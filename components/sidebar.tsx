@@ -1,105 +1,103 @@
 "use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, CheckSquare, FolderOpen, Home, Settings, Users, Calendar, MessageSquare, DollarSign, FileText, Shield, Briefcase } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/hooks/useAuth"
+import {
+  LayoutDashboard,
+  FolderOpen,
+  CheckSquare,
+  Users,
+  Calendar,
+  MessageSquare,
+  BarChart3,
+  Bell,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react"
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Projects", href: "/projects", icon: FolderOpen, badge: "18" },
-  { name: "Tasks", href: "/tasks", icon: CheckSquare, badge: "47" },
-  { name: "Calendar", href: "/calendar", icon: Calendar },
-  { name: "Team", href: "/team", icon: Users, badge: "24" },
-  { name: "Budget", href: "/budget", icon: DollarSign },
-  { name: "Reports", href: "/reports", icon: FileText },
-  { name: "Messages", href: "/messages", icon: MessageSquare, badge: "3" },
-]
-
-const adminNavigation = [
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Compliance", href: "/compliance", icon: Shield },
-  { name: "Administration", href: "/admin", icon: Briefcase },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dự án", href: "/projects", icon: FolderOpen },
+  { name: "Công việc", href: "/tasks", icon: CheckSquare },
+  { name: "Nhóm", href: "/team", icon: Users },
+  { name: "Lịch", href: "/calendar", icon: Calendar },
+  { name: "Tin nhắn", href: "/messages", icon: MessageSquare },
+  { name: "Báo cáo", href: "/reports", icon: BarChart3 },
+  { name: "Thông báo", href: "/notifications", icon: Bell },
+  { name: "Cài đặt", href: "/settings", icon: Settings },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { user, logout } = useAuth()
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div className="flex flex-col w-64 bg-white border-r border-gray-200 shadow-sm">
-      <div className="flex items-center h-16 px-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
-        <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center">
-            <Briefcase className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <span className="text-xl font-bold text-white">ProManage</span>
-            <div className="text-xs text-blue-100">Enterprise</div>
-          </div>
+    <div
+      className={cn(
+        "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
+        collapsed ? "w-16" : "w-64",
+      )}
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          {!collapsed && (
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">ProManage</h1>
+              <p className="text-sm text-gray-600">Quản lý dự án</p>
+            </div>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8">
+            {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1">
-        <div className="mb-6">
-          <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Main Navigation
-          </h3>
-          {navigation.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link key={item.name} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start mb-1 h-10",
-                    isActive && "bg-blue-50 text-blue-700 hover:bg-blue-50 border-r-2 border-blue-600"
-                  )}
-                >
-                  <item.icon className="h-4 w-4 mr-3" />
-                  <span className="flex-1 text-left">{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
-            )
-          })}
-        </div>
-
-        <div>
-          <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Administration
-          </h3>
-          {adminNavigation.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link key={item.name} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start mb-1 h-10",
-                    isActive && "bg-blue-50 text-blue-700 hover:bg-blue-50 border-r-2 border-blue-600"
-                  )}
-                >
-                  <item.icon className="h-4 w-4 mr-3" />
-                  {item.name}
-                </Button>
-              </Link>
-            )
-          })}
-        </div>
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {navigation.map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link key={item.name} href={item.href}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start",
+                  collapsed && "px-2",
+                  isActive && "bg-blue-50 text-blue-700 hover:bg-blue-100",
+                )}
+              >
+                <item.icon className={cn("h-4 w-4", !collapsed && "mr-3")} />
+                {!collapsed && item.name}
+              </Button>
+            </Link>
+          )
+        })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <div className="text-xs text-gray-500 mb-2">Current Plan</div>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Enterprise Pro</span>
-          <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>
-        </div>
+      {/* User Info */}
+      <div className="p-4 border-t border-gray-200">
+        {!collapsed && user && (
+          <div className="mb-3">
+            <p className="text-sm font-medium text-gray-900">{user.name}</p>
+            <p className="text-xs text-gray-600">{user.email}</p>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className={cn("w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50", collapsed && "px-2")}
+        >
+          <LogOut className={cn("h-4 w-4", !collapsed && "mr-3")} />
+          {!collapsed && "Đăng xuất"}
+        </Button>
       </div>
     </div>
   )
