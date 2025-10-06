@@ -1,8 +1,8 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
-import { api, ApiError } from "@/lib/api"
 
 interface User {
   id: string
@@ -12,12 +12,10 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  token: string | null
-  userId: string | null
-  isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
+  isLoading: boolean
   isAuthenticated: boolean
 }
 
@@ -25,83 +23,63 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token")
-    const storedUserId = localStorage.getItem("userId")
-
-    if (storedToken && storedUserId) {
-      setToken(storedToken)
-      setUserId(storedUserId)
-
-      api.auth
-        .getProfile()
-        .then((userData) => setUser(userData))
-        .catch(() => {
-          localStorage.removeItem("token")
-          localStorage.removeItem("userId")
-        })
-        .finally(() => setIsLoading(false))
-    } else {
-      setIsLoading(false)
-    }
+    checkAuth()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  async function checkAuth() {
     try {
-      const response = await api.auth.login(email, password)
-
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("userId", response.userId)
-
-      setToken(response.token)
-      setUserId(response.userId)
-
-      const userData = await api.auth.getProfile()
-      setUser(userData)
-
-      router.push("/dashboard")
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error("Email hoặc mật khẩu không đúng")
+      const token = localStorage.getItem("token")
+      if (token) {
+        const profile = await api.auth.getProfile()
+        setUser(profile)
       }
-      throw error
+    } catch (error) {
+      console.error("Auth check failed:", error)
+      localStorage.removeItem("token")
+      localStorage.removeItem("userId")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const register = async (name: string, email: string, password: string) => {
+  async function login(email: string, password: string) {
+    setIsLoading(true)
+    try {
+      await api.auth.login(email, password)
+      const profile = await api.auth.getProfile()
+      setUser(profile)
+      router.push("/dashboard")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function register(name: string, email: string, password: string) {
+    setIsLoading(true)
     try {
       await api.auth.register(name, email, password)
       await login(email, password)
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error("Đăng ký thất bại. Email có thể đã được sử dụng.")
-      }
-      throw error
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("userId")
+  function logout() {
+    api.auth.logout()
     setUser(null)
-    setToken(null)
-    setUserId(null)
     router.push("/auth/signin")
   }
 
   const value = {
     user,
-    token,
-    userId,
-    isLoading,
     login,
     register,
     logout,
+    isLoading,
     isAuthenticated: !!user,
   }
 

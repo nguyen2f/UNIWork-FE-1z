@@ -9,25 +9,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, UserPlus } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function SignUpPage() {
+  const { register, isLoading } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    if (password !== confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp")
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Vui lòng điền đầy đủ thông tin")
       return
     }
 
@@ -36,23 +36,26 @@ export default function SignUpPage() {
       return
     }
 
-    setLoading(true)
+    if (password !== confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp")
+      return
+    }
 
     try {
       await register(name, email, password)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng ký thất bại")
-    } finally {
-      setLoading(false)
+      toast.success("Đăng ký thành công!")
+    } catch (err: any) {
+      setError(err.message || "Đăng ký thất bại")
+      toast.error("Đăng ký thất bại")
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Đăng ký</CardTitle>
-          <CardDescription className="text-center">Tạo tài khoản mới để sử dụng hệ thống</CardDescription>
+          <CardTitle className="text-2xl font-bold">Đăng ký</CardTitle>
+          <CardDescription>Tạo tài khoản mới để bắt đầu quản lý dự án</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,8 +73,8 @@ export default function SignUpPage() {
                 placeholder="Nguyễn Văn A"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
                 required
-                disabled={loading}
               />
             </div>
 
@@ -83,8 +86,8 @@ export default function SignUpPage() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
                 required
-                disabled={loading}
               />
             </div>
 
@@ -94,18 +97,18 @@ export default function SignUpPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                   required
-                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
@@ -115,31 +118,21 @@ export default function SignUpPage() {
               <Input
                 id="confirmPassword"
                 type={showPassword ? "text" : "password"}
-                placeholder="Nhập lại mật khẩu"
+                placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isLoading}
                 required
-                disabled={loading}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Đang đăng ký...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Đăng ký
-                </>
-              )}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
 
             <div className="text-center text-sm">
               <span className="text-gray-600">Đã có tài khoản? </span>
-              <Link href="/auth/signin" className="text-blue-600 hover:underline font-medium">
+              <Link href="/auth/signin" className="text-primary hover:underline">
                 Đăng nhập ngay
               </Link>
             </div>
