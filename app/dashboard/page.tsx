@@ -1,138 +1,55 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
-import { Loader2, FolderKanban, CheckSquare, Users, TrendingUp } from "lucide-react"
-import { authApi } from "@/lib/api"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LogOut, User } from "lucide-react"
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      const userId = localStorage.getItem("userId")
-
-      if (!token || !userId) {
-        router.push("/auth/signin")
-        return
-      }
-
-      const profile = await authApi.getProfile()
-      setUser(profile)
-    } catch (error) {
-      console.error("Auth check failed:", error)
-      router.push("/auth/signin")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLogout = () => {
-    authApi.logout()
-    router.push("/auth/signin")
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    )
-  }
+  const { user, logout } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Xin chào, {user?.name || "User"}</span>
-            <Button variant="outline" onClick={handleLogout}>
-              Đăng xuất
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng dự án</CardTitle>
-              <FolderKanban className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground">+2 từ tháng trước</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Công việc</CardTitle>
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">45</div>
-              <p className="text-xs text-muted-foreground">+12 từ tuần trước</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Thành viên</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">8</div>
-              <p className="text-xs text-muted-foreground">+1 từ tháng trước</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tiến độ</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">76%</div>
-              <p className="text-xs text-muted-foreground">+5% từ tuần trước</p>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <Button onClick={logout} variant="outline">
+            <LogOut className="h-4 w-4 mr-2" />
+            Đăng xuất
+          </Button>
         </div>
 
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin kết nối</CardTitle>
-              <CardDescription>Token và User ID đã được lưu trong header</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">User ID:</span>
-                  <code className="bg-gray-100 px-2 py-1 rounded">{localStorage.getItem("userId")}</code>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">Token:</span>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                    {localStorage.getItem("token")?.substring(0, 50)}...
-                  </code>
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin người dùng</CardTitle>
+            <CardDescription>Chi tiết tài khoản của bạn</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+                <User className="h-8 w-8 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+              <div>
+                <p className="font-medium text-lg">{user?.name}</p>
+                <p className="text-gray-500">{user?.email}</p>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">User ID:</span>
+                <span className="font-mono text-sm">{user?.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Token:</span>
+                <span className="font-mono text-sm truncate max-w-xs">
+                  {typeof window !== "undefined" ? localStorage.getItem("token")?.substring(0, 30) + "..." : ""}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

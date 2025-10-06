@@ -1,14 +1,13 @@
 "use client"
 
 import { useState, useEffect, createContext, useContext, type ReactNode } from "react"
-import { authApi } from "@/lib/api"
 import { useRouter } from "next/navigation"
 
 interface User {
   id: string
   name: string
   email: string
-  role: string
+  role?: string
   avatar?: string
 }
 
@@ -35,15 +34,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem("token")
-      if (!token) {
+      const userId = localStorage.getItem("userId")
+
+      if (!token || !userId) {
         setLoading(false)
         return
       }
 
-      const userData = await authApi.getProfile()
-      setUser(userData)
+      // Giả sử user đã đăng nhập
+      setUser({
+        id: userId,
+        name: "User",
+        email: "user@example.com",
+      })
     } catch (error) {
       localStorage.removeItem("token")
+      localStorage.removeItem("userId")
       console.error("Auth check failed:", error)
     } finally {
       setLoading(false)
@@ -52,9 +58,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await authApi.login({ email, password })
-      localStorage.setItem("token", response.token)
-      setUser(response.user)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+      const response = await fetch(`${apiUrl}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Login failed")
+      }
+
+      const data = await response.json()
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("userId", data.userId)
+
+      setUser({
+        id: data.userId,
+        name: data.name || "User",
+        email: email,
+      })
+
       router.push("/dashboard")
     } catch (error) {
       throw error
@@ -63,7 +89,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      await authApi.register({ name, email, password })
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+      const response = await fetch(`${apiUrl}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Registration failed")
+      }
+
       // Sau khi đăng ký thành công, tự động đăng nhập
       await login(email, password)
     } catch (error) {
@@ -73,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem("token")
+    localStorage.removeItem("userId")
     setUser(null)
     router.push("/auth/signin")
   }

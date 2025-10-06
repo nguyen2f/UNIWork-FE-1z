@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 import { CalendarDays, Plus, Users, AlertTriangle, DollarSign, Target, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +13,17 @@ import { Sidebar } from "../components/sidebar"
 import { Header } from "../components/header"
 
 export default function Dashboard() {
+  const router = useRouter()
+  const { isAuthenticated, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading) {
+      if (!isAuthenticated) {
+        router.push("/auth/signin")
+      }
+    }
+  }, [isAuthenticated, loading, router])
+
   const [projects] = useState([
     {
       id: 1,
@@ -161,226 +173,225 @@ export default function Dashboard() {
     }
   }
 
-  const router = useRouter()
-
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("token")
-    const userId = localStorage.getItem("userId")
-
-    if (!token || !userId) {
-      router.push("/auth/signin")
-    }
-  }, [router])
-
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Executive Dashboard</h1>
-              <p className="text-gray-600 mt-2">
-                Real-time insights into project performance and organizational metrics
-              </p>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, index) => (
-                <Card key={index} className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{stat.title}</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                        <p className="text-sm text-gray-500 mt-1 flex items-center">
-                          <Activity className="h-3 w-3 mr-1" />
-                          {stat.change}
-                        </p>
-                      </div>
-                      <div className={`h-12 w-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
-                        <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Strategic Projects */}
-              <div className="lg:col-span-2">
-                <Card className="shadow-sm">
-                  <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100">
-                    <div>
-                      <CardTitle className="text-xl">Strategic Projects</CardTitle>
-                      <CardDescription>High-priority initiatives and their current status</CardDescription>
-                    </div>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Project
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-6">
-                      {projects.map((project) => (
-                        <div
-                          key={project.id}
-                          className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-white"
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-semibold text-gray-900 text-lg">{project.name}</h3>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}
-                                >
-                                  {project.status}
-                                </span>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(project.priority)}`}
-                                >
-                                  {project.priority}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3">{project.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-gray-500">
-                                <span className="flex items-center">
-                                  <CalendarDays className="h-4 w-4 mr-1" />
-                                  Due {project.dueDate}
-                                </span>
-                                <span>Client: {project.client}</span>
-                                <span>Dept: {project.department}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Progress</span>
-                                <span className="font-medium">{project.progress}%</span>
-                              </div>
-                              <Progress value={project.progress} className="h-2" />
-                            </div>
-
-                            <div className="text-sm">
-                              <div className="text-gray-600 mb-1">Budget Status</div>
-                              <div className="font-medium">
-                                ${(project.budget.spent / 1000).toFixed(0)}K / $
-                                {(project.budget.allocated / 1000).toFixed(0)}K
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {Math.round((project.budget.spent / project.budget.allocated) * 100)}% utilized
-                              </div>
-                            </div>
-
-                            <div className="text-sm">
-                              <div className="text-gray-600 mb-1">Task Completion</div>
-                              <div className="font-medium">
-                                {project.tasks.completed} / {project.tasks.total} tasks
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {Math.round((project.tasks.completed / project.tasks.total) * 100)}% complete
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Users className="h-4 w-4 mr-1" />
-                              Team ({project.team.length} members)
-                            </div>
-                            <div className="flex -space-x-2">
-                              {project.team.slice(0, 5).map((member, idx) => (
-                                <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                                    {member}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ))}
-                              {project.team.length > 5 && (
-                                <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
-                                  <span className="text-xs text-gray-600">+{project.team.length - 5}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Recent Activity */}
-              <div>
-                <Card className="shadow-sm">
-                  <CardHeader className="border-b border-gray-100">
-                    <CardTitle className="text-xl">Recent Activity</CardTitle>
-                    <CardDescription>Latest updates and milestones</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {recentActivities.map((activity) => (
-                        <div
-                          key={activity.id}
-                          className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
-                        >
-                          <div className="flex-shrink-0 mt-1">
-                            <div
-                              className={`h-3 w-3 rounded-full ${
-                                activity.type === "milestone"
-                                  ? "bg-green-500"
-                                  : activity.type === "approval"
-                                    ? "bg-blue-500"
-                                    : activity.type === "meeting"
-                                      ? "bg-purple-500"
-                                      : "bg-orange-500"
-                              }`}
-                            ></div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                            <p className="text-xs text-gray-500 mt-1">{activity.project}</p>
-                            <div className="flex items-center justify-between mt-2">
-                              <div className="flex items-center space-x-2">
-                                <Badge
-                                  variant={
-                                    activity.priority === "Critical"
-                                      ? "destructive"
-                                      : activity.priority === "High"
-                                        ? "default"
-                                        : "secondary"
-                                  }
-                                  className="text-xs"
-                                >
-                                  {activity.priority}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-gray-400">
-                                <div>{activity.user}</div>
-                                <div>{activity.time}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <Button variant="outline" className="w-full mt-4 bg-transparent">
-                      View All Activity
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Đang tải...</p>
           </div>
-        </main>
-      </div>
+        </div>
+      ) : isAuthenticated ? (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+              <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-gray-900">Executive Dashboard</h1>
+                  <p className="text-gray-600 mt-2">
+                    Real-time insights into project performance and organizational metrics
+                  </p>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {stats.map((stat, index) => (
+                    <Card key={index} className="border-l-4 border-l-blue-500">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{stat.title}</p>
+                            <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                            <p className="text-sm text-gray-500 mt-1 flex items-center">
+                              <Activity className="h-3 w-3 mr-1" />
+                              {stat.change}
+                            </p>
+                          </div>
+                          <div className={`h-12 w-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
+                            <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Strategic Projects */}
+                  <div className="lg:col-span-2">
+                    <Card className="shadow-sm">
+                      <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100">
+                        <div>
+                          <CardTitle className="text-xl">Strategic Projects</CardTitle>
+                          <CardDescription>High-priority initiatives and their current status</CardDescription>
+                        </div>
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                          <Plus className="h-4 w-4 mr-2" />
+                          New Project
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="space-y-6">
+                          {projects.map((project) => (
+                            <div
+                              key={project.id}
+                              className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-white"
+                            >
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h3 className="font-semibold text-gray-900 text-lg">{project.name}</h3>
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}
+                                    >
+                                      {project.status}
+                                    </span>
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(project.priority)}`}
+                                    >
+                                      {project.priority}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-3">{project.description}</p>
+                                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                                    <span className="flex items-center">
+                                      <CalendarDays className="h-4 w-4 mr-1" />
+                                      Due {project.dueDate}
+                                    </span>
+                                    <span>Client: {project.client}</span>
+                                    <span>Dept: {project.department}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Progress</span>
+                                    <span className="font-medium">{project.progress}%</span>
+                                  </div>
+                                  <Progress value={project.progress} className="h-2" />
+                                </div>
+
+                                <div className="text-sm">
+                                  <div className="text-gray-600 mb-1">Budget Status</div>
+                                  <div className="font-medium">
+                                    ${(project.budget.spent / 1000).toFixed(0)}K / $
+                                    {(project.budget.allocated / 1000).toFixed(0)}K
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {Math.round((project.budget.spent / project.budget.allocated) * 100)}% utilized
+                                  </div>
+                                </div>
+
+                                <div className="text-sm">
+                                  <div className="text-gray-600 mb-1">Task Completion</div>
+                                  <div className="font-medium">
+                                    {project.tasks.completed} / {project.tasks.total} tasks
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {Math.round((project.tasks.completed / project.tasks.total) * 100)}% complete
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <Users className="h-4 w-4 mr-1" />
+                                  Team ({project.team.length} members)
+                                </div>
+                                <div className="flex -space-x-2">
+                                  {project.team.slice(0, 5).map((member, idx) => (
+                                    <Avatar key={idx} className="h-8 w-8 border-2 border-white">
+                                      <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                                        {member}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ))}
+                                  {project.team.length > 5 && (
+                                    <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
+                                      <span className="text-xs text-gray-600">+{project.team.length - 5}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Recent Activity */}
+                  <div>
+                    <Card className="shadow-sm">
+                      <CardHeader className="border-b border-gray-100">
+                        <CardTitle className="text-xl">Recent Activity</CardTitle>
+                        <CardDescription>Latest updates and milestones</CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          {recentActivities.map((activity) => (
+                            <div
+                              key={activity.id}
+                              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                            >
+                              <div className="flex-shrink-0 mt-1">
+                                <div
+                                  className={`h-3 w-3 rounded-full ${
+                                    activity.type === "milestone"
+                                      ? "bg-green-500"
+                                      : activity.type === "approval"
+                                        ? "bg-blue-500"
+                                        : activity.type === "meeting"
+                                          ? "bg-purple-500"
+                                          : "bg-orange-500"
+                                  }`}
+                                ></div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                                <p className="text-xs text-gray-500 mt-1">{activity.project}</p>
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="flex items-center space-x-2">
+                                    <Badge
+                                      variant={
+                                        activity.priority === "Critical"
+                                          ? "destructive"
+                                          : activity.priority === "High"
+                                            ? "default"
+                                            : "secondary"
+                                      }
+                                      className="text-xs"
+                                    >
+                                      {activity.priority}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    <div>{activity.user}</div>
+                                    <div>{activity.time}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <Button variant="outline" className="w-full mt-4 bg-transparent">
+                          View All Activity
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
