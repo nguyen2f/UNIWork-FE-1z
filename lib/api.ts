@@ -14,60 +14,56 @@ export function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("token")
   const userId = localStorage.getItem("userId")
 
-  return {
+  const headers: HeadersInit = {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...(userId && { userId }),
   }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+
+  if (userId) {
+    headers["userId"] = userId
+  }
+
+  return headers
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_URL}${endpoint}`
+
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...options.headers,
+    },
+  }
+
+  const response = await fetch(url, config)
+
   if (!response.ok) {
     const error = await response.text()
-    throw new ApiError(response.status, error || "API Error")
+    throw new ApiError(response.status, error || response.statusText)
   }
+
   return response.json()
 }
 
-export const api = {
-  auth: {
-    login: async (email: string, password: string) => {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
-      return handleResponse<{ token: string; userId: string }>(response)
-    },
-    register: async (name: string, email: string, password: string) => {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      })
-      return handleResponse<{ message: string }>(response)
-    },
-    getProfile: async () => {
-      const response = await fetch(`${API_URL}/auth/profile`, {
-        headers: getAuthHeaders(),
-      })
-      return handleResponse<{ id: string; name: string; email: string }>(response)
-    },
+export const authApi = {
+  login: async (email: string, password: string) => {
+    return apiRequest<{ token: string; userId: string }>("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
   },
-  projects: {
-    getAll: async () => {
-      const response = await fetch(`${API_URL}/projects`, {
-        headers: getAuthHeaders(),
-      })
-      return handleResponse<any[]>(response)
-    },
-    create: async (data: any) => {
-      const response = await fetch(`${API_URL}/projects`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      })
-      return handleResponse<any>(response)
-    },
+
+  register: async (name: string, email: string, password: string) => {
+    return apiRequest<{ message: string }>("/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    })
   },
 }

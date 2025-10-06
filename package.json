@@ -10,8 +10,6 @@
   },
   "dependencies": {
     "@auth/core": "latest",
-    "@radix-ui/react-alert-dialog": "^1.0.5",
-    "@radix-ui/react-progress": "latest",
     "@radix-ui/react-slot": "latest",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",

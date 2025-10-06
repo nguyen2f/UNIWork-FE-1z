@@ -1,8 +1,8 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { authApi } from "@/lib/api"
 import { useRouter } from "next/navigation"
-import { api } from "@/lib/api"
 
 interface User {
   id: string
@@ -12,10 +12,10 @@ interface User {
 
 interface AuthContextType {
   user: User | null
+  token: string | null
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
-  isLoading: boolean
   isAuthenticated: boolean
 }
 
@@ -23,54 +23,65 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [token, setToken] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem("token")
-      if (token) {
-        try {
-          const userData = await api.auth.getProfile()
-          setUser(userData)
-        } catch (error) {
-          console.error("Failed to load user:", error)
-          localStorage.removeItem("token")
-          localStorage.removeItem("userId")
-        }
-      }
-      setIsLoading(false)
+    const storedToken = localStorage.getItem("token")
+    const storedUserId = localStorage.getItem("userId")
+    const storedUserName = localStorage.getItem("userName")
+    const storedUserEmail = localStorage.getItem("userEmail")
+
+    if (storedToken && storedUserId) {
+      setToken(storedToken)
+      setUser({
+        id: storedUserId,
+        name: storedUserName || "",
+        email: storedUserEmail || "",
+      })
     }
-    loadUser()
   }, [])
 
   const login = async (email: string, password: string) => {
-    const { token, userId } = await api.auth.login(email, password)
-    localStorage.setItem("token", token)
-    localStorage.setItem("userId", userId)
-    const userData = await api.auth.getProfile()
-    setUser(userData)
+    const response = await authApi.login(email, password)
+
+    localStorage.setItem("token", response.token)
+    localStorage.setItem("userId", response.userId)
+    localStorage.setItem("userEmail", email)
+
+    setToken(response.token)
+    setUser({
+      id: response.userId,
+      name: email.split("@")[0],
+      email: email,
+    })
+
     router.push("/dashboard")
   }
 
   const register = async (name: string, email: string, password: string) => {
-    await api.auth.register(name, email, password)
+    await authApi.register(name, email, password)
     await login(email, password)
   }
 
   const logout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("userId")
+    localStorage.removeItem("userName")
+    localStorage.removeItem("userEmail")
+
+    setToken(null)
     setUser(null)
+
     router.push("/auth/signin")
   }
 
-  const value = {
+  const value: AuthContextType = {
     user,
+    token,
     login,
     register,
     logout,
-    isLoading,
     isAuthenticated: !!user,
   }
 
