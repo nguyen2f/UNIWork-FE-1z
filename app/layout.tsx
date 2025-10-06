@@ -7,16 +7,16 @@ import { AuthProvider } from "@/hooks/useAuth"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ProManage - Quản lý dự án",
-  description: "Hệ thống quản lý dự án chuyên nghiệp",
+  title: "Project Management System",
+  description: "Hệ thống quản lý dự án",
     generator: 'v0.app'
 }
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode
-}) {
+}>) {
   return (
     <html lang="vi">
       <body className={inter.className}>

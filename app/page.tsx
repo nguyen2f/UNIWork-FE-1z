@@ -7,15 +7,17 @@ import { Users, AlertTriangle, DollarSign, Target } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard")
-    } else {
-      router.push("/auth/signin")
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push("/dashboard")
+      } else {
+        router.push("/auth/signin")
+      }
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, isLoading, router])
 
   const [projects] = useState([
     {
@@ -169,7 +171,10 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-50">
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
       </div>
     </div>
   )
