@@ -7,8 +7,8 @@ import { AuthProvider } from "@/hooks/useAuth"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ProManage - Project Management System",
-  description: "Enterprise project management solution",
+  title: "Project Management System",
+  description: "Quản lý dự án và công việc",
     generator: 'v0.app'
 }
 
