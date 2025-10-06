@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export class ApiError extends Error {
   constructor(
@@ -10,9 +10,9 @@ export class ApiError extends Error {
   }
 }
 
-export function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("token")
+  const userId = localStorage.getItem("userId")
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -29,20 +29,10 @@ export function getAuthHeaders(): HeadersInit {
   return headers
 }
 
-export async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_URL}${endpoint}`
-
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
-  })
-
+async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const errorText = await response.text()
-    throw new ApiError(response.status, errorText || "An error occurred")
+    const error = await response.json().catch(() => ({ message: "Unknown error" }))
+    throw new ApiError(response.status, error.message || `HTTP ${response.status}`)
   }
 
   return response.json()
@@ -50,72 +40,108 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
 
 export const api = {
   auth: {
-    login: (email: string, password: string) =>
-      apiCall<{ token: string; userId: string }>("/auth/login", {
+    login: async (email: string, password: string) => {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      }),
+      })
+      return handleResponse<{ token: string; userId: string }>(response)
+    },
 
-    register: (name: string, email: string, password: string) =>
-      apiCall<{ message: string }>("/auth/register", {
+    register: async (name: string, email: string, password: string) => {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
-      }),
+      })
+      return handleResponse<{ message: string }>(response)
+    },
 
-    getProfile: () => apiCall<any>("/auth/profile"),
+    getProfile: async () => {
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        headers: getAuthHeaders(),
+      })
+      return handleResponse<{ id: string; name: string; email: string }>(response)
+    },
   },
 
   projects: {
-    getAll: () => apiCall<any[]>("/projects"),
-    getById: (id: string) => apiCall<any>(`/projects/${id}`),
-    create: (data: any) =>
-      apiCall<any>("/projects", {
+    getAll: async () => {
+      const response = await fetch(`${API_BASE_URL}/projects`, {
+        headers: getAuthHeaders(),
+      })
+      return handleResponse<any[]>(response)
+    },
+
+    getById: async (id: string) => {
+      const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
+        headers: getAuthHeaders(),
+      })
+      return handleResponse<any>(response)
+    },
+
+    create: async (data: any) => {
+      const response = await fetch(`${API_BASE_URL}/projects`, {
         method: "POST",
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
-      }),
-    update: (id: string, data: any) =>
-      apiCall<any>(`/projects/${id}`, {
+      })
+      return handleResponse<any>(response)
+    },
+
+    update: async (id: string, data: any) => {
+      const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
         method: "PUT",
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
-      }),
-    delete: (id: string) =>
-      apiCall<void>(`/projects/${id}`, {
+      })
+      return handleResponse<any>(response)
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
         method: "DELETE",
-      }),
+        headers: getAuthHeaders(),
+      })
+      return handleResponse<any>(response)
+    },
   },
 
   tasks: {
-    getByProject: (projectId: string) => apiCall<any[]>(`/projects/${projectId}/tasks`),
-    create: (data: any) =>
-      apiCall<any>("/tasks", {
+    getAll: async () => {
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
+        headers: getAuthHeaders(),
+      })
+      return handleResponse<any[]>(response)
+    },
+
+    create: async (data: any) => {
+      const response = await fetch(`${API_BASE_URL}/tasks`, {
         method: "POST",
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
-      }),
-    update: (id: string, data: any) =>
-      apiCall<any>(`/tasks/${id}`, {
+      })
+      return handleResponse<any>(response)
+    },
+
+    update: async (id: string, data: any) => {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: "PUT",
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
-      }),
-    delete: (id: string) =>
-      apiCall<void>(`/tasks/${id}`, {
+      })
+      return handleResponse<any>(response)
+    },
+
+    delete: async (id: string) => {
+      const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
         method: "DELETE",
-      }),
-  },
-
-  messages: {
-    getAll: () => apiCall<any[]>("/messages"),
-    send: (data: any) =>
-      apiCall<any>("/messages", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-  },
-
-  notifications: {
-    getAll: () => apiCall<any[]>("/notifications"),
-    markAsRead: (id: string) =>
-      apiCall<void>(`/notifications/${id}`, {
-        method: "PUT",
-      }),
+        headers: getAuthHeaders(),
+      })
+      return handleResponse<any>(response)
+    },
   },
 }
+
+export { API_BASE_URL }
