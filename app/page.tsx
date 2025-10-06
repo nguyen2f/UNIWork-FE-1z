@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { CalendarDays, CheckCircle2, Clock, Plus, TrendingUp, Users, AlertTriangle, DollarSign, Target, Activity } from 'lucide-react'
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { CalendarDays, Plus, Users, AlertTriangle, DollarSign, Target, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -57,76 +58,76 @@ export default function Dashboard() {
   ])
 
   const [recentActivities] = useState([
-    { 
-      id: 1, 
-      title: "Security audit documentation completed", 
-      project: "Security Compliance Audit", 
-      priority: "Critical", 
+    {
+      id: 1,
+      title: "Security audit documentation completed",
+      project: "Security Compliance Audit",
+      priority: "Critical",
       time: "2 hours ago",
       user: "David Kim",
-      type: "milestone"
+      type: "milestone",
     },
-    { 
-      id: 2, 
-      title: "CRM data migration phase 2 started", 
-      project: "Enterprise CRM Migration", 
-      priority: "High", 
+    {
+      id: 2,
+      title: "CRM data migration phase 2 started",
+      project: "Enterprise CRM Migration",
+      priority: "High",
       time: "4 hours ago",
       user: "Sarah Miller",
-      type: "update"
+      type: "update",
     },
-    { 
-      id: 3, 
-      title: "Budget approval received for Q2 initiatives", 
-      project: "Digital Transformation", 
-      priority: "Medium", 
+    {
+      id: 3,
+      title: "Budget approval received for Q2 initiatives",
+      project: "Digital Transformation",
+      priority: "Medium",
       time: "6 hours ago",
       user: "John Doe",
-      type: "approval"
+      type: "approval",
     },
-    { 
-      id: 4, 
-      title: "Stakeholder review meeting scheduled", 
-      project: "Enterprise CRM Migration", 
-      priority: "High", 
+    {
+      id: 4,
+      title: "Stakeholder review meeting scheduled",
+      project: "Enterprise CRM Migration",
+      priority: "High",
       time: "8 hours ago",
       user: "Rachel Wong",
-      type: "meeting"
+      type: "meeting",
     },
   ])
 
   const stats = [
-    { 
-      title: "Active Projects", 
-      value: "18", 
-      icon: Target, 
+    {
+      title: "Active Projects",
+      value: "18",
+      icon: Target,
       change: "+3 from last quarter",
       trend: "up",
-      color: "blue"
+      color: "blue",
     },
-    { 
-      title: "Total Budget", 
-      value: "$2.4M", 
-      icon: DollarSign, 
+    {
+      title: "Total Budget",
+      value: "$2.4M",
+      icon: DollarSign,
       change: "15% of annual budget",
       trend: "neutral",
-      color: "green"
+      color: "green",
     },
-    { 
-      title: "Team Utilization", 
-      value: "87%", 
-      icon: Users, 
+    {
+      title: "Team Utilization",
+      value: "87%",
+      icon: Users,
       change: "+5% from last month",
       trend: "up",
-      color: "purple"
+      color: "purple",
     },
-    { 
-      title: "At Risk Projects", 
-      value: "2", 
-      icon: AlertTriangle, 
+    {
+      title: "At Risk Projects",
+      value: "2",
+      icon: AlertTriangle,
       change: "-1 from last week",
       trend: "down",
-      color: "red"
+      color: "red",
     },
   ]
 
@@ -160,6 +161,18 @@ export default function Dashboard() {
     }
   }
 
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token")
+    const userId = localStorage.getItem("userId")
+
+    if (!token || !userId) {
+      router.push("/auth/signin")
+    }
+  }, [router])
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -170,7 +183,9 @@ export default function Dashboard() {
             {/* Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Executive Dashboard</h1>
-              <p className="text-gray-600 mt-2">Real-time insights into project performance and organizational metrics</p>
+              <p className="text-gray-600 mt-2">
+                Real-time insights into project performance and organizational metrics
+              </p>
             </div>
 
             {/* Stats Grid */}
@@ -213,15 +228,22 @@ export default function Dashboard() {
                   <CardContent className="p-6">
                     <div className="space-y-6">
                       {projects.map((project) => (
-                        <div key={project.id} className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-white">
+                        <div
+                          key={project.id}
+                          className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-white"
+                        >
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="font-semibold text-gray-900 text-lg">{project.name}</h3>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}
+                                >
                                   {project.status}
                                 </span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(project.priority)}`}>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(project.priority)}`}
+                                >
                                   {project.priority}
                                 </span>
                               </div>
@@ -245,11 +267,12 @@ export default function Dashboard() {
                               </div>
                               <Progress value={project.progress} className="h-2" />
                             </div>
-                            
+
                             <div className="text-sm">
                               <div className="text-gray-600 mb-1">Budget Status</div>
                               <div className="font-medium">
-                                ${(project.budget.spent / 1000).toFixed(0)}K / ${(project.budget.allocated / 1000).toFixed(0)}K
+                                ${(project.budget.spent / 1000).toFixed(0)}K / $
+                                {(project.budget.allocated / 1000).toFixed(0)}K
                               </div>
                               <div className="text-xs text-gray-500">
                                 {Math.round((project.budget.spent / project.budget.allocated) * 100)}% utilized
@@ -269,13 +292,15 @@ export default function Dashboard() {
 
                           <div className="flex items-center justify-between">
                             <div className="flex items-center text-sm text-gray-600">
-                              <Users className="h-4 w-4 mr-2" />
+                              <Users className="h-4 w-4 mr-1" />
                               Team ({project.team.length} members)
                             </div>
                             <div className="flex -space-x-2">
                               {project.team.slice(0, 5).map((member, idx) => (
                                 <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">{member}</AvatarFallback>
+                                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                                    {member}
+                                  </AvatarFallback>
                                 </Avatar>
                               ))}
                               {project.team.length > 5 && (
@@ -307,11 +332,17 @@ export default function Dashboard() {
                           className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
                         >
                           <div className="flex-shrink-0 mt-1">
-                            <div className={`h-3 w-3 rounded-full ${
-                              activity.type === 'milestone' ? 'bg-green-500' :
-                              activity.type === 'approval' ? 'bg-blue-500' :
-                              activity.type === 'meeting' ? 'bg-purple-500' : 'bg-orange-500'
-                            }`}></div>
+                            <div
+                              className={`h-3 w-3 rounded-full ${
+                                activity.type === "milestone"
+                                  ? "bg-green-500"
+                                  : activity.type === "approval"
+                                    ? "bg-blue-500"
+                                    : activity.type === "meeting"
+                                      ? "bg-purple-500"
+                                      : "bg-orange-500"
+                              }`}
+                            ></div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900">{activity.title}</p>
@@ -340,7 +371,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <Button variant="outline" className="w-full mt-4">
+                    <Button variant="outline" className="w-full mt-4 bg-transparent">
                       View All Activity
                     </Button>
                   </CardContent>
