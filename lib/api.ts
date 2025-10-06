@@ -1,6 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
-// API utility functions
+// API Error Class
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -11,35 +11,63 @@ export class ApiError extends Error {
   }
 }
 
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem("token")
+// Get token and userId from localStorage
+function getAuthHeaders() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
 
+  return {
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(userId && { userId }),
+  }
+}
+
+// Base API request function
+async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const config: RequestInit = {
     headers: {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new ApiError(response.status, errorData.message || "API Error")
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: "Network error" }))
+      throw new ApiError(response.status, errorData.message || `Error ${response.status}`)
+    }
+
+    // Handle empty responses
+    const text = await response.text()
+    return text ? JSON.parse(text) : {}
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    throw new ApiError(0, "Network error occurred")
   }
-
-  return response.json()
 }
 
 // Auth API
 export const authApi = {
-  login: (credentials: { email: string; password: string }) =>
-    apiRequest<{ token: string; user: any }>("/auth/login", {
+  login: async (credentials: { email: string; password: string }) => {
+    const response = await apiRequest<{ token: string; userId: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
-    }),
+    })
+
+    // Save token and userId to localStorage
+    if (response.token && response.userId) {
+      localStorage.setItem("token", response.token)
+      localStorage.setItem("userId", response.userId)
+    }
+
+    return response
+  },
 
   register: (userData: { name: string; email: string; password: string }) =>
     apiRequest<{ message: string }>("/auth/register", {
@@ -47,9 +75,12 @@ export const authApi = {
       body: JSON.stringify(userData),
     }),
 
-  getProfile: () => apiRequest<any>("/auth/profile"),
+  logout: () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("userId")
+  },
 
-  refreshToken: () => apiRequest<{ token: string }>("/auth/refresh"),
+  getProfile: () => apiRequest<any>("/auth/profile"),
 }
 
 // Projects API
@@ -87,12 +118,6 @@ export const projectsApi = {
     apiRequest<{ message: string }>(`/projects/${id}/members/${userId}`, {
       method: "DELETE",
     }),
-
-  updateMemberRole: (id: string, userId: string, role: string) =>
-    apiRequest<any>(`/projects/${id}/members/${userId}`, {
-      method: "PUT",
-      body: JSON.stringify({ role }),
-    }),
 }
 
 // Tasks API
@@ -120,7 +145,7 @@ export const tasksApi = {
 
   updateStatus: (id: string, status: string) =>
     apiRequest<any>(`/tasks/${id}/status`, {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({ status }),
     }),
 }
@@ -134,8 +159,6 @@ export const messagesApi = {
       method: "POST",
       body: JSON.stringify(messageData),
     }),
-
-  getDirectMessages: (userId: string) => apiRequest<any[]>(`/messages/direct/${userId}`),
 }
 
 // Notifications API
@@ -144,12 +167,7 @@ export const notificationsApi = {
 
   markAsRead: (id: string) =>
     apiRequest<any>(`/notifications/${id}/read`, {
-      method: "PUT",
-    }),
-
-  markAllAsRead: () =>
-    apiRequest<{ message: string }>("/notifications/read-all", {
-      method: "PUT",
+      method: "PATCH",
     }),
 }
 
@@ -160,16 +178,4 @@ export const usersApi = {
   getById: (id: string) => apiRequest<any>(`/users/${id}`),
 
   search: (query: string) => apiRequest<any[]>(`/users/search?q=${encodeURIComponent(query)}`),
-}
-
-// Reports API
-export const reportsApi = {
-  getProjectStats: (projectId: string) => apiRequest<any>(`/reports/projects/${projectId}/stats`),
-
-  getDashboardStats: () => apiRequest<any>("/reports/dashboard"),
-
-  getUserStats: (userId: string) => apiRequest<any>(`/reports/users/${userId}/stats`),
-
-  exportProject: (projectId: string, format: "pdf" | "excel") =>
-    apiRequest<{ downloadUrl: string }>(`/reports/projects/${projectId}/export?format=${format}`),
 }
