@@ -2,20 +2,20 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { apiLogin, apiRegister } from "@/lib/api"
+import { api } from "@/lib/api"
 
 interface User {
-  userId: string
-  email: string
+  id: string
   name: string
+  email: string
 }
 
 interface AuthContextType {
   user: User | null
-  token: string | null
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
+  isLoading: boolean
   isAuthenticated: boolean
 }
 
@@ -23,64 +23,54 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token")
-    const storedUserId = localStorage.getItem("userId")
-    const storedUser = localStorage.getItem("user")
-
-    if (storedToken && storedUserId && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    const loadUser = async () => {
+      const token = localStorage.getItem("token")
+      if (token) {
+        try {
+          const userData = await api.auth.getProfile()
+          setUser(userData)
+        } catch (error) {
+          console.error("Failed to load user:", error)
+          localStorage.removeItem("token")
+          localStorage.removeItem("userId")
+        }
+      }
+      setIsLoading(false)
     }
+    loadUser()
   }, [])
 
   const login = async (email: string, password: string) => {
-    const response = await apiLogin(email, password)
-
-    localStorage.setItem("token", response.token)
-    localStorage.setItem("userId", response.userId)
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        userId: response.userId,
-        email: email,
-        name: response.name || email,
-      }),
-    )
-
-    setToken(response.token)
-    setUser({
-      userId: response.userId,
-      email: email,
-      name: response.name || email,
-    })
-
+    const { token, userId } = await api.auth.login(email, password)
+    localStorage.setItem("token", token)
+    localStorage.setItem("userId", userId)
+    const userData = await api.auth.getProfile()
+    setUser(userData)
     router.push("/dashboard")
   }
 
   const register = async (name: string, email: string, password: string) => {
-    await apiRegister(name, email, password)
+    await api.auth.register(name, email, password)
     await login(email, password)
   }
 
   const logout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("userId")
-    localStorage.removeItem("user")
-    setToken(null)
     setUser(null)
     router.push("/auth/signin")
   }
 
   const value = {
     user,
-    token,
     login,
     register,
     logout,
+    isLoading,
     isAuthenticated: !!user,
   }
 

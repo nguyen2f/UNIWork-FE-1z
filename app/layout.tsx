@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Project Management System",
-  description: "Quản lý dự án và công việc",
+  description: "Quản lý dự án và công việc hiệu quả",
     generator: 'v0.app'
 }
 

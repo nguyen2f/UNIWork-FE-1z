@@ -14,15 +14,17 @@ import { Header } from "../components/header"
 
 export default function Dashboard() {
   const router = useRouter()
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push("/dashboard")
+      } else {
         router.push("/auth/signin")
       }
     }
-  }, [isAuthenticated, loading, router])
+  }, [isAuthenticated, isLoading, router])
 
   const [projects] = useState([
     {
@@ -173,22 +175,12 @@ export default function Dashboard() {
     }
   }
 
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (token) {
-      router.push("/dashboard")
-    } else {
-      router.push("/auth/signin")
-    }
-  }, [router])
-
   return (
     <div className="flex h-screen bg-gray-50">
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
           </div>
         </div>
       ) : isAuthenticated ? (
@@ -221,7 +213,7 @@ export default function Dashboard() {
                             </p>
                           </div>
                           <div className={`h-12 w-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
-                            <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+                            {stat.icon && <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />}
                           </div>
                         </div>
                       </CardContent>
@@ -402,7 +394,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
         </div>
       )}
     </div>
