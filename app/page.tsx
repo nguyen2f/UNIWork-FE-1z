@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { Users, AlertTriangle, DollarSign, Target } from "lucide-react"
 
-export default function HomePage() {
+export default function Home() {
   const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
 
@@ -169,10 +171,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Đang tải...</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+        <p className="mt-4 text-sm text-muted-foreground">Đang tải...</p>
       </div>
     </div>
   )

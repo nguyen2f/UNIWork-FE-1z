@@ -3,24 +3,20 @@ import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value
-  const { pathname } = request.nextUrl
+  const isAuthPage = request.nextUrl.pathname.startsWith("/auth")
+  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard")
 
-  if (pathname.startsWith("/auth")) {
-    if (token) {
-      return NextResponse.redirect(new URL("/dashboard", request.url))
-    }
-    return NextResponse.next()
+  if (isDashboard && !token) {
+    return NextResponse.redirect(new URL("/auth/signin", request.url))
   }
 
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/projects")) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/auth/signin", request.url))
-    }
+  if (isAuthPage && token) {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/projects/:path*", "/auth/:path*"],
+  matcher: ["/dashboard/:path*", "/auth/:path*"],
 }

@@ -1,8 +1,8 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
-import { api } from "@/lib/api"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"
 
 interface User {
   id: string
@@ -38,7 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile)
       }
     } catch (error) {
-      console.error("Auth check failed:", error)
       localStorage.removeItem("token")
       localStorage.removeItem("userId")
     } finally {
@@ -47,29 +46,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(email: string, password: string) {
-    setIsLoading(true)
-    try {
-      await api.auth.login(email, password)
-      const profile = await api.auth.getProfile()
-      setUser(profile)
-      router.push("/dashboard")
-    } finally {
-      setIsLoading(false)
-    }
+    const response = await api.auth.login(email, password)
+    localStorage.setItem("token", response.token)
+    localStorage.setItem("userId", response.userId)
+
+    const profile = await api.auth.getProfile()
+    setUser(profile)
+    router.push("/dashboard")
   }
 
   async function register(name: string, email: string, password: string) {
-    setIsLoading(true)
-    try {
-      await api.auth.register(name, email, password)
-      await login(email, password)
-    } finally {
-      setIsLoading(false)
-    }
+    await api.auth.register(name, email, password)
+    await login(email, password)
   }
 
   function logout() {
-    api.auth.logout()
+    localStorage.removeItem("token")
+    localStorage.removeItem("userId")
     setUser(null)
     router.push("/auth/signin")
   }

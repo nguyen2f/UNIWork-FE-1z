@@ -3,51 +3,69 @@
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut } from "lucide-react"
+import { LogOut, User, Mail, Key } from "lucide-react"
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-4xl mx-auto space-y-6 py-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
           <Button onClick={logout} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut size={18} className="mr-2" />
             Đăng xuất
           </Button>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <CardHeader>
             <CardTitle>Thông tin người dùng</CardTitle>
-            <CardDescription>Thông tin tài khoản đang đăng nhập</CardDescription>
+            <CardDescription>Thông tin tài khoản của bạn</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Họ và tên</p>
-              <p className="mt-1 text-lg">{user?.name}</p>
+            <div className="flex items-center space-x-3">
+              <User className="text-muted-foreground" size={20} />
+              <div>
+                <p className="text-sm text-muted-foreground">Họ và tên</p>
+                <p className="font-medium">{user?.name}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Email</p>
-              <p className="mt-1 text-lg">{user?.email}</p>
+
+            <div className="flex items-center space-x-3">
+              <Mail className="text-muted-foreground" size={20} />
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{user?.email}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">User ID</p>
-              <p className="mt-1 text-sm font-mono bg-gray-100 p-2 rounded">{localStorage.getItem("userId")}</p>
+
+            <div className="flex items-center space-x-3">
+              <Key className="text-muted-foreground" size={20} />
+              <div>
+                <p className="text-sm text-muted-foreground">User ID</p>
+                <p className="font-mono text-sm">{user?.id}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Token</p>
-              <p className="mt-1 text-sm font-mono bg-gray-100 p-2 rounded break-all">
-                {localStorage.getItem("token")?.substring(0, 50)}...
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin kết nối</CardTitle>
+            <CardDescription>Token đang sử dụng</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-md">
+              <p className="text-sm text-muted-foreground mb-2">Token:</p>
+              <p className="font-mono text-xs break-all">
+                {typeof window !== "undefined" && localStorage.getItem("token")}
               </p>
             </div>
           </CardContent>
         </Card>
-      </main>
+      </div>
     </div>
   )
 }
