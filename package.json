@@ -21,7 +21,6 @@
     "nodemailer": "latest",
     "react": "^18",
     "react-dom": "^18",
-    "shadcn": "latest",
     "sonner": "latest",
     "tailwind-merge": "^2.5.5"
   },

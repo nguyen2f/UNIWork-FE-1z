@@ -21,12 +21,11 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
     try {
       await register(email, password, name)
       toast.success("Đăng ký thành công!")
-    } catch (error) {
-      toast.error("Đăng ký thất bại. Vui lòng thử lại.")
+    } catch {
+      toast.error("Đăng ký thất bại")
     } finally {
       setLoading(false)
     }
@@ -35,40 +34,25 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold text-center">ProManage</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-3xl text-center">ProManage</CardTitle>
           <CardDescription className="text-center">Tạo tài khoản mới</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Họ và tên</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Nguyễn Văn A"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -78,12 +62,12 @@ export default function SignUpPage() {
               {loading ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
+          <p className="mt-4 text-center text-sm">
             Đã có tài khoản?{" "}
             <Link href="/auth/signin" className="text-primary hover:underline">
               Đăng nhập
             </Link>
-          </div>
+          </p>
         </CardContent>
       </Card>
     </div>

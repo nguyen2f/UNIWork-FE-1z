@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
@@ -17,7 +18,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,10 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for existing session
     const token = localStorage.getItem("token")
     const userData = localStorage.getItem("user")
-
     if (token && userData) {
       setUser(JSON.parse(userData))
     }
@@ -40,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await api.auth.login(email, password)
-
     if (response.success && response.data) {
       setUser(response.data.user)
       localStorage.setItem("token", response.data.token)
@@ -53,19 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, password: string, name: string) => {
     const response = await api.auth.register(email, password, name)
-
     if (response.success && response.data) {
       setUser(response.data.user)
       localStorage.setItem("token", response.data.token)
       localStorage.setItem("user", JSON.stringify(response.data.user))
       router.push("/dashboard")
     } else {
-      throw new Error(response.error || "Registration failed")
+      throw new Error("Registration failed")
     }
   }
 
-  const logout = async () => {
-    await api.auth.logout()
+  const logout = () => {
     setUser(null)
     localStorage.removeItem("token")
     localStorage.removeItem("user")
@@ -77,8 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider")
   return context
 }
