@@ -1,199 +1,209 @@
-// Mock API với delay để simulate backend
+// Mock API với setTimeout để simulate backend
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-// Mock data
-const mockUsers = [{ id: "1", name: "Admin User", email: "admin@example.com", password: "123456" }]
+// Mock user data
+const mockUsers = [
+  { id: "1", email: "admin@example.com", name: "Admin User", role: "admin" },
+  { id: "2", email: "user@example.com", name: "Regular User", role: "user" },
+]
 
+// Mock projects data
 const mockProjects = [
   {
     id: "1",
     name: "Website Redesign",
-    description: "Complete overhaul of company website",
+    description: "Complete website redesign project",
     status: "in-progress",
-    progress: 65,
+    priority: "high",
     startDate: "2024-01-01",
     endDate: "2024-03-31",
+    progress: 65,
     budget: 50000,
     spent: 32500,
-    teamSize: 5,
   },
   {
     id: "2",
     name: "Mobile App Development",
-    description: "iOS and Android app for customers",
+    description: "New mobile app for iOS and Android",
     status: "planning",
-    progress: 20,
+    priority: "high",
     startDate: "2024-02-01",
     endDate: "2024-06-30",
+    progress: 25,
     budget: 100000,
     spent: 15000,
-    teamSize: 8,
   },
 ]
 
+// Mock tasks data
 const mockTasks = [
   {
     id: "1",
-    title: "Design new homepage",
-    description: "Create mockups for the new homepage",
-    status: "in-progress",
+    title: "Design homepage mockup",
+    description: "Create initial homepage design",
+    status: "completed",
     priority: "high",
     projectId: "1",
-    assigneeId: "1",
+    assignedTo: "1",
     dueDate: "2024-01-15",
   },
   {
     id: "2",
-    title: "Setup CI/CD pipeline",
-    description: "Configure automated deployment",
-    status: "todo",
-    priority: "medium",
+    title: "Implement authentication",
+    description: "Set up user authentication system",
+    status: "in-progress",
+    priority: "high",
     projectId: "1",
-    assigneeId: "1",
-    dueDate: "2024-01-20",
+    assignedTo: "2",
+    dueDate: "2024-01-30",
   },
 ]
 
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message)
-    this.name = "ApiError"
-  }
-}
-
 export const api = {
-  auth: {
-    login: async (email: string, password: string) => {
-      await delay(800)
+  // Auth APIs
+  async login(email: string, password: string) {
+    await delay(800)
+    // TODO: Replace with actual API call
+    // const response = await fetch('/api/auth/login', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ email, password })
+    // })
+    // const data = await response.json()
 
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password })
-      // })
-
-      const user = mockUsers.find((u) => u.email === email)
-      if (!user) {
-        throw new ApiError(401, "Invalid credentials")
-      }
-
+    const user = mockUsers.find((u) => u.email === email)
+    if (user) {
       return {
-        token: "mock-jwt-token-" + Date.now(),
-        userId: user.id,
+        success: true,
+        user,
+        token: "mock-jwt-token-" + user.id,
       }
-    },
-
-    register: async (name: string, email: string, password: string) => {
-      await delay(800)
-
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/auth/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name, email, password })
-      // })
-
-      const newUser = {
-        id: String(mockUsers.length + 1),
-        name,
-        email,
-        password,
-      }
-      mockUsers.push(newUser)
-
-      return { success: true }
-    },
-
-    getProfile: async () => {
-      await delay(500)
-
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token')
-      // const response = await fetch('/api/auth/profile', {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // })
-
-      return mockUsers[0]
-    },
+    }
+    throw new Error("Invalid credentials")
   },
 
-  projects: {
-    getAll: async () => {
-      await delay(600)
+  async register(email: string, password: string, name: string) {
+    await delay(800)
+    // TODO: Replace with actual API call
+    // const response = await fetch('/api/auth/register', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ email, password, name })
+    // })
 
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token')
-      // const response = await fetch('/api/projects', {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // })
-
-      return mockProjects
-    },
-
-    getById: async (id: string) => {
-      await delay(500)
-
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token')
-      // const response = await fetch(`/api/projects/${id}`, {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // })
-
-      return mockProjects.find((p) => p.id === id)
-    },
-
-    create: async (data: any) => {
-      await delay(700)
-
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token')
-      // const response = await fetch('/api/projects', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify(data)
-      // })
-
-      const newProject = {
-        id: String(mockProjects.length + 1),
-        ...data,
-        progress: 0,
-        spent: 0,
-      }
-      mockProjects.push(newProject)
-      return newProject
-    },
+    const newUser = {
+      id: String(mockUsers.length + 1),
+      email,
+      name,
+      role: "user",
+    }
+    mockUsers.push(newUser)
+    return {
+      success: true,
+      user: newUser,
+      token: "mock-jwt-token-" + newUser.id,
+    }
   },
 
-  tasks: {
-    getAll: async () => {
-      await delay(600)
+  // Projects APIs
+  async getProjects() {
+    await delay(500)
+    // TODO: Replace with actual API call
+    // const response = await fetch('/api/projects', {
+    //   headers: {
+    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //   }
+    // })
 
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token')
-      // const response = await fetch('/api/tasks', {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // })
+    return mockProjects
+  },
 
-      return mockTasks
-    },
+  async getProject(id: string) {
+    await delay(500)
+    // TODO: Replace with actual API call
+    // const response = await fetch(`/api/projects/${id}`, {
+    //   headers: {
+    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //   }
+    // })
 
-    getByProject: async (projectId: string) => {
-      await delay(500)
+    return mockProjects.find((p) => p.id === id)
+  },
 
-      // TODO: Replace with actual API call
-      // const token = localStorage.getItem('token')
-      // const response = await fetch(`/api/projects/${projectId}/tasks`, {
-      //   headers: { 'Authorization': `Bearer ${token}` }
-      // })
+  async createProject(data: any) {
+    await delay(800)
+    // TODO: Replace with actual API call
+    // const response = await fetch('/api/projects', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //   },
+    //   body: JSON.stringify(data)
+    // })
 
-      return mockTasks.filter((t) => t.projectId === projectId)
-    },
+    const newProject = {
+      id: String(mockProjects.length + 1),
+      ...data,
+      progress: 0,
+      spent: 0,
+    }
+    mockProjects.push(newProject)
+    return newProject
+  },
+
+  // Tasks APIs
+  async getTasks(projectId?: string) {
+    await delay(500)
+    // TODO: Replace with actual API call
+    // const url = projectId ? `/api/tasks?projectId=${projectId}` : '/api/tasks'
+    // const response = await fetch(url, {
+    //   headers: {
+    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //   }
+    // })
+
+    return projectId ? mockTasks.filter((t) => t.projectId === projectId) : mockTasks
+  },
+
+  async createTask(data: any) {
+    await delay(800)
+    // TODO: Replace with actual API call
+    // const response = await fetch('/api/tasks', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //   },
+    //   body: JSON.stringify(data)
+    // })
+
+    const newTask = {
+      id: String(mockTasks.length + 1),
+      ...data,
+      status: "todo",
+    }
+    mockTasks.push(newTask)
+    return newTask
+  },
+
+  async updateTask(id: string, data: any) {
+    await delay(800)
+    // TODO: Replace with actual API call
+    // const response = await fetch(`/api/tasks/${id}`, {
+    //   method: 'PATCH',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //   },
+    //   body: JSON.stringify(data)
+    // })
+
+    const taskIndex = mockTasks.findIndex((t) => t.id === id)
+    if (taskIndex !== -1) {
+      mockTasks[taskIndex] = { ...mockTasks[taskIndex], ...data }
+      return mockTasks[taskIndex]
+    }
+    throw new Error("Task not found")
   },
 }
