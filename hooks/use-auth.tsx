@@ -1,9 +1,9 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import type React from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
-import { toast } from "sonner"
 
 interface User {
   id: string
@@ -17,18 +17,18 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is logged in
+    // Check for existing session
     const token = localStorage.getItem("token")
     const userData = localStorage.getItem("user")
 
@@ -39,38 +39,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await api.login(email, password)
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
-      setUser(response.user)
-      toast.success("Đăng nhập thành công!")
+    const response = await api.auth.login(email, password)
+
+    if (response.success && response.data) {
+      setUser(response.data.user)
+      localStorage.setItem("token", response.data.token)
+      localStorage.setItem("user", JSON.stringify(response.data.user))
       router.push("/dashboard")
-    } catch (error) {
-      toast.error("Đăng nhập thất bại. Vui lòng thử lại.")
-      throw error
+    } else {
+      throw new Error(response.error || "Login failed")
     }
   }
 
   const register = async (email: string, password: string, name: string) => {
-    try {
-      const response = await api.register(email, password, name)
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
-      setUser(response.user)
-      toast.success("Đăng ký thành công!")
+    const response = await api.auth.register(email, password, name)
+
+    if (response.success && response.data) {
+      setUser(response.data.user)
+      localStorage.setItem("token", response.data.token)
+      localStorage.setItem("user", JSON.stringify(response.data.user))
       router.push("/dashboard")
-    } catch (error) {
-      toast.error("Đăng ký thất bại. Vui lòng thử lại.")
-      throw error
+    } else {
+      throw new Error(response.error || "Registration failed")
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    await api.auth.logout()
+    setUser(null)
     localStorage.removeItem("token")
     localStorage.removeItem("user")
-    setUser(null)
-    toast.success("Đăng xuất thành công!")
     router.push("/auth/signin")
   }
 
