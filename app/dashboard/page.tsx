@@ -1,216 +1,124 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/hooks/useAuth"
-import { api } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut, User, Mail, Key, FolderKanban, ListTodo } from "lucide-react"
-import { toast } from "sonner"
+import { useAuth } from "@/hooks/use-auth"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FolderKanban, CheckSquare, Users, TrendingUp } from "lucide-react"
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth()
-  const [projects, setProjects] = useState<any[]>([])
-  const [tasks, setTasks] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      const [projectsData, tasksData] = await Promise.all([api.projects.getAll(), api.tasks.getAll()])
-
-      setProjects(projectsData)
-      setTasks(tasksData)
-    } catch (error) {
-      toast.error("Không thể tải dữ liệu")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (!user || isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Đang tải...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const completedTasks = tasks.filter((t) => t.status === "completed").length
-  const inProgressProjects = projects.filter((p) => p.status === "in-progress").length
+  const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Hệ thống Quản lý Dự án</h1>
-          <Button onClick={logout} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
-            Đăng xuất
-          </Button>
-        </div>
-      </header>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Chào mừng, {user?.name}!</h1>
+        <p className="text-muted-foreground mt-2">Tổng quan về dự án và công việc của bạn</p>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng dự án</CardTitle>
-              <FolderKanban className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{projects.length}</div>
-              <p className="text-xs text-muted-foreground">{inProgressProjects} đang thực hiện</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng công việc</CardTitle>
-              <ListTodo className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{tasks.length}</div>
-              <p className="text-xs text-muted-foreground">{completedTasks} đã hoàn thành</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tiến độ</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0}%
-              </div>
-              <p className="text-xs text-muted-foreground">Hoàn thành chung</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Thành viên</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground">Đang hoạt động</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Thông tin tài khoản</CardTitle>
-              <CardDescription>Chi tiết thông tin người dùng</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Họ và tên</p>
-                  <p className="text-lg">{user.name}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Email</p>
-                  <p className="text-lg">{user.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <Key className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">User ID</p>
-                  <p className="text-sm font-mono">{user.id}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Dự án gần đây</CardTitle>
-              <CardDescription>Các dự án đang thực hiện</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {projects.slice(0, 3).map((project) => (
-                  <div key={project.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{project.name}</p>
-                      <p className="text-sm text-muted-foreground">{project.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{project.progress}%</p>
-                      <p className="text-xs text-muted-foreground capitalize">{project.status}</p>
-                    </div>
-                  </div>
-                ))}
-                {projects.length === 0 && <p className="text-muted-foreground text-center py-4">Chưa có dự án nào</p>}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Công việc gần đây</CardTitle>
-            <CardDescription>Danh sách công việc đang thực hiện</CardDescription>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tổng dự án</CardTitle>
+            <FolderKanban className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {tasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{task.title}</p>
-                    <p className="text-sm text-muted-foreground">{task.description}</p>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">+2 từ tháng trước</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Công việc</CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">48</div>
+            <p className="text-xs text-muted-foreground">32 đã hoàn thành</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Thành viên</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">24</div>
+            <p className="text-xs text-muted-foreground">+3 thành viên mới</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tiến độ</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">68%</div>
+            <p className="text-xs text-muted-foreground">+12% từ tuần trước</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Dự án đang thực hiện</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { name: "Website Redesign", progress: 65, color: "bg-blue-500" },
+                { name: "Mobile App", progress: 40, color: "bg-green-500" },
+                { name: "API Development", progress: 80, color: "bg-purple-500" },
+              ].map((project, index) => (
+                <div key={index}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">{project.name}</span>
+                    <span className="text-sm text-muted-foreground">{project.progress}%</span>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        task.priority === "high"
-                          ? "bg-red-100 text-red-700"
-                          : task.priority === "medium"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {task.priority === "high" ? "Cao" : task.priority === "medium" ? "Trung bình" : "Thấp"}
-                    </span>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        task.status === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : task.status === "in-progress"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {task.status === "completed"
-                        ? "Hoàn thành"
-                        : task.status === "in-progress"
-                          ? "Đang làm"
-                          : "Chưa làm"}
-                    </span>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className={`h-full ${project.color}`} style={{ width: `${project.progress}%` }} />
                   </div>
                 </div>
               ))}
-              {tasks.length === 0 && <p className="text-muted-foreground text-center py-4">Chưa có công việc nào</p>}
             </div>
           </CardContent>
         </Card>
-      </main>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Công việc sắp đến hạn</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { task: "Design homepage mockup", dueDate: "Hôm nay", priority: "Cao" },
+                { task: "Review pull request", dueDate: "Ngày mai", priority: "Trung bình" },
+                { task: "Update documentation", dueDate: "2 ngày nữa", priority: "Thấp" },
+              ].map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{item.task}</p>
+                    <p className="text-sm text-muted-foreground">{item.dueDate}</p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      item.priority === "Cao"
+                        ? "bg-red-100 text-red-700"
+                        : item.priority === "Trung bình"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {item.priority}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -2,9 +2,9 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks/use-auth"
 
-export default function HomePage() {
+export default function Home() {
   const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
 
@@ -21,7 +21,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
         <p className="mt-4 text-muted-foreground">Đang tải...</p>
       </div>
     </div>
