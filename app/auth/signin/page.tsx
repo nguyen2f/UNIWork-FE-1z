@@ -3,14 +3,14 @@
 import type React from "react"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, LogIn } from "lucide-react"
-import Link from "next/link"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 export default function SignInPage() {
@@ -21,17 +21,23 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
 
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
 
+    if (!email || !password) {
+      setError("Vui lòng điền đầy đủ thông tin")
+      setIsLoading(false)
+      return
+    }
+
     try {
       await login(email, password)
       toast.success("Đăng nhập thành công!")
-    } catch (err: any) {
-      setError(err.message || "Đăng nhập thất bại")
-      toast.error(err.message || "Đăng nhập thất bại")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Đăng nhập thất bại")
+      toast.error("Đăng nhập thất bại")
     } finally {
       setIsLoading(false)
     }
@@ -42,10 +48,10 @@ export default function SignInPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
-          <CardDescription className="text-center">Nhập email và mật khẩu để truy cập hệ thống</CardDescription>
+          <CardDescription className="text-center">Nhập thông tin để đăng nhập vào hệ thống</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -57,11 +63,11 @@ export default function SignInPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="example@email.com"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 disabled={isLoading}
+                required
               />
             </div>
 
@@ -74,43 +80,40 @@ export default function SignInPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
                   disabled={isLoading}
-                  className="pr-10"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  disabled={isLoading}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
+          </CardContent>
 
+          <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Đang đăng nhập...
                 </>
               ) : (
-                <>
-                  <LogIn size={18} className="mr-2" />
-                  Đăng nhập
-                </>
+                "Đăng nhập"
               )}
             </Button>
 
-            <div className="text-center text-sm text-muted-foreground">
+            <p className="text-sm text-center text-muted-foreground">
               Chưa có tài khoản?{" "}
               <Link href="/auth/signup" className="text-primary hover:underline font-medium">
                 Đăng ký ngay
               </Link>
-            </div>
-          </form>
-        </CardContent>
+            </p>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   )

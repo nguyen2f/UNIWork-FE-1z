@@ -8,8 +8,8 @@ import { Toaster } from "sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Project Management System",
-  description: "Quản lý dự án và công việc hiệu quả",
+  title: "Quản lý Dự án",
+  description: "Hệ thống quản lý dự án và công việc",
     generator: 'v0.app'
 }
 

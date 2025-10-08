@@ -2,15 +2,16 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value
-  const isAuthPage = request.nextUrl.pathname.startsWith("/auth")
-  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard")
+  const token = request.cookies.get("token")?.value || request.headers.get("authorization")?.split(" ")[1]
 
-  if (isDashboard && !token) {
+  const isAuthPage = request.nextUrl.pathname.startsWith("/auth")
+  const isPublicPage = request.nextUrl.pathname === "/"
+
+  if (!token && !isAuthPage && !isPublicPage) {
     return NextResponse.redirect(new URL("/auth/signin", request.url))
   }
 
-  if (isAuthPage && token) {
+  if (token && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
@@ -18,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 }
