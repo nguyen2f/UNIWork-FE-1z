@@ -26,17 +26,11 @@ export default function SignInPage() {
     setError("")
     setIsLoading(true)
 
-    if (!email || !password) {
-      setError("Vui lòng điền đầy đủ thông tin")
-      setIsLoading(false)
-      return
-    }
-
     try {
       await login(email, password)
       toast.success("Đăng nhập thành công!")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng nhập thất bại")
+      setError("Email hoặc mật khẩu không đúng")
       toast.error("Đăng nhập thất bại")
     } finally {
       setIsLoading(false)
@@ -63,12 +57,13 @@ export default function SignInPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="example@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
                 required
               />
+              <p className="text-xs text-muted-foreground">Demo: bất kỳ email nào</p>
             </div>
 
             <div className="space-y-2">
@@ -91,6 +86,7 @@ export default function SignInPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">Demo: bất kỳ mật khẩu nào</p>
             </div>
           </CardContent>
 

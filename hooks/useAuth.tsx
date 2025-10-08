@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { api, ApiError } from "@/lib/api"
+import { api } from "@/lib/api"
 
 interface User {
   id: string
@@ -34,10 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const token = localStorage.getItem("token")
       if (token) {
-        const profile = await api.getProfile()
+        const profile = await api.auth.getProfile()
         setUser(profile)
       }
     } catch (error) {
+      console.error("Auth check failed:", error)
       localStorage.removeItem("token")
       localStorage.removeItem("userId")
     } finally {
@@ -46,32 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    try {
-      const { token, userId } = await api.login(email, password)
-      localStorage.setItem("token", token)
-      localStorage.setItem("userId", userId)
+    const { token, userId } = await api.auth.login(email, password)
+    localStorage.setItem("token", token)
+    localStorage.setItem("userId", userId)
 
-      const profile = await api.getProfile()
-      setUser(profile)
-      router.push("/dashboard")
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error("Email hoặc mật khẩu không đúng")
-      }
-      throw error
-    }
+    const profile = await api.auth.getProfile()
+    setUser(profile)
+    router.push("/dashboard")
   }
 
   const register = async (name: string, email: string, password: string) => {
-    try {
-      await api.register(name, email, password)
-      await login(email, password)
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw new Error("Email đã tồn tại hoặc thông tin không hợp lệ")
-      }
-      throw error
-    }
+    await api.auth.register(name, email, password)
+    await login(email, password)
   }
 
   const logout = () => {
@@ -81,16 +68,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/auth/signin")
   }
 
-  const value = {
-    user,
-    login,
-    register,
-    logout,
-    isLoading,
-    isAuthenticated: !!user,
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        isLoading,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

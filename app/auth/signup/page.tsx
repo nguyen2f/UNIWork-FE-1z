@@ -26,31 +26,24 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setIsLoading(true)
-
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Vui lòng điền đầy đủ thông tin")
-      setIsLoading(false)
-      return
-    }
 
     if (password.length < 6) {
       setError("Mật khẩu phải có ít nhất 6 ký tự")
-      setIsLoading(false)
       return
     }
 
     if (password !== confirmPassword) {
       setError("Mật khẩu xác nhận không khớp")
-      setIsLoading(false)
       return
     }
+
+    setIsLoading(true)
 
     try {
       await register(name, email, password)
       toast.success("Đăng ký thành công!")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng ký thất bại")
+      setError("Đăng ký thất bại. Vui lòng thử lại")
       toast.error("Đăng ký thất bại")
     } finally {
       setIsLoading(false)
@@ -58,7 +51,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Đăng ký</CardTitle>
@@ -90,7 +83,7 @@ export default function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="example@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -118,6 +111,7 @@ export default function SignUpPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">Tối thiểu 6 ký tự</p>
             </div>
 
             <div className="space-y-2">
@@ -139,7 +133,7 @@ export default function SignUpPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang đăng ký...
+                  Đang xử lý...
                 </>
               ) : (
                 "Đăng ký"
