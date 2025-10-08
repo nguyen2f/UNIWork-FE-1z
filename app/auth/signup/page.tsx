@@ -3,71 +3,99 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
 import { toast } from "sonner"
+import { Building2 } from "lucide-react"
 
 export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { register } = useAuth()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
+
     try {
-      await register(email, password, name)
+      await register(name, email, password)
       toast.success("Đăng ký thành công!")
-    } catch {
-      toast.error("Đăng ký thất bại")
+      router.push("/dashboard")
+    } catch (error) {
+      toast.error("Đăng ký thất bại. Vui lòng thử lại.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-3xl text-center">ProManage</CardTitle>
-          <CardDescription className="text-center">Tạo tài khoản mới</CardDescription>
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
+              <Building2 className="h-6 w-6 text-primary-foreground" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">Đăng ký</CardTitle>
+          <CardDescription>Tạo tài khoản mới để bắt đầu</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Họ và tên</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Nguyễn Văn A"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input
+                id="email"
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Đang đăng ký..." : "Đăng ký"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Đang đăng ký..." : "Đăng ký"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-sm">
             Đã có tài khoản?{" "}
             <Link href="/auth/signin" className="text-primary hover:underline">
               Đăng nhập
             </Link>
-          </p>
+          </div>
         </CardContent>
       </Card>
     </div>
