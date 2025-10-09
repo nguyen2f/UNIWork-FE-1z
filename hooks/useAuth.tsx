@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth()
   }, [])
 
-  async function checkAuth() {
+  const checkAuth = async () => {
     try {
       const token = localStorage.getItem("token")
       if (token) {
@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile)
       }
     } catch (error) {
+      console.error("Auth check failed:", error)
       localStorage.removeItem("token")
       localStorage.removeItem("userId")
     } finally {
@@ -45,38 +46,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function login(email: string, password: string) {
-    const response = await api.auth.login(email, password)
-    localStorage.setItem("token", response.token)
-    localStorage.setItem("userId", response.userId)
+  const login = async (email: string, password: string) => {
+    const { token, userId } = await api.auth.login(email, password)
+    localStorage.setItem("token", token)
+    localStorage.setItem("userId", userId)
 
     const profile = await api.auth.getProfile()
     setUser(profile)
     router.push("/dashboard")
   }
 
-  async function register(name: string, email: string, password: string) {
+  const register = async (name: string, email: string, password: string) => {
     await api.auth.register(name, email, password)
     await login(email, password)
   }
 
-  function logout() {
+  const logout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("userId")
     setUser(null)
     router.push("/auth/signin")
   }
 
-  const value = {
-    user,
-    login,
-    register,
-    logout,
-    isLoading,
-    isAuthenticated: !!user,
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        isLoading,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
