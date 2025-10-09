@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LayoutDashboard, FolderKanban, Users, Calendar, Settings, LogOut } from "lucide-react"
+import { Building2, FolderKanban, ListTodo, Users, LogOut } from "lucide-react"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -21,7 +21,7 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
           <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
@@ -29,18 +29,20 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <header className="border-b bg-white">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LayoutDashboard className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">ProManage</h1>
+            <Building2 className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold">Project Management</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Welcome, {user.name}</span>
+            <span className="text-sm text-muted-foreground">
+              Xin chào, <strong>{user.name || user.email}</strong>
+            </span>
             <Button onClick={logout} variant="outline" size="sm">
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              Đăng xuất
             </Button>
           </div>
         </div>
@@ -49,10 +51,10 @@ export default function DashboardPage() {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
-          <p className="text-muted-foreground">Overview of your projects and tasks</p>
+          <p className="text-muted-foreground">Welcome back! Here's an overview of your projects.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
@@ -67,11 +69,11 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Tasks</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <ListTodo className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">48</div>
-              <p className="text-xs text-muted-foreground">15 due this week</p>
+              <p className="text-xs text-muted-foreground">23 completed this week</p>
             </CardContent>
           </Card>
 
@@ -81,76 +83,40 @@ export default function DashboardPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">8</div>
               <p className="text-xs text-muted-foreground">Across all projects</p>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">87%</div>
-              <p className="text-xs text-muted-foreground">+5% from last month</p>
-            </CardContent>
-          </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Projects</CardTitle>
-              <CardDescription>Your latest project activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: "Website Redesign", status: "In Progress", progress: 65 },
-                  { name: "Mobile App Development", status: "Planning", progress: 20 },
-                  { name: "Marketing Campaign", status: "In Progress", progress: 80 },
-                ].map((project, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{project.name}</p>
-                      <p className="text-sm text-muted-foreground">{project.status}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{project.progress}%</p>
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Projects</CardTitle>
+            <CardDescription>Your latest projects and their status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { name: "Website Redesign", status: "In Progress", progress: 65 },
+                { name: "Mobile App", status: "Planning", progress: 20 },
+                { name: "API Integration", status: "Review", progress: 90 },
+              ].map((project, index) => (
+                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{project.name}</h3>
+                    <p className="text-sm text-muted-foreground">{project.status}</p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming Deadlines</CardTitle>
-              <CardDescription>Tasks due in the next 7 days</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { task: "Complete UI Design", project: "Website Redesign", due: "2 days" },
-                  { task: "API Integration", project: "Mobile App", due: "4 days" },
-                  { task: "Content Creation", project: "Marketing Campaign", due: "5 days" },
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{item.task}</p>
-                      <p className="text-sm text-muted-foreground">{item.project}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                      <div className="bg-primary h-2 rounded-full" style={{ width: `${project.progress}%` }} />
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-orange-600">Due in {item.due}</p>
-                    </div>
+                    <span className="text-sm font-medium w-12 text-right">{project.progress}%</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   )

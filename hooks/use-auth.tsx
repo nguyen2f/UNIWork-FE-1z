@@ -44,27 +44,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.login(email, password)
 
-      const authToken = response.token || response.data?.token
-      const userData = response.user || response.data?.user || response.data
+      console.log("Login response:", response)
+
+      // Response structure: { userId: 5, token: "..." }
+      const authToken = response.token
+      const userId = response.userId
 
       if (!authToken) {
         throw new Error("No token received from server")
       }
 
+      // Create user object
+      const userData: User = {
+        id: String(userId),
+        name: email.split("@")[0],
+        email: email,
+      }
+
       localStorage.setItem("token", authToken)
+      localStorage.setItem("userId", String(userId))
       localStorage.setItem("user", JSON.stringify(userData))
 
       setToken(authToken)
       setUser(userData)
 
-      toast.success("Login successful!")
+      toast.success("Đăng nhập thành công!")
 
-      setTimeout(() => {
-        router.push("/dashboard")
-        router.refresh()
-      }, 100)
+      // Force navigation
+      router.push("/dashboard")
+      router.refresh()
     } catch (error: any) {
-      toast.error(error.message || "Login failed")
+      console.error("Login error:", error)
+      toast.error(error.message || "Đăng nhập thất bại")
       throw error
     } finally {
       setIsLoading(false)
@@ -76,10 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.register(name, email, password)
 
-      toast.success("Registration successful! Please login.")
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.")
       router.push("/auth/signin")
     } catch (error: any) {
-      toast.error(error.message || "Registration failed")
+      console.error("Register error:", error)
+      toast.error(error.message || "Đăng ký thất bại")
       throw error
     } finally {
       setIsLoading(false)
@@ -90,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi.logout()
     setUser(null)
     setToken(null)
-    toast.info("Logged out successfully")
+    toast.info("Đã đăng xuất")
     router.push("/auth/signin")
   }
 

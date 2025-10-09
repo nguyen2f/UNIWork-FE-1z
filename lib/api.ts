@@ -5,6 +5,7 @@ interface ApiResponse<T = any> {
   data?: T
   message?: string
   token?: string
+  userId?: number
   user?: any
 }
 
@@ -82,6 +83,7 @@ export const authApi = {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token")
       localStorage.removeItem("user")
+      localStorage.removeItem("userId")
     }
   },
 }
