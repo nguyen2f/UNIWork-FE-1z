@@ -1,18 +1,21 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"
 
 interface User {
-  id: string
+  id?: string
   name: string
   email: string
-  role: string
+  [key: string]: any
 }
 
 interface AuthContextType {
   user: User | null
   token: string | null
   isLoading: boolean
+  isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
@@ -24,9 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    // Check for existing session
+    // Check for existing session on mount
     const storedToken = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
 
@@ -34,34 +38,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
     }
+
     setIsLoading(false)
   }, [])
 
   const login = async (email: string, password: string) => {
-    const { login: apiLogin } = await import("@/lib/api")
-    const response = await apiLogin(email, password)
+    const response = await api.auth.login(email, password)
 
-    if (response.success) {
-      setUser(response.user)
-      setToken(response.token)
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
+    if (response.success && response.data) {
+      const { token: authToken, user: userData, ...rest } = response.data
+
+      // Handle different response structures
+      const userToken = authToken || response.data.accessToken || rest.token
+      const userInfo = userData || rest.user || rest
+
+      setUser(userInfo)
+      setToken(userToken)
+
+      localStorage.setItem("token", userToken)
+      localStorage.setItem("user", JSON.stringify(userInfo))
+
+      router.push("/dashboard")
     } else {
-      throw new Error("Login failed")
+      throw new Error(response.error || "Login failed")
     }
   }
 
   const register = async (name: string, email: string, password: string) => {
-    const { register: apiRegister } = await import("@/lib/api")
-    const response = await apiRegister(name, email, password)
+    const response = await api.auth.register(name, email, password)
 
-    if (response.success) {
-      setUser(response.user)
-      setToken(response.token)
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
+    if (response.success && response.data) {
+      const { token: authToken, user: userData, ...rest } = response.data
+
+      // Handle different response structures
+      const userToken = authToken || response.data.accessToken || rest.token
+      const userInfo = userData || rest.user || { name, email, ...rest }
+
+      setUser(userInfo)
+      setToken(userToken)
+
+      localStorage.setItem("token", userToken)
+      localStorage.setItem("user", JSON.stringify(userInfo))
+
+      router.push("/dashboard")
     } else {
-      throw new Error("Registration failed")
+      throw new Error(response.error || "Registration failed")
     }
   }
 
@@ -70,10 +91,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     localStorage.removeItem("token")
     localStorage.removeItem("user")
+    router.push("/auth/signin")
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isLoading,
+        isAuthenticated: !!user && !!token,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   )
 }
 

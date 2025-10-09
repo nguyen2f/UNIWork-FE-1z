@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ProManage - Project Management System",
-  description: "Enterprise project management platform",
+  description: "Professional project and task management system",
     generator: 'v0.app'
 }
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <body className={inter.className}>
         <AuthProvider>
           {children}

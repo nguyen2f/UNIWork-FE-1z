@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
@@ -11,14 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Building2 } from "lucide-react"
+import { Building2, Loader2 } from "lucide-react"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,9 +25,8 @@ export default function SignInPage() {
     try {
       await login(email, password)
       toast.success("Đăng nhập thành công!")
-      router.push("/dashboard")
     } catch (error) {
-      toast.error("Đăng nhập thất bại. Vui lòng thử lại.")
+      toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại. Vui lòng thử lại.")
     } finally {
       setIsLoading(false)
     }
@@ -45,7 +42,7 @@ export default function SignInPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
-          <CardDescription>Nhập email và mật khẩu để tiếp tục</CardDescription>
+          <CardDescription>Nhập thông tin tài khoản để tiếp tục</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -54,7 +51,7 @@ export default function SignInPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="nguyen.nguyenphuc.dev@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -74,12 +71,19 @@ export default function SignInPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang đăng nhập...
+                </>
+              ) : (
+                "Đăng nhập"
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             Chưa có tài khoản?{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
+            <Link href="/auth/signup" className="text-primary hover:underline font-medium">
               Đăng ký ngay
             </Link>
           </div>

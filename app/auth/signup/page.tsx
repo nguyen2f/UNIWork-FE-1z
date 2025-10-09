@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
@@ -11,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Building2 } from "lucide-react"
+import { Building2, Loader2 } from "lucide-react"
 
 export default function SignUpPage() {
   const [name, setName] = useState("")
@@ -19,18 +18,22 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { register } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (password.length < 6) {
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự")
+      return
+    }
+
     setIsLoading(true)
 
     try {
       await register(name, email, password)
       toast.success("Đăng ký thành công!")
-      router.push("/dashboard")
     } catch (error) {
-      toast.error("Đăng ký thất bại. Vui lòng thử lại.")
+      toast.error(error instanceof Error ? error.message : "Đăng ký thất bại. Vui lòng thử lại.")
     } finally {
       setIsLoading(false)
     }
@@ -46,7 +49,7 @@ export default function SignUpPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Đăng ký</CardTitle>
-          <CardDescription>Tạo tài khoản mới để bắt đầu</CardDescription>
+          <CardDescription>Tạo tài khoản mới để bắt đầu sử dụng</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,7 +58,7 @@ export default function SignUpPage() {
               <Input
                 id="name"
                 type="text"
-                placeholder="Nguyễn Văn A"
+                placeholder="Mai Thi Quynh"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -67,7 +70,7 @@ export default function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="email@example.com"
+                placeholder="maicute@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -83,16 +86,24 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
                 disabled={isLoading}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Đang đăng ký..." : "Đăng ký"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang đăng ký...
+                </>
+              ) : (
+                "Đăng ký"
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             Đã có tài khoản?{" "}
-            <Link href="/auth/signin" className="text-primary hover:underline">
+            <Link href="/auth/signin" className="text-primary hover:underline font-medium">
               Đăng nhập
             </Link>
           </div>
