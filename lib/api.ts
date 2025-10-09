@@ -1,124 +1,87 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://uniwork-ir2d.onrender.com"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://uniwork-ir2d.onrender.com"
 
 interface ApiResponse<T = any> {
-  success: boolean
+  success?: boolean
   data?: T
-  error?: string
+  message?: string
+  token?: string
+  user?: any
 }
 
-async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  try {
+class ApiClient {
+  private baseURL: string
+
+  constructor(baseURL: string) {
+    this.baseURL = baseURL
+  }
+
+  private getAuthHeaders(): HeadersInit {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-
-    const headers: HeadersInit = {
+    return {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     }
+  }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    })
+  async request<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    try {
+      const url = `${this.baseURL}${endpoint}`
 
-    const data = await response.json()
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.getAuthHeaders(),
+          ...options.headers,
+        },
+      })
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.message || data.error || "Something went wrong",
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "API request failed")
       }
-    }
 
-    return {
-      success: true,
-      data,
+      return data
+    } catch (error) {
+      console.error("API Error:", error)
+      throw error
     }
-  } catch (error) {
-    console.error("API Error:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Network error",
-    }
+  }
+
+  async get<T = any>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: "GET" })
+  }
+
+  async post<T = any>(endpoint: string, data: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async put<T = any>(endpoint: string, data: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: "DELETE" })
   }
 }
 
-export const api = {
-  auth: {
-    login: async (email: string, password: string) => {
-      return fetchApi("/user/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      })
-    },
-    register: async (name: string, email: string, password: string) => {
-      return fetchApi("/user/register", {
-        method: "POST",
-        body: JSON.stringify({ name, email, password }),
-      })
-    },
-    logout: async () => {
-      return { success: true }
-    },
-    getProfile: async () => {
-      return fetchApi("/user/profile")
-    },
-  },
+export const api = new ApiClient(API_URL)
 
-  projects: {
-    getAll: async () => {
-      return fetchApi("/projects")
-    },
+export const authApi = {
+  login: (email: string, password: string) => api.post("/user/login", { email, password }),
 
-    getById: async (id: string) => {
-      return fetchApi(`/projects/${id}`)
-    },
+  register: (name: string, email: string, password: string) => api.post("/user/register", { name, email, password }),
 
-    create: async (projectData: any) => {
-      return fetchApi("/projects", {
-        method: "POST",
-        body: JSON.stringify(projectData),
-      })
-    },
-
-    update: async (id: string, projectData: any) => {
-      return fetchApi(`/projects/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(projectData),
-      })
-    },
-
-    delete: async (id: string) => {
-      return fetchApi(`/projects/${id}`, {
-        method: "DELETE",
-      })
-    },
-  },
-
-  tasks: {
-    getAll: async (projectId?: string) => {
-      const endpoint = projectId ? `/tasks?projectId=${projectId}` : "/tasks"
-      return fetchApi(endpoint)
-    },
-
-    create: async (taskData: any) => {
-      return fetchApi("/tasks", {
-        method: "POST",
-        body: JSON.stringify(taskData),
-      })
-    },
-
-    update: async (id: string, taskData: any) => {
-      return fetchApi(`/tasks/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(taskData),
-      })
-    },
-
-    delete: async (id: string) => {
-      return fetchApi(`/tasks/${id}`, {
-        method: "DELETE",
-      })
-    },
+  logout: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+    }
   },
 }

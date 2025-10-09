@@ -3,25 +3,27 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { Loader2 } from "lucide-react"
 
 export default function HomePage() {
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
+      if (user) {
         router.push("/dashboard")
       } else {
         router.push("/auth/signin")
       }
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [user, isLoading, router])
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Loading...</p>
+      </div>
     </div>
   )
 }

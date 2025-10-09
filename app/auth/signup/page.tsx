@@ -8,66 +8,42 @@ import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "sonner"
-import { Building2, Loader2 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const { register } = useAuth()
+  const { register, isLoading } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!name || !email || !password) {
-      toast.error("Vui lòng điền đầy đủ thông tin")
-      return
-    }
-
-    if (password.length < 6) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự")
-      return
-    }
-
-    setIsLoading(true)
-
     try {
       await register(name, email, password)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Đăng ký thất bại")
-    } finally {
-      setIsLoading(false)
+      console.error("Registration error:", error)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 bg-primary rounded-lg flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Đăng ký</CardTitle>
-          <CardDescription>Tạo tài khoản mới</CardDescription>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Sign Up</CardTitle>
+          <CardDescription className="text-center">Create a new account to get started</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Họ và tên</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="Nguyễn Văn A"
+                placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isLoading}
-                autoComplete="name"
               />
             </div>
             <div className="space-y-2">
@@ -75,16 +51,15 @@ export default function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="example@gmail.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -93,28 +68,21 @@ export default function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                autoComplete="new-password"
-                minLength={6}
               />
             </div>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đăng ký...
-                </>
-              ) : (
-                "Đăng ký"
-              )}
+              {isLoading ? "Creating account..." : "Sign Up"}
             </Button>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            Đã có tài khoản?{" "}
-            <Link href="/auth/signin" className="text-primary hover:underline font-medium">
-              Đăng nhập
-            </Link>
-          </div>
-        </CardContent>
+            <p className="text-sm text-center text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/auth/signin" className="text-primary hover:underline">
+                Sign In
+              </Link>
+            </p>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   )
