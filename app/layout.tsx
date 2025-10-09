@@ -8,8 +8,8 @@ import { Toaster } from "sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "UniWork - Project Management",
-  description: "Enterprise project management system",
+  title: "ProManage - Project Management",
+  description: "Enterprise Project Management System",
     generator: 'v0.app'
 }
 
@@ -19,11 +19,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi">
+    <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
           {children}
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-center" richColors />
         </AuthProvider>
       </body>
     </html>

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
@@ -20,6 +19,7 @@ export default function LoginPage() {
     e.preventDefault()
     try {
       await login(email, password)
+      // No need to manually navigate - login function handles it
     } catch (error) {
       console.error("Login error:", error)
     }

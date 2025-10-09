@@ -2,23 +2,27 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function Home() {
   const router = useRouter()
+  const { token, isLoading } = useAuth()
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (token) {
-      router.push("/dashboard")
-    } else {
-      router.push("/auth/login")
+    if (!isLoading) {
+      if (token) {
+        router.push("/dashboard")
+      } else {
+        router.push("/auth/login")
+      }
     }
-  }, [router])
+  }, [token, isLoading, router])
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Đang tải...</h1>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+        <p className="mt-4 text-muted-foreground">Đang tải...</p>
       </div>
     </div>
   )

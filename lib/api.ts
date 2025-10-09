@@ -1,33 +1,16 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://uniwork-ir2d.onrender.com"
 
 interface ApiResponse<T = any> {
-  success?: boolean
+  success: boolean
   data?: T
   error?: string
   message?: string
 }
 
-async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_URL}${endpoint}`
+async function handleResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get("content-type")
 
-  const defaultHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-  }
-
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-  if (token) {
-    defaultHeaders.Authorization = `Bearer ${token}`
-  }
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    })
-
+  if (contentType && contentType.includes("application/json")) {
     const data = await response.json()
 
     if (!response.ok) {
@@ -35,32 +18,46 @@ async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): P
     }
 
     return data
-  } catch (error) {
-    console.error("API Error:", error)
-    throw error
   }
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  const text = await response.text()
+  return text as any
 }
 
 export const authApi = {
-  login: async (email: string, password: string) => {
-    return fetchApi("/user/login", {
+  async login(email: string, password: string) {
+    const response = await fetch(`${API_URL}/user/login`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ email, password }),
     })
+    return handleResponse(response)
   },
 
-  register: async (name: string, email: string, password: string) => {
-    return fetchApi("/user/register", {
+  async register(name: string, email: string, password: string) {
+    const response = await fetch(`${API_URL}/user/register`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ name, email, password }),
     })
+    return handleResponse(response)
   },
 
-  logout: () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
-      localStorage.removeItem("user")
-      localStorage.removeItem("userId")
-    }
+  logout() {
+    localStorage.removeItem("token")
+    localStorage.removeItem("userId")
+    localStorage.removeItem("user")
   },
+}
+
+export const api = {
+  auth: authApi,
 }

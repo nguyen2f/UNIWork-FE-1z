@@ -1,7 +1,6 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
 import { authApi } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -26,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token")
@@ -44,8 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.login(email, password)
 
-      console.log("Full login response:", response)
+      console.log("Login response:", response)
 
+      // Response structure: { userId: 5, token: "..." }
       const authToken = response.token
       const userId = response.userId
 
@@ -68,8 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       toast.success("Đăng nhập thành công!")
 
-      console.log("Navigating to dashboard...")
-
+      // Redirect to dashboard immediately
       window.location.href = "/dashboard"
     } catch (error: any) {
       console.error("Login error:", error)
