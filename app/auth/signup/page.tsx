@@ -27,6 +27,11 @@ export default function SignUpPage() {
       return
     }
 
+    if (password.length < 6) {
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự")
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -89,13 +94,14 @@ export default function SignUpPage() {
                 required
                 disabled={isLoading}
                 autoComplete="new-password"
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang đăng ký...
+                  Đăng ký...
                 </>
               ) : (
                 "Đăng ký"

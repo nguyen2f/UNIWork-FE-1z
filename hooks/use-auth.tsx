@@ -65,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         toast.success("Đăng nhập thành công!")
 
-        // Force navigation with a small delay to ensure state is set
         setTimeout(() => {
           router.push("/dashboard")
           router.refresh()
@@ -102,7 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         toast.success("Đăng ký thành công!")
 
-        // Force navigation
         setTimeout(() => {
           router.push("/dashboard")
           router.refresh()

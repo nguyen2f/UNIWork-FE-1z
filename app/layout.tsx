@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ProManage - Project Management System",
-  description: "Professional project and task management system",
+  description: "Enterprise project management system",
     generator: 'v0.app'
 }
 
