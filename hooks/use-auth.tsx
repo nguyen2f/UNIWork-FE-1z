@@ -44,17 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.login(email, password)
 
-      console.log("Login response:", response)
+      console.log("Full login response:", response)
 
-      // Response structure: { userId: 5, token: "..." }
       const authToken = response.token
       const userId = response.userId
 
       if (!authToken) {
-        throw new Error("No token received from server")
+        throw new Error("Không nhận được token từ server")
       }
 
-      // Create user object
       const userData: User = {
         id: String(userId),
         name: email.split("@")[0],
@@ -70,9 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       toast.success("Đăng nhập thành công!")
 
-      // Force navigation
-      router.push("/dashboard")
-      router.refresh()
+      console.log("Navigating to dashboard...")
+
+      window.location.href = "/dashboard"
     } catch (error: any) {
       console.error("Login error:", error)
       toast.error(error.message || "Đăng nhập thất bại")
@@ -87,8 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.register(name, email, password)
 
+      console.log("Register response:", response)
+
       toast.success("Đăng ký thành công! Vui lòng đăng nhập.")
-      router.push("/auth/signin")
+      window.location.href = "/auth/login"
     } catch (error: any) {
       console.error("Register error:", error)
       toast.error(error.message || "Đăng ký thất bại")
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setToken(null)
     toast.info("Đã đăng xuất")
-    router.push("/auth/signin")
+    window.location.href = "/auth/login"
   }
 
   return (

@@ -11,18 +11,17 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Loader2 } from "lucide-react"
 
-export default function SignUpPage() {
-  const [name, setName] = useState("")
+export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const { register, isLoading } = useAuth()
+  const { login, isLoading } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await register(name, email, password)
+      await login(email, password)
     } catch (error) {
-      console.error("Register error:", error)
+      console.error("Login error:", error)
     }
   }
 
@@ -35,23 +34,11 @@ export default function SignUpPage() {
               <Building2 className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Đăng ký</CardTitle>
-          <CardDescription className="text-center">Tạo tài khoản mới</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
+          <CardDescription className="text-center">Nhập thông tin để tiếp tục</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Họ và tên</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Nguyễn Văn A"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -82,16 +69,16 @@ export default function SignUpPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang đăng ký...
+                  Đang đăng nhập...
                 </>
               ) : (
-                "Đăng ký"
+                "Đăng nhập"
               )}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Đã có tài khoản?{" "}
-              <Link href="/auth/login" className="text-primary hover:underline">
-                Đăng nhập
+              Chưa có tài khoản?{" "}
+              <Link href="/auth/signup" className="text-primary hover:underline">
+                Đăng ký
               </Link>
             </p>
           </CardFooter>
