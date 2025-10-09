@@ -22,8 +22,8 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (password.length < 6) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự")
+    if (!name || !email || !password) {
+      toast.error("Vui lòng điền đầy đủ thông tin")
       return
     }
 
@@ -31,9 +31,8 @@ export default function SignUpPage() {
 
     try {
       await register(name, email, password)
-      toast.success("Đăng ký thành công!")
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Đăng ký thất bại. Vui lòng thử lại.")
+      toast.error(error instanceof Error ? error.message : "Đăng ký thất bại")
     } finally {
       setIsLoading(false)
     }
@@ -49,7 +48,7 @@ export default function SignUpPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Đăng ký</CardTitle>
-          <CardDescription>Tạo tài khoản mới để bắt đầu sử dụng</CardDescription>
+          <CardDescription>Tạo tài khoản mới</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -58,11 +57,12 @@ export default function SignUpPage() {
               <Input
                 id="name"
                 type="text"
-                placeholder="Mai Thi Quynh"
+                placeholder="Nguyễn Văn A"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="name"
               />
             </div>
             <div className="space-y-2">
@@ -70,11 +70,12 @@ export default function SignUpPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="maicute@gmail.com"
+                placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -86,8 +87,8 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
                 disabled={isLoading}
+                autoComplete="new-password"
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>

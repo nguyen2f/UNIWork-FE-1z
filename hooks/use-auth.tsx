@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
+import { toast } from "sonner"
 
 interface User {
   id?: string
@@ -30,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for existing session on mount
     const storedToken = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
 
@@ -43,46 +43,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string) => {
-    const response = await api.auth.login(email, password)
+    try {
+      const response = await api.auth.login(email, password)
 
-    if (response.success && response.data) {
-      const { token: authToken, user: userData, ...rest } = response.data
+      if (response.success && response.data) {
+        console.log("Login response:", response.data)
 
-      // Handle different response structures
-      const userToken = authToken || response.data.accessToken || rest.token
-      const userInfo = userData || rest.user || rest
+        const { token: authToken, user: userData, ...rest } = response.data
+        const userToken = authToken || response.data.accessToken || rest.token
+        const userInfo = userData || rest.user || rest
 
-      setUser(userInfo)
-      setToken(userToken)
+        if (!userToken) {
+          throw new Error("No token received from server")
+        }
 
-      localStorage.setItem("token", userToken)
-      localStorage.setItem("user", JSON.stringify(userInfo))
+        setUser(userInfo)
+        setToken(userToken)
 
-      router.push("/dashboard")
-    } else {
-      throw new Error(response.error || "Login failed")
+        localStorage.setItem("token", userToken)
+        localStorage.setItem("user", JSON.stringify(userInfo))
+
+        toast.success("Đăng nhập thành công!")
+
+        // Force navigation with a small delay to ensure state is set
+        setTimeout(() => {
+          router.push("/dashboard")
+          router.refresh()
+        }, 100)
+      } else {
+        throw new Error(response.error || "Login failed")
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      throw error
     }
   }
 
   const register = async (name: string, email: string, password: string) => {
-    const response = await api.auth.register(name, email, password)
+    try {
+      const response = await api.auth.register(name, email, password)
 
-    if (response.success && response.data) {
-      const { token: authToken, user: userData, ...rest } = response.data
+      if (response.success && response.data) {
+        console.log("Register response:", response.data)
 
-      // Handle different response structures
-      const userToken = authToken || response.data.accessToken || rest.token
-      const userInfo = userData || rest.user || { name, email, ...rest }
+        const { token: authToken, user: userData, ...rest } = response.data
+        const userToken = authToken || response.data.accessToken || rest.token
+        const userInfo = userData || rest.user || { name, email, ...rest }
 
-      setUser(userInfo)
-      setToken(userToken)
+        if (!userToken) {
+          throw new Error("No token received from server")
+        }
 
-      localStorage.setItem("token", userToken)
-      localStorage.setItem("user", JSON.stringify(userInfo))
+        setUser(userInfo)
+        setToken(userToken)
 
-      router.push("/dashboard")
-    } else {
-      throw new Error(response.error || "Registration failed")
+        localStorage.setItem("token", userToken)
+        localStorage.setItem("user", JSON.stringify(userInfo))
+
+        toast.success("Đăng ký thành công!")
+
+        // Force navigation
+        setTimeout(() => {
+          router.push("/dashboard")
+          router.refresh()
+        }, 100)
+      } else {
+        throw new Error(response.error || "Registration failed")
+      }
+    } catch (error) {
+      console.error("Register error:", error)
+      throw error
     }
   }
 
@@ -91,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null)
     localStorage.removeItem("token")
     localStorage.removeItem("user")
+    toast.success("Đăng xuất thành công!")
     router.push("/auth/signin")
   }
 

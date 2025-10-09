@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 
-export default function Home() {
+export default function HomePage() {
   const { user, isLoading } = useAuth()
 
   if (!isLoading) {

@@ -20,13 +20,18 @@ export default function SignInPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!email || !password) {
+      toast.error("Vui lòng điền đầy đủ thông tin")
+      return
+    }
+
     setIsLoading(true)
 
     try {
       await login(email, password)
-      toast.success("Đăng nhập thành công!")
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại. Vui lòng thử lại.")
+      toast.error(error instanceof Error ? error.message : "Đăng nhập thất bại")
     } finally {
       setIsLoading(false)
     }
@@ -56,6 +61,7 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -68,6 +74,7 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="current-password"
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>

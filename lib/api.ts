@@ -5,33 +5,43 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8297"
 interface ApiResponse<T = any> {
   success: boolean
   data?: T
-  message?: string
   error?: string
 }
 
-// Helper function to get auth headers
-function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
-}
+async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
-// Helper function to handle API errors
-async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-  const data = await response.json()
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    }
 
-  if (!response.ok) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || data.error || "Something went wrong",
+      }
+    }
+
+    return {
+      success: true,
+      data,
+    }
+  } catch (error) {
+    console.error("API Error:", error)
     return {
       success: false,
-      error: data.message || "An error occurred",
+      error: error instanceof Error ? error.message : "Network error",
     }
-  }
-
-  return {
-    success: true,
-    data,
   }
 }
 
@@ -111,208 +121,80 @@ const mockTasks = [
 
 export const api = {
   auth: {
-    login: async (email: string, password: string): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/user/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    login: async (email: string, password: string) => {
+      return fetchApi("/user/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      })
     },
-
-    register: async (name: string, email: string, password: string): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/user/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, email, password }),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    register: async (name: string, email: string, password: string) => {
+      return fetchApi("/user/register", {
+        method: "POST",
+        body: JSON.stringify({ name, email, password }),
+      })
     },
-
-    getProfile: async (): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/user/profile`, {
-          headers: getAuthHeaders(),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    logout: async () => {
+      return { success: true }
+    },
+    getProfile: async () => {
+      return fetchApi("/user/profile")
     },
   },
 
   projects: {
-    getAll: async (): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/projects`, {
-          headers: getAuthHeaders(),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    getAll: async () => {
+      return fetchApi("/projects")
     },
 
-    getById: async (id: string): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
-          headers: getAuthHeaders(),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    getById: async (id: string) => {
+      return fetchApi(`/projects/${id}`)
     },
 
-    create: async (projectData: any): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/projects`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(projectData),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    create: async (projectData: any) => {
+      return fetchApi("/projects", {
+        method: "POST",
+        body: JSON.stringify(projectData),
+      })
     },
 
-    update: async (id: string, projectData: any): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
-          method: "PUT",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(projectData),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    update: async (id: string, projectData: any) => {
+      return fetchApi(`/projects/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(projectData),
+      })
     },
 
-    delete: async (id: string): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/projects/${id}`, {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    delete: async (id: string) => {
+      return fetchApi(`/projects/${id}`, {
+        method: "DELETE",
+      })
     },
   },
 
   tasks: {
-    getAll: async (projectId?: string): Promise<ApiResponse> => {
-      try {
-        const url = projectId ? `${API_BASE_URL}/tasks?projectId=${projectId}` : `${API_BASE_URL}/tasks`
-
-        const response = await fetch(url, {
-          headers: getAuthHeaders(),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    getAll: async (projectId?: string) => {
+      const endpoint = projectId ? `/tasks?projectId=${projectId}` : "/tasks"
+      return fetchApi(endpoint)
     },
 
-    create: async (taskData: any): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tasks`, {
-          method: "POST",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(taskData),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    create: async (taskData: any) => {
+      return fetchApi("/tasks", {
+        method: "POST",
+        body: JSON.stringify(taskData),
+      })
     },
 
-    update: async (id: string, taskData: any): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-          method: "PUT",
-          headers: getAuthHeaders(),
-          body: JSON.stringify(taskData),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    update: async (id: string, taskData: any) => {
+      return fetchApi(`/tasks/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(taskData),
+      })
     },
 
-    delete: async (id: string): Promise<ApiResponse> => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        })
-
-        return handleResponse(response)
-      } catch (error) {
-        return {
-          success: false,
-          error: "Network error. Please try again.",
-        }
-      }
+    delete: async (id: string) => {
+      return fetchApi(`/tasks/${id}`, {
+        method: "DELETE",
+      })
     },
   },
 }
