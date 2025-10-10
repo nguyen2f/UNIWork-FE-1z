@@ -1,74 +1,117 @@
+// Mock user database - không cần API thật
+const MOCK_USERS = [
+  {
+    id: "1",
+    name: "Admin User",
+    email: "admin@company.com",
+    password: "123456", // Trong thực tế sẽ hash password
+    role: "admin",
+  },
+  {
+    id: "2",
+    name: "Manager User",
+    email: "manager@company.com",
+    password: "123456",
+    role: "manager",
+  },
+]
+
 interface ApiResponse<T = any> {
   success: boolean
   data?: T
   error?: string
+  message?: string
   token?: string
-  userId?: number
+  userId?: string
   name?: string
   email?: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://uniwork-ir2d.onrender.com"
-
-async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  try {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    }
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    })
-
-    const data: ApiResponse<T> = await response.json()
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.message || `HTTP error! status: ${response.status}`,
-      }
-    }
-
-    return {
-      success: true,
-      data,
-      token: data.token,
-      userId: data.userId,
-      name: data.name,
-      email: data.email,
-    }
-  } catch (error) {
-    console.error("API Error:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Network error",
-    }
-  }
-}
+// Simulate API delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const authApi = {
   async login(email: string, password: string): Promise<ApiResponse> {
-    return fetchApi("/user/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    })
+    try {
+      // Simulate network delay
+      await delay(1000)
+
+      // Find user in mock database
+      const user = MOCK_USERS.find((u) => u.email === email && u.password === password)
+
+      if (!user) {
+        return {
+          success: false,
+          error: "Email hoặc mật khẩu không đúng",
+        }
+      }
+
+      // Generate mock token
+      const token = `mock_token_${user.id}_${Date.now()}`
+
+      return {
+        success: true,
+        token: token,
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        message: "Đăng nhập thành công",
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: "Đã xảy ra lỗi khi đăng nhập",
+      }
+    }
   },
 
   async register(name: string, email: string, password: string): Promise<ApiResponse> {
-    return fetchApi("/user/register", {
-      method: "POST",
-      body: JSON.stringify({ name, email, password }),
-    })
+    try {
+      // Simulate network delay
+      await delay(1000)
+
+      // Check if user already exists
+      const existingUser = MOCK_USERS.find((u) => u.email === email)
+
+      if (existingUser) {
+        return {
+          success: false,
+          error: "Email đã được sử dụng",
+        }
+      }
+
+      // Create new user
+      const newUser = {
+        id: `${MOCK_USERS.length + 1}`,
+        name,
+        email,
+        password,
+        role: "member",
+      }
+
+      MOCK_USERS.push(newUser)
+
+      return {
+        success: true,
+        message: "Đăng ký thành công",
+        userId: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: "Đã xảy ra lỗi khi đăng ký",
+      }
+    }
   },
 
   logout() {
-    localStorage.removeItem("token")
-    localStorage.removeItem("userId")
-    localStorage.removeItem("user")
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token")
+      localStorage.removeItem("userId")
+      localStorage.removeItem("user")
+    }
   },
 }
 

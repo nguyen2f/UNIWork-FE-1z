@@ -1,17 +1,15 @@
 "use client"
 
-import Link from "next/link"
-
-import { CardFooter } from "@/components/ui/card"
-
 import type React from "react"
 import { useState } from "react"
+import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Loader2 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Building2, Loader2, Info } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -20,11 +18,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      await login(email, password)
-    } catch (error) {
-      console.error("Login error:", error)
-    }
+    await login(email, password)
   }
 
   return (
@@ -39,6 +33,18 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold text-center">Đăng nhập</CardTitle>
           <CardDescription className="text-center">Nhập thông tin để tiếp tục</CardDescription>
         </CardHeader>
+
+        <Alert className="mx-6 mb-4">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            <strong>Tài khoản test:</strong>
+            <br />
+            Email: admin@company.com
+            <br />
+            Password: 123456
+          </AlertDescription>
+        </Alert>
+
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -46,7 +52,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="admin@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -63,6 +69,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
               />
             </div>
           </CardContent>
@@ -79,7 +86,7 @@ export default function LoginPage() {
             </Button>
             <p className="text-sm text-center text-muted-foreground">
               Chưa có tài khoản?{" "}
-              <Link href="/auth/signup" className="text-primary hover:underline">
+              <Link href="/auth/signup" className="text-primary hover:underline font-medium">
                 Đăng ký
               </Link>
             </p>

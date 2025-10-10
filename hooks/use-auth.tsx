@@ -18,6 +18,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   isLoading: boolean
+  isAuthenticated: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
+  // Load user from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
@@ -52,30 +54,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authApi.login(email, password)
 
       if (response.success && response.token && response.userId) {
-        console.log("Login response:", response)
-        const userId = response.userId.toString()
-
         const userData: User = {
-          id: String(userId),
-          name: response.name || "Unknown User",
+          id: response.userId,
+          name: response.name || "User",
           email: response.email || email,
         }
 
+        // Save to localStorage
         localStorage.setItem("token", response.token)
-        localStorage.setItem("userId", userId)
+        localStorage.setItem("userId", response.userId)
         localStorage.setItem("user", JSON.stringify(userData))
 
         setUser(userData)
         setToken(response.token)
 
         toast.success("Đăng nhập thành công!")
-        router.push("/dashboard")
+
+        // Wait a bit for state to update, then navigate
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 100)
       } else {
-        toast.error("Đăng nhập thất bại: " + response.message)
+        toast.error(response.error || "Đăng nhập thất bại")
       }
     } catch (error: any) {
       console.error("Login error:", error)
-      toast.error(error.message || "Đăng nhập thất bại")
+      toast.error("Đã xảy ra lỗi khi đăng nhập")
     } finally {
       setIsLoading(false)
     }
@@ -88,13 +92,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.success) {
         toast.success("Đăng ký thành công! Vui lòng đăng nhập.")
-        router.push("/auth/login")
+        setTimeout(() => {
+          router.push("/auth/login")
+        }, 100)
       } else {
-        toast.error("Đăng ký thất bại: " + response.message)
+        toast.error(response.error || "Đăng ký thất bại")
       }
     } catch (error: any) {
       console.error("Register error:", error)
-      toast.error(error.message || "Đăng ký thất bại")
+      toast.error("Đã xảy ra lỗi khi đăng ký")
     } finally {
       setIsLoading(false)
     }
@@ -104,12 +110,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi.logout()
     setUser(null)
     setToken(null)
-    router.push("/auth/login")
     toast.success("Đăng xuất thành công!")
+    router.push("/auth/login")
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        register,
+        logout,
+        isLoading,
+        isAuthenticated: !!user && !!token,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   )
 }
 

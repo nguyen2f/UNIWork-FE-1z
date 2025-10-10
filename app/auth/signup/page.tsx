@@ -1,7 +1,5 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
@@ -9,22 +7,30 @@ import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Loader2 } from "lucide-react"
 
 export default function SignupPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const { register, isLoading } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      await register(name, email, password)
-    } catch (error) {
-      console.error("Register error:", error)
+
+    if (password !== confirmPassword) {
+      alert("Mật khẩu không khớp!")
+      return
     }
+
+    if (password.length < 6) {
+      alert("Mật khẩu phải có ít nhất 6 ký tự!")
+      return
+    }
+
+    await register(name, email, password)
   }
 
   return (
@@ -75,6 +81,20 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isLoading}
+                minLength={6}
               />
             </div>
           </CardContent>
@@ -91,7 +111,7 @@ export default function SignupPage() {
             </Button>
             <p className="text-sm text-center text-muted-foreground">
               Đã có tài khoản?{" "}
-              <Link href="/auth/login" className="text-primary hover:underline">
+              <Link href="/auth/login" className="text-primary hover:underline font-medium">
                 Đăng nhập
               </Link>
             </p>
