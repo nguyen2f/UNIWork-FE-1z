@@ -11,18 +11,34 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
-import { useProjects } from "@/hooks/useProjects"
-import { useAuth } from "@/hooks/useAuth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { mockProjects, mockUsers } from "@/lib/data"
 
 export default function ProjectsPage() {
-  const { projects, loading, deleteProject } = useProjects()
-  const { user } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
+
+  // Khởi tạo projects với mock data
+  const [projects] = useState(() => {
+    return mockProjects.map((project) => ({
+      ...project,
+      members: mockUsers.map((user) => ({
+        userId: user.id,
+        projectId: project.id,
+        role:
+          user.role === "admin"
+            ? ("owner" as const)
+            : user.role === "manager"
+              ? ("manager" as const)
+              : ("member" as const),
+        joinedAt: "2024-02-01T00:00:00Z",
+        user,
+      })),
+    }))
+  })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -96,22 +112,9 @@ export default function ProjectsPage() {
 
   const handleDeleteProject = async (id: string) => {
     if (confirm("Bạn có chắc chắn muốn xóa dự án này?")) {
-      await deleteProject(id)
+      // Xử lý xóa project
+      console.log("Delete project:", id)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-screen bg-gray-50">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 flex items-center justify-center">
-            <div>Đang tải...</div>
-          </main>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -262,10 +265,10 @@ export default function ProjectsPage() {
                         Nhóm ({project.members?.length || 0} thành viên)
                       </div>
                       <div className="flex -space-x-2">
-                        {project.members?.slice(0, 3).map((member: any, idx: number) => (
+                        {project.members?.slice(0, 3).map((member, idx) => (
                           <Avatar key={idx} className="h-8 w-8 border-2 border-white">
                             <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                              {member.user?.name?.charAt(0) || "U"}
+                              {member.user?.avatar || "U"}
                             </AvatarFallback>
                           </Avatar>
                         ))}
