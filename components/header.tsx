@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Search, Settings, LogOut, User } from "lucide-react"
+import { Search, Settings, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
+import { NotificationsPopover } from "./notifications-popover"
 import Link from "next/link"
 
 export function Header() {
@@ -34,12 +35,7 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center space-x-4">
-          <Link href="/notifications">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-            </Button>
-          </Link>
+          <NotificationsPopover />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
