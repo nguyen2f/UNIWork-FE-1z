@@ -1,24 +1,24 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { authApi } from "@/lib/api"
-import { toast } from "sonner"
+import { login as apiLogin, register as apiRegister } from "@/lib/api"
 
 interface User {
   id: string
-  name: string
   email: string
+  name: string
+  role: string
 }
 
 interface AuthContextType {
   user: User | null
   token: string | null
+  isLoading: boolean
+  isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
-  isLoading: boolean
-  isAuthenticated: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -26,94 +26,57 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  // Comment phần load từ localStorage để test
-  // useEffect(() => {
-  //   const storedToken = localStorage.getItem("token")
-  //   const storedUser = localStorage.getItem("user")
-
-  //   if (storedToken && storedUser) {
-  //     try {
-  //       const parsedUser = JSON.parse(storedUser)
-  //       setUser(parsedUser)
-  //       setToken(storedToken)
-  //     } catch (error) {
-  //       console.error("Failed to parse user from localStorage", error)
-  //     }
-  //   }
-  // }, [])
+  useEffect(() => {
+    // Comment localStorage để test - không lưu trữ gì cả
+    // const savedToken = localStorage.getItem("token")
+    // const savedUser = localStorage.getItem("user")
+    // if (savedToken && savedUser) {
+    //   setToken(savedToken)
+    //   setUser(JSON.parse(savedUser))
+    // }
+    setIsLoading(false)
+  }, [])
 
   const login = async (email: string, password: string) => {
     try {
-      setIsLoading(true)
-      console.log("Attempting login with:", { email, password })
+      const response = await apiLogin(email, password)
+      setUser(response.user)
+      setToken(response.token)
 
-      const response = await authApi.login(email, password)
-      console.log("Login response:", response)
+      // Comment localStorage
+      // localStorage.setItem("token", response.token)
+      // localStorage.setItem("user", JSON.stringify(response.user))
 
-      if (response.success && response.token && response.userId) {
-        const userData: User = {
-          id: response.userId,
-          name: response.name || "User",
-          email: response.email || email,
-        }
-
-        // Comment phần lưu vào localStorage
-        // localStorage.setItem("token", response.token)
-        // localStorage.setItem("userId", response.userId)
-        // localStorage.setItem("user", JSON.stringify(userData))
-
-        // Set state để có thể sử dụng
-        setUser(userData)
-        setToken(response.token)
-
-        toast.success("Đăng nhập thành công!")
-        console.log("Navigating to dashboard...")
-
-        // Navigate to dashboard
-        router.push("/dashboard")
-      } else {
-        console.error("Login failed:", response.error)
-        toast.error(response.error || "Đăng nhập thất bại")
-      }
+      router.push("/dashboard")
     } catch (error: any) {
-      console.error("Login error:", error)
-      toast.error("Đã xảy ra lỗi khi đăng nhập")
-    } finally {
-      setIsLoading(false)
+      throw new Error(error.message || "Đăng nhập thất bại")
     }
   }
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      setIsLoading(true)
-      console.log("Attempting register with:", { name, email, password })
+      const response = await apiRegister(name, email, password)
+      setUser(response.user)
+      setToken(response.token)
 
-      const response = await authApi.register(name, email, password)
-      console.log("Register response:", response)
+      // Comment localStorage
+      // localStorage.setItem("token", response.token)
+      // localStorage.setItem("user", JSON.stringify(response.user))
 
-      if (response.success) {
-        toast.success("Đăng ký thành công! Vui lòng đăng nhập.")
-        router.push("/auth/login")
-      } else {
-        console.error("Register failed:", response.error)
-        toast.error(response.error || "Đăng ký thất bại")
-      }
+      router.push("/dashboard")
     } catch (error: any) {
-      console.error("Register error:", error)
-      toast.error("Đã xảy ra lỗi khi đăng ký")
-    } finally {
-      setIsLoading(false)
+      throw new Error(error.message || "Đăng ký thất bại")
     }
   }
 
   const logout = () => {
-    authApi.logout()
     setUser(null)
     setToken(null)
-    toast.success("Đăng xuất thành công!")
+    // localStorage.removeItem("token")
+    // localStorage.removeItem("user")
     router.push("/auth/login")
   }
 
@@ -122,11 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
+        isLoading,
+        isAuthenticated: !!user && !!token,
         login,
         register,
         logout,
-        isLoading,
-        isAuthenticated: !!user && !!token,
       }}
     >
       {children}
