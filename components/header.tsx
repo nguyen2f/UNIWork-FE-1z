@@ -1,11 +1,17 @@
 "use client"
 
-import { Bell, Search, User } from "lucide-react"
+import { Bell, Search, Settings, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/hooks/useAuth"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/hooks/use-auth"
 import Link from "next/link"
 
 export function Header() {
@@ -18,44 +24,52 @@ export function Header() {
         <div className="flex-1 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Tìm kiếm dự án, công việc..." className="pl-10" />
+            <Input
+              type="search"
+              placeholder="Search projects, tasks, or team members..."
+              className="pl-10 bg-gray-50"
+            />
           </div>
         </div>
 
-        {/* Right side */}
+        {/* Actions */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
           <Link href="/notifications">
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
+              <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
             </Button>
           </Link>
 
-          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2">
+              <Button variant="ghost" className="flex items-center space-x-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                  <AvatarFallback className="bg-blue-100 text-blue-700">{user?.avatar || "U"}</AvatarFallback>
                 </Avatar>
-                <span className="hidden md:block">{user?.name}</span>
+                <div className="text-left">
+                  <p className="text-sm font-medium">{user?.name || "User"}</p>
+                  <p className="text-xs text-gray-500">{user?.role || "Member"}</p>
+                </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" />
-                Hồ sơ cá nhân
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/settings" className="flex items-center">
-                  Cài đặt
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={logout} className="text-red-600">
-                Đăng xuất
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => logout()} className="text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

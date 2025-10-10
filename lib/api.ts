@@ -1,68 +1,103 @@
-// Mock API - không call backend thật
-const mockUsers = [
+// Mock API - Comment tất cả API calls thật
+interface User {
+  id: string
+  name: string
+  email: string
+  role: "admin" | "manager" | "member"
+  avatar: string
+  createdAt: string
+}
+
+interface LoginResponse {
+  user: User
+  token: string
+}
+
+interface RegisterResponse {
+  user: User
+  token: string
+}
+
+// Mock database
+const mockUsers: User[] = [
   {
     id: "1",
+    name: "John Doe",
     email: "admin@company.com",
-    password: "123456",
-    name: "Admin User",
     role: "admin",
+    avatar: "JD",
+    createdAt: new Date().toISOString(),
   },
   {
     id: "2",
-    email: "manager@company.com",
-    password: "123456",
-    name: "Project Manager",
+    name: "Sarah Miller",
+    email: "sarah@company.com",
     role: "manager",
+    avatar: "SM",
+    createdAt: new Date().toISOString(),
   },
 ]
 
-// Mock login - trả về user data
-export async function login(email: string, password: string) {
-  await new Promise((resolve) => setTimeout(resolve, 800))
+// Mock login function
+export async function login(email: string, password: string): Promise<LoginResponse> {
+  console.log("Mock login called with:", email, password)
 
-  const user = mockUsers.find((u) => u.email === email && u.password === password)
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
 
-  if (!user) {
-    throw new Error("Email hoặc mật khẩu không đúng")
+  // Find user
+  const user = mockUsers.find((u) => u.email === email)
+
+  if (!user || password !== "123456") {
+    throw new Error("Invalid email or password")
   }
 
+  console.log("Login successful:", user)
+
   return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    },
-    token: "mock-token-" + user.id,
+    user,
+    token: "mock-token-" + Date.now(),
   }
 }
 
-// Mock register
-export async function register(name: string, email: string, password: string) {
-  await new Promise((resolve) => setTimeout(resolve, 800))
+// Mock register function
+export async function register(name: string, email: string, password: string): Promise<RegisterResponse> {
+  console.log("Mock register called with:", { name, email, password })
 
-  const exists = mockUsers.find((u) => u.email === email)
-  if (exists) {
-    throw new Error("Email đã được sử dụng")
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // Check if user exists
+  const existingUser = mockUsers.find((u) => u.email === email)
+  if (existingUser) {
+    throw new Error("Email already registered")
   }
 
-  const newUser = {
+  // Create new user
+  const newUser: User = {
     id: String(mockUsers.length + 1),
-    email,
-    password,
     name,
+    email,
     role: "member",
+    avatar: name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase(),
+    createdAt: new Date().toISOString(),
   }
 
   mockUsers.push(newUser)
+  console.log("Register successful:", newUser)
 
   return {
-    user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      role: newUser.role,
-    },
-    token: "mock-token-" + newUser.id,
+    user: newUser,
+    token: "mock-token-" + Date.now(),
   }
+}
+
+// Mock logout function
+export async function logout(): Promise<void> {
+  console.log("Mock logout called")
+  await new Promise((resolve) => setTimeout(resolve, 500))
 }

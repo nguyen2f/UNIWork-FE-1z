@@ -3,102 +3,101 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/hooks/useAuth"
 import {
   LayoutDashboard,
-  FolderOpen,
+  FolderKanban,
   CheckSquare,
   Users,
   Calendar,
   MessageSquare,
   BarChart3,
-  Bell,
   Settings,
-  LogOut,
-  Menu,
-  X,
+  ChevronLeft,
+  ChevronRight,
+  Building2,
+  DollarSign,
+  Shield,
+  FileText,
+  Bell,
+  User,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Dự án", href: "/projects", icon: FolderOpen },
-  { name: "Công việc", href: "/tasks", icon: CheckSquare },
-  { name: "Nhóm", href: "/team", icon: Users },
-  { name: "Lịch", href: "/calendar", icon: Calendar },
-  { name: "Tin nhắn", href: "/messages", icon: MessageSquare },
-  { name: "Báo cáo", href: "/reports", icon: BarChart3 },
-  { name: "Thông báo", href: "/notifications", icon: Bell },
-  { name: "Cài đặt", href: "/settings", icon: Settings },
+  { name: "Projects", href: "/projects", icon: FolderKanban },
+  { name: "Tasks", href: "/tasks", icon: CheckSquare },
+  { name: "Team", href: "/team", icon: Users },
+  { name: "Calendar", href: "/calendar", icon: Calendar },
+  { name: "Budget", href: "/budget", icon: DollarSign },
+  { name: "Messages", href: "/messages", icon: MessageSquare },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Compliance", href: "/compliance", icon: Shield },
+  { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Admin", href: "/admin", icon: User },
+  { name: "Notifications", href: "/notifications", icon: Bell },
+  { name: "Settings", href: "/settings", icon: Settings },
 ]
 
 export function Sidebar() {
-  const pathname = usePathname()
-  const { user, logout } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
+  const pathname = usePathname()
 
   return (
     <div
-      className={cn(
-        "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
-      )}
+      className={cn("bg-gray-900 text-white transition-all duration-300 flex flex-col", collapsed ? "w-16" : "w-64")}
     >
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {!collapsed && (
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">ProManage</h1>
-              <p className="text-sm text-gray-600">Quản lý dự án</p>
+      {/* Logo */}
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+        {!collapsed && (
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Building2 className="h-6 w-6" />
             </div>
-          )}
-          <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8">
-            {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-          </Button>
-        </div>
+            <div>
+              <h1 className="font-bold text-lg">ProManage</h1>
+              <p className="text-xs text-gray-400">Enterprise</p>
+            </div>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-gray-400 hover:text-white hover:bg-gray-800"
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {navigation.map((item) => {
           const isActive = pathname === item.href
           return (
             <Link key={item.name} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
+              <div
                 className={cn(
-                  "w-full justify-start",
-                  collapsed && "px-2",
-                  isActive && "bg-blue-50 text-blue-700 hover:bg-blue-100",
+                  "flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors",
+                  isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white",
+                  collapsed && "justify-center",
                 )}
               >
-                <item.icon className={cn("h-4 w-4", !collapsed && "mr-3")} />
-                {!collapsed && item.name}
-              </Button>
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {!collapsed && <span className="text-sm font-medium">{item.name}</span>}
+              </div>
             </Link>
           )
         })}
       </nav>
 
       {/* User Info */}
-      <div className="p-4 border-t border-gray-200">
-        {!collapsed && user && (
-          <div className="mb-3">
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="text-xs text-gray-600">{user.email}</p>
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          onClick={logout}
-          className={cn("w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50", collapsed && "px-2")}
-        >
-          <LogOut className={cn("h-4 w-4", !collapsed && "mr-3")} />
-          {!collapsed && "Đăng xuất"}
-        </Button>
-      </div>
+      {!collapsed && (
+        <div className="p-4 border-t border-gray-800">
+          <div className="text-xs text-gray-400">Version 1.0.0</div>
+        </div>
+      )}
     </div>
   )
 }

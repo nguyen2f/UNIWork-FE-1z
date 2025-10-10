@@ -7,8 +7,8 @@ import { AuthProvider } from "@/hooks/use-auth"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ProManage - Project Management System",
-  description: "Enterprise project management platform",
+  title: "ProManage Enterprise - Project Management Platform",
+  description: "Enterprise-grade project management and collaboration platform",
     generator: 'v0.app'
 }
 
@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="vi">
+    <html lang="en">
       <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>

@@ -6,23 +6,23 @@ import { useAuth } from "@/hooks/use-auth"
 
 export default function Home() {
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
+    if (!loading) {
+      if (user) {
         router.push("/dashboard")
       } else {
         router.push("/auth/login")
       }
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [user, loading, router])
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex h-screen items-center justify-center">
       <div className="text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
-        <p className="mt-4 text-muted-foreground">Đang tải...</p>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
       </div>
     </div>
   )

@@ -2,99 +2,75 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { login as apiLogin, register as apiRegister } from "@/lib/api"
+import * as api from "@/lib/api"
 
 interface User {
   id: string
-  email: string
   name: string
-  role: string
+  email: string
+  role: "admin" | "manager" | "member"
+  avatar: string
+  createdAt: string
 }
 
 interface AuthContextType {
   user: User | null
-  token: string | null
-  isLoading: boolean
-  isAuthenticated: boolean
+  loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    // Comment localStorage để test - không lưu trữ gì cả
-    // const savedToken = localStorage.getItem("token")
-    // const savedUser = localStorage.getItem("user")
-    // if (savedToken && savedUser) {
-    //   setToken(savedToken)
+    // Comment: Không load user từ localStorage nữa
+    // const savedUser = localStorage.getItem('user')
+    // if (savedUser) {
     //   setUser(JSON.parse(savedUser))
     // }
-    setIsLoading(false)
+    setLoading(false)
   }, [])
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await apiLogin(email, password)
-      setUser(response.user)
-      setToken(response.token)
+    const response = await api.login(email, password)
+    setUser(response.user)
 
-      // Comment localStorage
-      // localStorage.setItem("token", response.token)
-      // localStorage.setItem("user", JSON.stringify(response.user))
+    // Comment: Không lưu vào localStorage
+    // localStorage.setItem('user', JSON.stringify(response.user))
+    // localStorage.setItem('token', response.token)
 
-      router.push("/dashboard")
-    } catch (error: any) {
-      throw new Error(error.message || "Đăng nhập thất bại")
-    }
+    router.push("/dashboard")
   }
 
   const register = async (name: string, email: string, password: string) => {
-    try {
-      const response = await apiRegister(name, email, password)
-      setUser(response.user)
-      setToken(response.token)
+    const response = await api.register(name, email, password)
+    setUser(response.user)
 
-      // Comment localStorage
-      // localStorage.setItem("token", response.token)
-      // localStorage.setItem("user", JSON.stringify(response.user))
+    // Comment: Không lưu vào localStorage
+    // localStorage.setItem('user', JSON.stringify(response.user))
+    // localStorage.setItem('token', response.token)
 
-      router.push("/dashboard")
-    } catch (error: any) {
-      throw new Error(error.message || "Đăng ký thất bại")
-    }
+    router.push("/dashboard")
   }
 
-  const logout = () => {
+  const logout = async () => {
+    await api.logout()
     setUser(null)
-    setToken(null)
-    // localStorage.removeItem("token")
-    // localStorage.removeItem("user")
+
+    // Comment: Không xóa localStorage
+    // localStorage.removeItem('user')
+    // localStorage.removeItem('token')
+
     router.push("/auth/login")
   }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        isLoading,
-        isAuthenticated: !!user && !!token,
-        login,
-        register,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
