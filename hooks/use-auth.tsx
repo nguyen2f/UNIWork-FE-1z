@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import { authApi } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -25,14 +26,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token")
     const storedUser = localStorage.getItem("user")
 
     if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+      try {
+        const parsedUser = JSON.parse(storedUser)
+        setUser(parsedUser)
+        setToken(storedToken)
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error)
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      }
     }
     setIsLoading(false)
   }, [])
@@ -42,37 +51,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.login(email, password)
 
-      console.log("Login response:", response)
+      if (response.success && response.token && response.userId) {
+        console.log("Login response:", response)
+        const userId = response.userId.toString()
 
-      // Response structure: { userId: 5, token: "..." }
-      const authToken = response.token
-      const userId = response.userId
+        const userData: User = {
+          id: String(userId),
+          name: response.name || "Unknown User",
+          email: response.email || email,
+        }
 
-      if (!authToken) {
-        throw new Error("Không nhận được token từ server")
+        localStorage.setItem("token", response.token)
+        localStorage.setItem("userId", userId)
+        localStorage.setItem("user", JSON.stringify(userData))
+
+        setUser(userData)
+        setToken(response.token)
+
+        toast.success("Đăng nhập thành công!")
+        router.push("/dashboard")
+      } else {
+        toast.error("Đăng nhập thất bại: " + response.message)
       }
-
-      const userData: User = {
-        id: String(userId),
-        name: email.split("@")[0],
-        email: email,
-      }
-
-      localStorage.setItem("token", authToken)
-      localStorage.setItem("userId", String(userId))
-      localStorage.setItem("user", JSON.stringify(userData))
-
-      setToken(authToken)
-      setUser(userData)
-
-      toast.success("Đăng nhập thành công!")
-
-      // Redirect to dashboard immediately
-      window.location.href = "/dashboard"
     } catch (error: any) {
       console.error("Login error:", error)
       toast.error(error.message || "Đăng nhập thất bại")
-      throw error
     } finally {
       setIsLoading(false)
     }
@@ -83,14 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
       const response = await authApi.register(name, email, password)
 
-      console.log("Register response:", response)
-
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.")
-      window.location.href = "/auth/login"
+      if (response.success) {
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập.")
+        router.push("/auth/login")
+      } else {
+        toast.error("Đăng ký thất bại: " + response.message)
+      }
     } catch (error: any) {
       console.error("Register error:", error)
       toast.error(error.message || "Đăng ký thất bại")
-      throw error
     } finally {
       setIsLoading(false)
     }
@@ -100,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi.logout()
     setUser(null)
     setToken(null)
-    toast.info("Đã đăng xuất")
-    window.location.href = "/auth/login"
+    router.push("/auth/login")
+    toast.success("Đăng xuất thành công!")
   }
 
   return (

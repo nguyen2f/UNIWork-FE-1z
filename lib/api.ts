@@ -1,54 +1,68 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://uniwork-ir2d.onrender.com"
-
 interface ApiResponse<T = any> {
   success: boolean
   data?: T
   error?: string
-  message?: string
+  token?: string
+  userId?: number
+  name?: string
+  email?: string
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  const contentType = response.headers.get("content-type")
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://uniwork-ir2d.onrender.com"
 
-  if (contentType && contentType.includes("application/json")) {
-    const data = await response.json()
+async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
-    if (!response.ok) {
-      throw new Error(data.message || data.error || `HTTP error! status: ${response.status}`)
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     }
 
-    return data
-  }
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    })
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
+    const data: ApiResponse<T> = await response.json()
 
-  const text = await response.text()
-  return text as any
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || `HTTP error! status: ${response.status}`,
+      }
+    }
+
+    return {
+      success: true,
+      data,
+      token: data.token,
+      userId: data.userId,
+      name: data.name,
+      email: data.email,
+    }
+  } catch (error) {
+    console.error("API Error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Network error",
+    }
+  }
 }
 
 export const authApi = {
-  async login(email: string, password: string) {
-    const response = await fetch(`${API_URL}/user/login`, {
+  async login(email: string, password: string): Promise<ApiResponse> {
+    return fetchApi("/user/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({ email, password }),
     })
-    return handleResponse(response)
   },
 
-  async register(name: string, email: string, password: string) {
-    const response = await fetch(`${API_URL}/user/register`, {
+  async register(name: string, email: string, password: string): Promise<ApiResponse> {
+    return fetchApi("/user/register", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({ name, email, password }),
     })
-    return handleResponse(response)
   },
 
   logout() {
