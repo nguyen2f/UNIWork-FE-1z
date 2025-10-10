@@ -1,18 +1,16 @@
 // Mock user database - không cần API thật
-const MOCK_USERS = [
+const mockUsers = [
   {
     id: "1",
     name: "Admin User",
     email: "admin@company.com",
-    password: "123456", // Trong thực tế sẽ hash password
-    role: "admin",
+    password: "123456",
   },
   {
     id: "2",
-    name: "Manager User",
-    email: "manager@company.com",
+    name: "John Doe",
+    email: "john@example.com",
     password: "123456",
-    role: "manager",
   },
 ]
 
@@ -27,91 +25,87 @@ interface ApiResponse<T = any> {
   email?: string
 }
 
+interface LoginResponse {
+  success: boolean
+  token?: string
+  userId?: string
+  name?: string
+  email?: string
+  error?: string
+}
+
+interface RegisterResponse {
+  success: boolean
+  error?: string
+}
+
 // Simulate API delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const authApi = {
-  async login(email: string, password: string): Promise<ApiResponse> {
-    try {
-      // Simulate network delay
-      await delay(1000)
+  // Mock login - không call API thật
+  login: async (email: string, password: string): Promise<LoginResponse> => {
+    console.log("Mock login:", { email, password })
 
-      // Find user in mock database
-      const user = MOCK_USERS.find((u) => u.email === email && u.password === password)
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-      if (!user) {
-        return {
-          success: false,
-          error: "Email hoặc mật khẩu không đúng",
-        }
-      }
+    // Find user in mock database
+    const user = mockUsers.find((u) => u.email === email && u.password === password)
 
-      // Generate mock token
-      const token = `mock_token_${user.id}_${Date.now()}`
-
+    if (user) {
       return {
         success: true,
-        token: token,
+        token: `mock-token-${user.id}-${Date.now()}`,
         userId: user.id,
         name: user.name,
         email: user.email,
-        message: "Đăng nhập thành công",
       }
-    } catch (error) {
-      return {
-        success: false,
-        error: "Đã xảy ra lỗi khi đăng nhập",
-      }
+    }
+
+    return {
+      success: false,
+      error: "Email hoặc mật khẩu không đúng",
     }
   },
 
-  async register(name: string, email: string, password: string): Promise<ApiResponse> {
-    try {
-      // Simulate network delay
-      await delay(1000)
+  // Mock register - không call API thật
+  register: async (name: string, email: string, password: string): Promise<RegisterResponse> => {
+    console.log("Mock register:", { name, email, password })
 
-      // Check if user already exists
-      const existingUser = MOCK_USERS.find((u) => u.email === email)
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-      if (existingUser) {
-        return {
-          success: false,
-          error: "Email đã được sử dụng",
-        }
-      }
-
-      // Create new user
-      const newUser = {
-        id: `${MOCK_USERS.length + 1}`,
-        name,
-        email,
-        password,
-        role: "member",
-      }
-
-      MOCK_USERS.push(newUser)
-
-      return {
-        success: true,
-        message: "Đăng ký thành công",
-        userId: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-      }
-    } catch (error) {
+    // Check if user already exists
+    const existingUser = mockUsers.find((u) => u.email === email)
+    if (existingUser) {
       return {
         success: false,
-        error: "Đã xảy ra lỗi khi đăng ký",
+        error: "Email đã được sử dụng",
       }
+    }
+
+    // Add new user to mock database
+    const newUser = {
+      id: String(mockUsers.length + 1),
+      name,
+      email,
+      password,
+    }
+    mockUsers.push(newUser)
+
+    return {
+      success: true,
     }
   },
 
-  logout() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
-      localStorage.removeItem("userId")
-      localStorage.removeItem("user")
-    }
+  // Mock logout - chỉ clear localStorage
+  logout: () => {
+    console.log("Mock logout")
+    // Comment phần lưu token
+    // localStorage.removeItem("token")
+    // localStorage.removeItem("userId")
+    // localStorage.removeItem("user")
   },
 }
 
