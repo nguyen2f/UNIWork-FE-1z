@@ -3,127 +3,119 @@
 import type React from "react"
 
 import { useState } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Mail } from "lucide-react"
+import { Mail, UserPlus } from "lucide-react"
 import { toast } from "sonner"
 
 interface InviteTeamMemberDialogProps {
-  trigger?: React.ReactNode
-  onSuccess?: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function InviteTeamMemberDialog({ trigger, onSuccess }: InviteTeamMemberDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+export function InviteTeamMemberDialog({ open, onOpenChange }: InviteTeamMemberDialogProps) {
   const [formData, setFormData] = useState({
-    email: "",
     name: "",
+    email: "",
     role: "member",
+    department: "",
   })
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+    toast.success("Invitation sent successfully!", {
+      description: `An invitation has been sent to ${formData.email}.`,
+    })
 
-      console.log("Invited member:", formData)
-      toast.success("Đã gửi lời mời thành công!")
-
-      setOpen(false)
-      resetForm()
-      onSuccess?.()
-    } catch (error) {
-      toast.error("Không thể gửi lời mời")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const resetForm = () => {
+    onOpenChange(false)
     setFormData({
-      email: "",
       name: "",
+      email: "",
       role: "member",
+      department: "",
     })
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger || <Button>Invite Team Member</Button>}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Mời thành viên mới</DialogTitle>
-          <DialogDescription>Gửi lời mời tham gia nhóm qua email</DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Invite Team Member
+          </DialogTitle>
         </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Tên thành viên *</Label>
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name *</Label>
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter full name"
               required
-              className="mt-1"
-              placeholder="Nguyễn Văn A"
             />
           </div>
 
-          <div>
-            <Label htmlFor="email">Email *</Label>
-            <div className="relative mt-1">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="space-y-2">
+            <Label htmlFor="email">Email Address *</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                required
-                className="pl-10"
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="email@example.com"
+                className="pl-9"
+                required
               />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="role">Vai trò</Label>
-            <Select value={formData.role} onValueChange={(value) => handleChange("role", value)}>
-              <SelectTrigger className="mt-1">
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-              Hủy
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <Select
+              value={formData.department}
+              onValueChange={(value) => setFormData({ ...formData, department: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="engineering">Engineering</SelectItem>
+                <SelectItem value="design">Design</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
+                <SelectItem value="sales">Sales</SelectItem>
+                <SelectItem value="support">Support</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Gửi lời mời
-            </Button>
+            <Button type="submit">Send Invitation</Button>
           </div>
         </form>
       </DialogContent>

@@ -1,364 +1,298 @@
 "use client"
 
 import { useState } from "react"
-import { Search, MoreHorizontal, Calendar, Users, DollarSign } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sidebar } from "../../components/sidebar"
-import { Header } from "../../components/header"
-import { CreateProjectDialog } from "../../components/create-project-dialog"
-import { EditProjectDialog } from "../../components/edit-project-dialog"
-import { ViewLayoutToggle } from "../../components/view-layout-toggle"
+import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
+import { CreateProjectDialog } from "@/components/create-project-dialog"
+import { EditProjectDialog } from "@/components/edit-project-dialog"
+import { ViewLayoutToggle } from "@/components/view-layout-toggle"
+import { Calendar, DollarSign, MoreVertical, Plus, Search, Users, FolderKanban, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { mockProjects, mockUsers } from "@/lib/data"
+import { toast } from "sonner"
 
 export default function ProjectsPage() {
-  const router = useRouter()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [priorityFilter, setPriorityFilter] = useState("all")
   const [view, setView] = useState<"grid" | "list">("grid")
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<any>(null)
 
-  const [projects] = useState(() => {
-    return mockProjects.map((project) => ({
-      ...project,
-      members: mockUsers.slice(0, 3).map((user) => ({
-        userId: user.id,
-        projectId: project.id,
-        role:
-          user.role === "admin"
-            ? ("owner" as const)
-            : user.role === "manager"
-              ? ("manager" as const)
-              : ("member" as const),
-        joinedAt: "2024-02-01T00:00:00Z",
-        user,
-      })),
-    }))
-  })
+  const projects = [
+    {
+      id: "1",
+      name: "Website Redesign",
+      description: "Complete overhaul of company website with modern design",
+      status: "In Progress",
+      priority: "High",
+      progress: 75,
+      startDate: "2024-01-01",
+      endDate: "2024-01-20",
+      budget: "50000",
+      teamSize: 5,
+      assignedTo: ["1", "2"],
+    },
+    {
+      id: "2",
+      name: "Mobile App Development",
+      description: "Native mobile app for iOS and Android",
+      status: "In Progress",
+      priority: "Critical",
+      progress: 45,
+      startDate: "2024-01-05",
+      endDate: "2024-02-15",
+      budget: "100000",
+      teamSize: 8,
+      assignedTo: ["2", "3", "4"],
+    },
+    {
+      id: "3",
+      name: "Marketing Campaign",
+      description: "Q1 marketing campaign across all channels",
+      status: "Planning",
+      priority: "Medium",
+      progress: 20,
+      startDate: "2024-01-10",
+      endDate: "2024-03-31",
+      budget: "75000",
+      teamSize: 4,
+      assignedTo: ["1", "3"],
+    },
+  ]
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-200"
-      case "active":
-        return "bg-blue-100 text-blue-800 border-blue-200"
-      case "planning":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "on-hold":
-        return "bg-red-100 text-red-800 border-red-200"
+      case "Planning":
+        return "secondary"
+      case "In Progress":
+        return "default"
+      case "On Hold":
+        return "outline"
+      case "Completed":
+        return "default"
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "secondary"
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "critical":
-        return "bg-red-100 text-red-800 border-red-300"
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-300"
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300"
-      case "low":
-        return "bg-green-100 text-green-800 border-green-300"
+      case "Critical":
+        return "destructive"
+      case "High":
+        return "destructive"
+      case "Medium":
+        return "default"
+      case "Low":
+        return "secondary"
       default:
-        return "bg-gray-100 text-gray-800 border-gray-300"
+        return "secondary"
     }
   }
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "planning":
-        return "Lên kế hoạch"
-      case "active":
-        return "Đang thực hiện"
-      case "completed":
-        return "Hoàn thành"
-      case "on-hold":
-        return "Tạm dừng"
-      default:
-        return status
-    }
+  const handleEdit = (project: any) => {
+    setSelectedProject(project)
+    setEditDialogOpen(true)
   }
 
-  const getPriorityText = (priority: string) => {
-    switch (priority) {
-      case "low":
-        return "Thấp"
-      case "medium":
-        return "Trung bình"
-      case "high":
-        return "Cao"
-      case "critical":
-        return "Khẩn cấp"
-      default:
-        return priority
-    }
-  }
-
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch =
-      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || project.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || project.priority === priorityFilter
-
-    return matchesSearch && matchesStatus && matchesPriority
-  })
-
-  const handleDeleteProject = async (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa dự án này?")) {
-      console.log("Delete project:", id)
-    }
+  const handleDelete = (projectId: string) => {
+    toast.success("Project deleted", {
+      description: "The project has been deleted successfully.",
+    })
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Danh sách dự án</h1>
-                <p className="text-gray-600 mt-2">Quản lý tất cả các dự án của tổ chức</p>
-              </div>
-              <CreateProjectDialog />
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Projects</h1>
+              <p className="text-muted-foreground">Manage and track all your projects</p>
             </div>
+            <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </div>
 
-            <div className="flex flex-col lg:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Tìm kiếm dự án..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="planning">Lên kế hoạch</SelectItem>
-                    <SelectItem value="active">Đang thực hiện</SelectItem>
-                    <SelectItem value="completed">Hoàn thành</SelectItem>
-                    <SelectItem value="on-hold">Tạm dừng</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Độ ưu tiên" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="low">Thấp</SelectItem>
-                    <SelectItem value="medium">Trung bình</SelectItem>
-                    <SelectItem value="high">Cao</SelectItem>
-                    <SelectItem value="critical">Khẩn cấp</SelectItem>
-                  </SelectContent>
-                </Select>
-                <ViewLayoutToggle view={view} onViewChange={setView} />
-              </div>
+          {/* Filters and View Toggle */}
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search projects..." className="pl-9" />
             </div>
+            <ViewLayoutToggle view={view} onViewChange={setView} />
+          </div>
 
-            {view === "grid" ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredProjects.map((project) => (
-                  <Card
-                    key={project.id}
-                    className="hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
-                  >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Link href={`/projects/${project.id}`}>
-                              <CardTitle className="text-lg hover:text-blue-600">{project.name}</CardTitle>
+          {/* Grid View */}
+          {view === "grid" && (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project) => (
+                <Card key={project.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <FolderKanban className="h-5 w-5 text-blue-600" />
+                        <CardTitle className="text-lg">{project.name}</CardTitle>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/projects/${project.id}`} className="cursor-pointer">
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
                             </Link>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
-                                  Xem chi tiết
-                                </DropdownMenuItem>
-                                <EditProjectDialog
-                                  project={project}
-                                  trigger={
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Chỉnh sửa</DropdownMenuItem>
-                                  }
-                                />
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteProject(project.id)}
-                                  className="text-red-600"
-                                >
-                                  Xóa dự án
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          <CardDescription className="text-sm line-clamp-2 mb-3">{project.description}</CardDescription>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(project)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(project.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
 
-                          <div className="flex items-center gap-2 mb-3">
-                            <span
-                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(project.status)}`}
-                            >
-                              {getStatusText(project.status)}
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getPriorityColor(project.priority)}`}
-                            >
-                              {getPriorityText(project.priority)}
-                            </span>
-                          </div>
-                        </div>
+                    <div className="flex gap-2">
+                      <Badge variant={getStatusColor(project.status)}>{project.status}</Badge>
+                      <Badge variant={getPriorityColor(project.priority)}>{project.priority}</Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium">{project.progress}%</span>
                       </div>
-                    </CardHeader>
+                      <Progress value={project.progress} />
+                    </div>
 
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Tiến độ</span>
-                          <span className="font-medium">{project.progress || 0}%</span>
-                        </div>
-                        <Progress value={project.progress || 0} className="h-2" />
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>{project.teamSize} members</span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span>${project.budget}</span>
+                      </div>
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="space-y-2">
-                          <div className="flex items-center text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            <span>Hạn: {new Date(project.endDate).toLocaleDateString("vi-VN")}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            <span>{new Intl.NumberFormat("vi-VN").format(project.budget || 0)} VNĐ</span>
-                          </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {project.startDate} - {project.endDate}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* List View */}
+          {view === "list" && (
+            <div className="space-y-3">
+              {projects.map((project) => (
+                <Card key={project.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-6">
+                      <div className="flex-shrink-0">
+                        <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <FolderKanban className="h-6 w-6 text-blue-600" />
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Users className="h-4 w-4 mr-2" />
-                          Nhóm ({project.members?.length || 0} thành viên)
-                        </div>
-                        <div className="flex -space-x-2">
-                          {project.members?.slice(0, 3).map((member, idx) => (
-                            <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                              <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                                {member.user?.avatar || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                          ))}
-                          {(project.members?.length || 0) > 3 && (
-                            <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
-                              <span className="text-xs text-gray-600">+{(project.members?.length || 0) - 3}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredProjects.map((project) => (
-                  <Card key={project.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <Link href={`/projects/${project.id}`}>
-                              <h3 className="text-lg font-semibold hover:text-blue-600">{project.name}</h3>
-                            </Link>
-                            <span
-                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(project.status)}`}
-                            >
-                              {getStatusText(project.status)}
-                            </span>
-                            <span
-                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getPriorityColor(project.priority)}`}
-                            >
-                              {getPriorityText(project.priority)}
-                            </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-semibold text-lg">{project.name}</h3>
+                            <p className="text-sm text-muted-foreground">{project.description}</p>
                           </div>
-                          <p className="text-sm text-gray-600 mt-2 line-clamp-1">{project.description}</p>
-                        </div>
-
-                        <div className="flex items-center gap-6">
-                          <div className="text-center">
-                            <p className="text-sm text-gray-500">Progress</p>
-                            <p className="text-lg font-semibold">{project.progress}%</p>
-                          </div>
-
-                          <div className="flex -space-x-2">
-                            {project.members?.slice(0, 3).map((member, idx) => (
-                              <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                                  {member.user?.avatar || "U"}
-                                </AvatarFallback>
-                              </Avatar>
-                            ))}
-                          </div>
-
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
-                                Xem chi tiết
+                              <DropdownMenuItem asChild>
+                                <Link href={`/projects/${project.id}`} className="cursor-pointer">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </Link>
                               </DropdownMenuItem>
-                              <EditProjectDialog
-                                project={project}
-                                trigger={
-                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Chỉnh sửa</DropdownMenuItem>
-                                }
-                              />
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteProject(project.id)}
-                                className="text-red-600"
-                              >
-                                Xóa dự án
+                              <DropdownMenuItem onClick={() => handleEdit(project)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDelete(project.id)} className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
 
-            {filteredProjects.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Không tìm thấy dự án nào</p>
-              </div>
-            )}
-          </div>
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <div className="flex gap-2">
+                            <Badge variant={getStatusColor(project.status)}>{project.status}</Badge>
+                            <Badge variant={getPriorityColor(project.priority)}>{project.priority}</Badge>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              <span>{project.teamSize}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4" />
+                              <span>${project.budget}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                {project.startDate} - {project.endDate}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 ml-auto">
+                            <div className="w-32">
+                              <Progress value={project.progress} />
+                            </div>
+                            <span className="text-sm font-medium w-12">{project.progress}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </main>
       </div>
+
+      <CreateProjectDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      <EditProjectDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} project={selectedProject} />
     </div>
   )
 }

@@ -3,150 +3,103 @@
 import type React from "react"
 
 import { useState } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Loader2, User } from "lucide-react"
-import { mockUsers, mockProjects } from "@/lib/data"
+import { Calendar } from "lucide-react"
 import { toast } from "sonner"
 
 interface CreateTaskDialogProps {
-  trigger?: React.ReactNode
-  projectId?: string
-  onSuccess?: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
-export function CreateTaskDialog({ trigger, projectId, onSuccess }: CreateTaskDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+const projects = [
+  { id: "1", name: "Website Redesign" },
+  { id: "2", name: "Mobile App Development" },
+  { id: "3", name: "Marketing Campaign" },
+]
+
+const teamMembers = [
+  { id: "1", name: "Sarah Johnson", role: "Designer", avatar: "/placeholder-user.jpg" },
+  { id: "2", name: "Michael Chen", role: "Developer", avatar: "/placeholder-user.jpg" },
+  { id: "3", name: "Emma Wilson", role: "Manager", avatar: "/placeholder-user.jpg" },
+  { id: "4", name: "David Brown", role: "Developer", avatar: "/placeholder-user.jpg" },
+]
+
+export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    project: "",
     status: "todo",
     priority: "medium",
-    projectId: projectId || "",
-    assigneeId: "",
     dueDate: "",
+    assignedTo: "",
   })
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+    toast.success("Task created successfully!", {
+      description: `${formData.title} has been added to your tasks.`,
+    })
 
-      const assignee = mockUsers.find((u) => u.id === formData.assigneeId)
-      const project = mockProjects.find((p) => p.id === formData.projectId)
-
-      const taskData = {
-        id: `task-${Date.now()}`,
-        ...formData,
-        createdBy: "current-user-id",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        assignee: assignee!,
-      }
-
-      console.log("Created task:", taskData)
-      toast.success("Tạo công việc thành công!")
-
-      setOpen(false)
-      resetForm()
-      onSuccess?.()
-    } catch (error) {
-      toast.error("Không thể tạo công việc")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const resetForm = () => {
+    onOpenChange(false)
     setFormData({
       title: "",
       description: "",
+      project: "",
       status: "todo",
       priority: "medium",
-      projectId: projectId || "",
-      assigneeId: "",
       dueDate: "",
+      assignedTo: "",
     })
   }
 
-  const selectedAssignee = mockUsers.find((user) => user.id === formData.assigneeId)
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo công việc
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tạo công việc mới</DialogTitle>
-          <DialogDescription>Điền thông tin để tạo công việc mới</DialogDescription>
+          <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <Label htmlFor="title">Tiêu đề công việc *</Label>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Task Title *</Label>
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => handleChange("title", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter task title"
                 required
-                className="mt-1"
-                placeholder="Nhập tiêu đề công việc"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <Label htmlFor="description">Mô tả *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                required
-                className="mt-1"
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter task description"
                 rows={4}
-                placeholder="Mô tả chi tiết về công việc"
               />
             </div>
 
-            <div className="md:col-span-2">
-              <Label htmlFor="projectId">Dự án *</Label>
-              <Select
-                value={formData.projectId}
-                onValueChange={(value) => handleChange("projectId", value)}
-                disabled={!!projectId}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Chọn dự án" />
+            <div className="space-y-2">
+              <Label htmlFor="project">Project</Label>
+              <Select value={formData.project} onValueChange={(value) => setFormData({ ...formData, project: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockProjects.map((project) => (
+                  {projects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
                     </SelectItem>
@@ -155,104 +108,91 @@ export function CreateTaskDialog({ trigger, projectId, onSuccess }: CreateTaskDi
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="status">Trạng thái</Label>
-              <Select value={formData.status} onValueChange={(value) => handleChange("status", value)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todo">Chưa làm</SelectItem>
-                  <SelectItem value="in-progress">Đang làm</SelectItem>
-                  <SelectItem value="review">Đang review</SelectItem>
-                  <SelectItem value="completed">Hoàn thành</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todo">To Do</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="review">In Review</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="priority">Độ ưu tiên</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleChange("priority", value)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Thấp</SelectItem>
-                  <SelectItem value="medium">Trung bình</SelectItem>
-                  <SelectItem value="high">Cao</SelectItem>
-                  <SelectItem value="critical">Khẩn cấp</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Due Date</Label>
+              <div className="relative">
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                />
+                <Calendar className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
             </div>
 
-            <div className="md:col-span-2">
-              <Label htmlFor="dueDate">Hạn hoàn thành</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => handleChange("dueDate", e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <Label>Người thực hiện</Label>
-              {selectedAssignee && (
-                <div className="mt-2 mb-3">
-                  <Badge variant="secondary" className="pl-2 pr-3 py-2">
-                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarFallback>{selectedAssignee.avatar}</AvatarFallback>
+            <div className="space-y-2">
+              <Label>Assign To</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {teamMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    onClick={() => setFormData({ ...formData, assignedTo: member.id })}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      formData.assignedTo === member.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-accent"
+                    }`}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{member.name[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">{selectedAssignee.name}</span>
-                      <span className="text-xs text-gray-500">{selectedAssignee.email}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{member.name}</p>
+                      <p className="text-xs text-muted-foreground">{member.role}</p>
                     </div>
-                  </Badge>
-                </div>
-              )}
-
-              <div className="border rounded-md p-3 max-h-48 overflow-y-auto mt-2">
-                <div className="flex items-center gap-2 mb-2 text-sm text-gray-600">
-                  <User className="h-4 w-4" />
-                  <span>Chọn người thực hiện công việc</span>
-                </div>
-                <div className="space-y-2">
-                  {mockUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      onClick={() => handleChange("assigneeId", user.id)}
-                      className={`flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-gray-100 ${
-                        formData.assigneeId === user.id ? "bg-blue-50 border border-blue-200" : ""
-                      }`}
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{user.avatar}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{user.name}</p>
-                        <p className="text-xs text-gray-500">{user.email}</p>
-                      </div>
-                      {formData.assigneeId === user.id && (
-                        <Badge variant="outline" className="text-xs">
-                          Đã chọn
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    {formData.assignedTo === member.id && (
+                      <Badge variant="secondary" className="ml-auto">
+                        ✓
+                      </Badge>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-              Hủy
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
-            <Button type="submit" disabled={loading || !formData.assigneeId}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Tạo công việc
-            </Button>
+            <Button type="submit">Create Task</Button>
           </div>
         </form>
       </DialogContent>

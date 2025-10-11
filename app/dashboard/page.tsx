@@ -1,362 +1,335 @@
 "use client"
 
-import { useState } from "react"
-import {
-  FolderKanban,
-  CheckSquare,
-  Users,
-  TrendingUp,
-  Clock,
-  Plus,
-  ArrowRight,
-  DollarSign,
-  Target,
-  Activity,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Sidebar } from "@/components/sidebar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
+import {
+  BarChart3,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FolderKanban,
+  ListTodo,
+  Plus,
+  TrendingUp,
+  Users,
+  UserPlus,
+} from "lucide-react"
+import { useState } from "react"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { InviteTeamMemberDialog } from "@/components/invite-team-member-dialog"
-import Link from "next/link"
 
 export default function DashboardPage() {
-  const [activeProjects] = useState([
+  const [createProjectOpen, setCreateProjectOpen] = useState(false)
+  const [createTaskOpen, setCreateTaskOpen] = useState(false)
+  const [inviteTeamOpen, setInviteTeamOpen] = useState(false)
+
+  const stats = [
+    {
+      title: "Active Projects",
+      value: "12",
+      change: "+2 this month",
+      icon: FolderKanban,
+      color: "text-blue-600",
+    },
+    {
+      title: "Tasks Completed",
+      value: "147",
+      change: "+23 this week",
+      icon: CheckCircle2,
+      color: "text-green-600",
+    },
+    {
+      title: "Team Members",
+      value: "28",
+      change: "+4 new",
+      icon: Users,
+      color: "text-purple-600",
+    },
+    {
+      title: "Pending Tasks",
+      value: "34",
+      change: "-8 from last week",
+      icon: Clock,
+      color: "text-orange-600",
+    },
+  ]
+
+  const recentProjects = [
     {
       id: "1",
-      name: "Enterprise CRM Migration",
-      progress: 78,
-      status: "on-track",
-      dueDate: "2024-02-28",
-      team: ["JD", "SM", "AL"],
-      priority: "high",
+      name: "Website Redesign",
+      progress: 75,
+      status: "In Progress",
+      team: 5,
+      deadline: "2024-01-20",
     },
     {
       id: "2",
-      name: "Digital Transformation Initiative",
+      name: "Mobile App Development",
       progress: 45,
-      status: "at-risk",
-      dueDate: "2024-03-15",
-      team: ["RW", "KL", "MJ"],
-      priority: "critical",
+      status: "In Progress",
+      team: 8,
+      deadline: "2024-02-15",
     },
     {
       id: "3",
-      name: "SOC 2 Compliance Implementation",
-      progress: 92,
-      status: "on-track",
-      dueDate: "2024-02-20",
-      team: ["DK", "PL"],
-      priority: "high",
+      name: "Marketing Campaign",
+      progress: 90,
+      status: "In Progress",
+      team: 4,
+      deadline: "2024-01-10",
     },
-    {
-      id: "4",
-      name: "Global ERP Rollout Phase 2",
-      progress: 34,
-      status: "delayed",
-      dueDate: "2024-04-30",
-      team: ["MR", "JB", "KW"],
-      priority: "medium",
-    },
-  ])
+  ]
 
-  const [recentActivity] = useState([
+  const upcomingTasks = [
     {
       id: "1",
-      user: "Sarah Miller",
-      avatar: "SM",
-      action: "completed task",
-      target: "Update user authentication flow",
-      project: "CRM Migration",
-      time: "5 minutes ago",
+      title: "Review design mockups",
+      project: "Website Redesign",
+      priority: "High",
+      dueDate: "Today",
     },
     {
       id: "2",
-      user: "David Kim",
-      avatar: "DK",
-      action: "uploaded document",
-      target: "Security Audit Report Q1",
-      project: "SOC 2 Compliance",
-      time: "1 hour ago",
+      title: "Update API documentation",
+      project: "Mobile App Development",
+      priority: "Medium",
+      dueDate: "Tomorrow",
     },
     {
       id: "3",
-      user: "Alex Johnson",
-      avatar: "AJ",
-      action: "commented on",
-      target: "API Integration Milestone",
-      project: "Digital Transformation",
-      time: "2 hours ago",
+      title: "Client presentation",
+      project: "Marketing Campaign",
+      priority: "High",
+      dueDate: "Jan 15",
     },
     {
       id: "4",
-      user: "Rachel Wong",
-      avatar: "RW",
-      action: "assigned task to",
-      target: "John Doe",
-      project: "ERP Rollout",
-      time: "3 hours ago",
+      title: "Code review session",
+      project: "Mobile App Development",
+      priority: "Low",
+      dueDate: "Jan 16",
     },
-  ])
+  ]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "on-track":
-        return "text-green-600 bg-green-100"
-      case "at-risk":
-        return "text-yellow-600 bg-yellow-100"
-      case "delayed":
-        return "text-red-600 bg-red-100"
-      default:
-        return "text-gray-600 bg-gray-100"
-    }
-  }
+  const teamActivity = [
+    {
+      user: "Sarah Johnson",
+      action: "completed",
+      target: "Design Review",
+      time: "2 hours ago",
+      avatar: "/placeholder-user.jpg",
+    },
+    {
+      user: "Michael Chen",
+      action: "created",
+      target: "New API Endpoint",
+      time: "4 hours ago",
+      avatar: "/placeholder-user.jpg",
+    },
+    {
+      user: "Emma Wilson",
+      action: "updated",
+      target: "Project Timeline",
+      time: "5 hours ago",
+      avatar: "/placeholder-user.jpg",
+    },
+  ]
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "critical":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200"
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200"
+      case "High":
+        return "destructive"
+      case "Medium":
+        return "default"
+      case "Low":
+        return "secondary"
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "default"
     }
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Executive Dashboard</h1>
-              <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your projects.</p>
-            </div>
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          {/* Quick Actions */}
+          <div className="mb-6 flex gap-3">
+            <Button onClick={() => setCreateProjectOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+            <Button onClick={() => setCreateTaskOpen(true)} variant="outline" className="gap-2">
+              <ListTodo className="h-4 w-4" />
+              Create Task
+            </Button>
+            <Button onClick={() => setInviteTeamOpen(true)} variant="outline" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Invite Team Member
+            </Button>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="border-l-4 border-l-blue-500">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Projects</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">18</p>
-                      <p className="text-sm text-green-600 mt-1 flex items-center">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        +12% from last month
-                      </p>
-                    </div>
-                    <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FolderKanban className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </div>
+          {/* Stats Grid */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            {stats.map((stat) => (
+              <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.change}</p>
                 </CardContent>
               </Card>
+            ))}
+          </div>
 
-              <Card className="border-l-4 border-l-green-500">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Completed Tasks</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">142</p>
-                      <p className="text-sm text-green-600 mt-1 flex items-center">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        +8% from last week
-                      </p>
-                    </div>
-                    <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <CheckSquare className="h-6 w-6 text-green-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-purple-500">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Team Members</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">24</p>
-                      <p className="text-sm text-purple-600 mt-1 flex items-center">
-                        <Activity className="h-3 w-3 mr-1" />
-                        18 active now
-                      </p>
-                    </div>
-                    <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Users className="h-6 w-6 text-purple-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-l-4 border-l-orange-500">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Budget Used</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">$2.4M</p>
-                      <p className="text-sm text-orange-600 mt-1">68% of allocated</p>
-                    </div>
-                    <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <DollarSign className="h-6 w-6 text-orange-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>Active Projects</CardTitle>
-                      <CardDescription>Track progress and status of ongoing initiatives</CardDescription>
-                    </div>
-                    <Link href="/projects">
-                      <Button variant="outline" size="sm">
-                        View All
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {activeProjects.map((project) => (
-                        <div
-                          key={project.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge className={`text-xs ${getStatusColor(project.status)}`}>
-                                  {project.status.replace("-", " ").toUpperCase()}
-                                </Badge>
-                                <Badge className={`text-xs border ${getPriorityColor(project.priority)}`}>
-                                  {project.priority.toUpperCase()}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="flex -space-x-2">
-                              {project.team.map((member, idx) => (
-                                <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                                    {member}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Progress</span>
-                              <span className="font-medium">{project.progress}%</span>
-                            </div>
-                            <Progress value={project.progress} className="h-2" />
-                            <div className="flex justify-between text-xs text-gray-500">
-                              <span className="flex items-center">
-                                <Clock className="h-3 w-3 mr-1" />
-                                Due: {project.dueDate}
-                              </span>
-                              <span>{project.team.length} members</span>
-                            </div>
-                          </div>
+          <div className="grid gap-6 lg:grid-cols-2 mb-6">
+            {/* Recent Projects */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FolderKanban className="h-5 w-5" />
+                  Recent Projects
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recentProjects.map((project) => (
+                  <div key={project.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{project.name}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="h-3 w-3" />
+                          <span>{project.team} members</span>
+                          <Calendar className="h-3 w-3 ml-2" />
+                          <span>Due {project.deadline}</span>
                         </div>
-                      ))}
+                      </div>
+                      <Badge variant="outline">{project.status}</Badge>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Target className="h-5 w-5 mr-2" />
-                      Quick Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <CreateProjectDialog
-                      trigger={
-                        <Button className="w-full justify-start bg-transparent" variant="outline">
-                          <Plus className="h-4 w-4 mr-2" />
-                          New Project
-                        </Button>
-                      }
-                    />
-                    <CreateTaskDialog
-                      trigger={
-                        <Button className="w-full justify-start bg-transparent" variant="outline">
-                          <CheckSquare className="h-4 w-4 mr-2" />
-                          Create Task
-                        </Button>
-                      }
-                    />
-                    <InviteTeamMemberDialog
-                      trigger={
-                        <Button className="w-full justify-start bg-transparent" variant="outline">
-                          <Users className="h-4 w-4 mr-2" />
-                          Invite Team Member
-                        </Button>
-                      }
-                    />
-                    <Link href="/reports">
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
-                        <Activity className="h-4 w-4 mr-2" />
-                        Generate Report
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Activity className="h-5 w-5 mr-2" />
-                      Recent Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {recentActivity.map((activity) => (
-                        <div key={activity.id} className="flex items-start space-x-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                              {activity.avatar}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 space-y-1">
-                            <p className="text-sm">
-                              <span className="font-medium">{activity.user}</span> {activity.action}{" "}
-                              <span className="font-medium">{activity.target}</span>
-                            </p>
-                            <p className="text-xs text-gray-500">{activity.project}</p>
-                            <p className="text-xs text-gray-400">{activity.time}</p>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium">{project.progress}%</span>
+                      </div>
+                      <Progress value={project.progress} />
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Tasks */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ListTodo className="h-5 w-5" />
+                  Upcoming Tasks
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {upcomingTasks.map((task) => (
+                  <div key={task.id} className="flex items-start justify-between p-3 rounded-lg border">
+                    <div className="space-y-1">
+                      <p className="font-medium">{task.title}</p>
+                      <p className="text-sm text-muted-foreground">{task.project}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                      <span className="text-xs text-muted-foreground">{task.dueDate}</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Team Activity & Performance */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Team Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Team Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {teamActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={activity.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{activity.user[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        <span className="font-medium">{activity.user}</span>{" "}
+                        <span className="text-muted-foreground">{activity.action}</span>{" "}
+                        <span className="font-medium">{activity.target}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Performance Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Performance Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Tasks Completion Rate</span>
+                    <span className="font-medium">87%</span>
+                  </div>
+                  <Progress value={87} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>On-time Delivery</span>
+                    <span className="font-medium">92%</span>
+                  </div>
+                  <Progress value={92} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Team Productivity</span>
+                    <span className="font-medium">78%</span>
+                  </div>
+                  <Progress value={78} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Budget Utilization</span>
+                    <span className="font-medium">65%</span>
+                  </div>
+                  <Progress value={65} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>
+
+      <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
+      <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} />
+      <InviteTeamMemberDialog open={inviteTeamOpen} onOpenChange={setInviteTeamOpen} />
     </div>
   )
 }
