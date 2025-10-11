@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Search, Filter, MoreHorizontal, Calendar, User, Flag } from 'lucide-react'
+import { Search, Filter, MoreHorizontal, Calendar, User, Flag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
+import { CreateTaskDialog } from "../../components/create-task-dialog"
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([
@@ -205,19 +206,14 @@ export default function TasksPage() {
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
                 <p className="text-gray-600 mt-2">Manage and track all your tasks across projects</p>
               </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Task
-              </Button>
+              <CreateTaskDialog />
             </div>
 
-            {/* Filters and Search */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -229,7 +225,6 @@ export default function TasksPage() {
               </Button>
             </div>
 
-            {/* Task Tabs */}
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="all">All Tasks</TabsTrigger>

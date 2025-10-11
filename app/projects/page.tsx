@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Search, MoreHorizontal, Calendar, Users, DollarSign } from "lucide-react"
+import { Search, MoreHorizontal, Calendar, Users, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
+import { CreateProjectDialog } from "../../components/create-project-dialog"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { mockProjects, mockUsers } from "@/lib/data"
@@ -21,11 +22,10 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
 
-  // Khởi tạo projects với mock data
   const [projects] = useState(() => {
     return mockProjects.map((project) => ({
       ...project,
-      members: mockUsers.map((user) => ({
+      members: mockUsers.slice(0, 3).map((user) => ({
         userId: user.id,
         projectId: project.id,
         role:
@@ -112,7 +112,6 @@ export default function ProjectsPage() {
 
   const handleDeleteProject = async (id: string) => {
     if (confirm("Bạn có chắc chắn muốn xóa dự án này?")) {
-      // Xử lý xóa project
       console.log("Delete project:", id)
     }
   }
@@ -124,21 +123,14 @@ export default function ProjectsPage() {
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Danh sách dự án</h1>
                 <p className="text-gray-600 mt-2">Quản lý tất cả các dự án của tổ chức</p>
               </div>
-              <Link href="/projects/create">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tạo dự án mới
-                </Button>
-              </Link>
+              <CreateProjectDialog />
             </div>
 
-            {/* Filters and Search */}
             <div className="flex flex-col lg:flex-row gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -177,7 +169,6 @@ export default function ProjectsPage() {
               </div>
             </div>
 
-            {/* Projects Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredProjects.map((project) => (
                 <Card
@@ -215,7 +206,6 @@ export default function ProjectsPage() {
                         </div>
                         <CardDescription className="text-sm line-clamp-2 mb-3">{project.description}</CardDescription>
 
-                        {/* Status and Priority Badges */}
                         <div className="flex items-center gap-2 mb-3">
                           <span
                             className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(project.status)}`}
@@ -233,7 +223,6 @@ export default function ProjectsPage() {
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    {/* Progress */}
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Tiến độ</span>
@@ -242,7 +231,6 @@ export default function ProjectsPage() {
                       <Progress value={project.progress || 0} className="h-2" />
                     </div>
 
-                    {/* Key Metrics */}
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="space-y-2">
                         <div className="flex items-center text-gray-600">
@@ -258,7 +246,6 @@ export default function ProjectsPage() {
                       </div>
                     </div>
 
-                    {/* Team */}
                     <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                       <div className="flex items-center text-sm text-gray-600">
                         <Users className="h-4 w-4 mr-2" />
