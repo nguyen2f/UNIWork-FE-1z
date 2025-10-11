@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
 import { CreateProjectDialog } from "../../components/create-project-dialog"
+import { EditProjectDialog } from "../../components/edit-project-dialog"
+import { ViewLayoutToggle } from "../../components/view-layout-toggle"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { mockProjects, mockUsers } from "@/lib/data"
@@ -21,6 +23,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [priorityFilter, setPriorityFilter] = useState("all")
+  const [view, setView] = useState<"grid" | "list">("grid")
 
   const [projects] = useState(() => {
     return mockProjects.map((project) => ({
@@ -166,25 +169,159 @@ export default function ProjectsPage() {
                     <SelectItem value="critical">Khẩn cấp</SelectItem>
                   </SelectContent>
                 </Select>
+                <ViewLayoutToggle view={view} onViewChange={setView} />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredProjects.map((project) => (
-                <Card
-                  key={project.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Link href={`/projects/${project.id}`}>
-                            <CardTitle className="text-lg hover:text-blue-600">{project.name}</CardTitle>
-                          </Link>
+            {view === "grid" ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredProjects.map((project) => (
+                  <Card
+                    key={project.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer border border-gray-200"
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Link href={`/projects/${project.id}`}>
+                              <CardTitle className="text-lg hover:text-blue-600">{project.name}</CardTitle>
+                            </Link>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
+                                  Xem chi tiết
+                                </DropdownMenuItem>
+                                <EditProjectDialog
+                                  project={project}
+                                  trigger={
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Chỉnh sửa</DropdownMenuItem>
+                                  }
+                                />
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteProject(project.id)}
+                                  className="text-red-600"
+                                >
+                                  Xóa dự án
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          <CardDescription className="text-sm line-clamp-2 mb-3">{project.description}</CardDescription>
+
+                          <div className="flex items-center gap-2 mb-3">
+                            <span
+                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(project.status)}`}
+                            >
+                              {getStatusText(project.status)}
+                            </span>
+                            <span
+                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getPriorityColor(project.priority)}`}
+                            >
+                              {getPriorityText(project.priority)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Tiến độ</span>
+                          <span className="font-medium">{project.progress || 0}%</span>
+                        </div>
+                        <Progress value={project.progress || 0} className="h-2" />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <div className="flex items-center text-gray-600">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            <span>Hạn: {new Date(project.endDate).toLocaleDateString("vi-VN")}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center text-gray-600">
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            <span>{new Intl.NumberFormat("vi-VN").format(project.budget || 0)} VNĐ</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Users className="h-4 w-4 mr-2" />
+                          Nhóm ({project.members?.length || 0} thành viên)
+                        </div>
+                        <div className="flex -space-x-2">
+                          {project.members?.slice(0, 3).map((member, idx) => (
+                            <Avatar key={idx} className="h-8 w-8 border-2 border-white">
+                              <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                                {member.user?.avatar || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
+                          {(project.members?.length || 0) > 3 && (
+                            <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
+                              <span className="text-xs text-gray-600">+{(project.members?.length || 0) - 3}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredProjects.map((project) => (
+                  <Card key={project.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <Link href={`/projects/${project.id}`}>
+                              <h3 className="text-lg font-semibold hover:text-blue-600">{project.name}</h3>
+                            </Link>
+                            <span
+                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(project.status)}`}
+                            >
+                              {getStatusText(project.status)}
+                            </span>
+                            <span
+                              className={`px-2 py-1 rounded-md text-xs font-medium border ${getPriorityColor(project.priority)}`}
+                            >
+                              {getPriorityText(project.priority)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-1">{project.description}</p>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-500">Progress</p>
+                            <p className="text-lg font-semibold">{project.progress}%</p>
+                          </div>
+
+                          <div className="flex -space-x-2">
+                            {project.members?.slice(0, 3).map((member, idx) => (
+                              <Avatar key={idx} className="h-8 w-8 border-2 border-white">
+                                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                                  {member.user?.avatar || "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                            ))}
+                          </div>
+
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="ghost" size="icon">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -192,9 +329,12 @@ export default function ProjectsPage() {
                               <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>
                                 Xem chi tiết
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}/edit`)}>
-                                Chỉnh sửa
-                              </DropdownMenuItem>
+                              <EditProjectDialog
+                                project={project}
+                                trigger={
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Chỉnh sửa</DropdownMenuItem>
+                                }
+                              />
                               <DropdownMenuItem
                                 onClick={() => handleDeleteProject(project.id)}
                                 className="text-red-600"
@@ -204,72 +344,12 @@ export default function ProjectsPage() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                        <CardDescription className="text-sm line-clamp-2 mb-3">{project.description}</CardDescription>
-
-                        <div className="flex items-center gap-2 mb-3">
-                          <span
-                            className={`px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(project.status)}`}
-                          >
-                            {getStatusText(project.status)}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded-md text-xs font-medium border ${getPriorityColor(project.priority)}`}
-                          >
-                            {getPriorityText(project.priority)}
-                          </span>
-                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Tiến độ</span>
-                        <span className="font-medium">{project.progress || 0}%</span>
-                      </div>
-                      <Progress value={project.progress || 0} className="h-2" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="space-y-2">
-                        <div className="flex items-center text-gray-600">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          <span>Hạn: {new Date(project.endDate).toLocaleDateString("vi-VN")}</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center text-gray-600">
-                          <DollarSign className="h-4 w-4 mr-2" />
-                          <span>{new Intl.NumberFormat("vi-VN").format(project.budget || 0)} VNĐ</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Users className="h-4 w-4 mr-2" />
-                        Nhóm ({project.members?.length || 0} thành viên)
-                      </div>
-                      <div className="flex -space-x-2">
-                        {project.members?.slice(0, 3).map((member, idx) => (
-                          <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                            <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                              {member.user?.avatar || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
-                        {(project.members?.length || 0) > 3 && (
-                          <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
-                            <span className="text-xs text-gray-600">+{(project.members?.length || 0) - 3}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {filteredProjects.length === 0 && (
               <div className="text-center py-12">

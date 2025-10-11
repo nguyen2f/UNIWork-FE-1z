@@ -20,6 +20,9 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
+import { CreateProjectDialog } from "@/components/create-project-dialog"
+import { CreateTaskDialog } from "@/components/create-task-dialog"
+import { InviteTeamMemberDialog } from "@/components/invite-team-member-dialog"
 import Link from "next/link"
 
 export default function DashboardPage() {
@@ -136,13 +139,11 @@ export default function DashboardPage() {
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Executive Dashboard</h1>
               <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your projects.</p>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <Card className="border-l-4 border-l-blue-500">
                 <CardContent className="p-6">
@@ -215,7 +216,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Active Projects */}
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -281,9 +281,7 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              {/* Recent Activity & Quick Actions */}
               <div className="space-y-6">
-                {/* Quick Actions */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -292,24 +290,30 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Link href="/projects/create">
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Project
-                      </Button>
-                    </Link>
-                    <Link href="/tasks">
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
-                        <CheckSquare className="h-4 w-4 mr-2" />
-                        Create Task
-                      </Button>
-                    </Link>
-                    <Link href="/team">
-                      <Button className="w-full justify-start bg-transparent" variant="outline">
-                        <Users className="h-4 w-4 mr-2" />
-                        Invite Team Member
-                      </Button>
-                    </Link>
+                    <CreateProjectDialog
+                      trigger={
+                        <Button className="w-full justify-start bg-transparent" variant="outline">
+                          <Plus className="h-4 w-4 mr-2" />
+                          New Project
+                        </Button>
+                      }
+                    />
+                    <CreateTaskDialog
+                      trigger={
+                        <Button className="w-full justify-start bg-transparent" variant="outline">
+                          <CheckSquare className="h-4 w-4 mr-2" />
+                          Create Task
+                        </Button>
+                      }
+                    />
+                    <InviteTeamMemberDialog
+                      trigger={
+                        <Button className="w-full justify-start bg-transparent" variant="outline">
+                          <Users className="h-4 w-4 mr-2" />
+                          Invite Team Member
+                        </Button>
+                      }
+                    />
                     <Link href="/reports">
                       <Button className="w-full justify-start bg-transparent" variant="outline">
                         <Activity className="h-4 w-4 mr-2" />
@@ -319,7 +323,6 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* Recent Activity */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">

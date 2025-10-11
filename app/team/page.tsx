@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Search, Mail, Phone, MoreHorizontal, MapPin, Calendar } from 'lucide-react'
+import { Plus, Search, Mail, Phone, MoreHorizontal, MapPin, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
+import { UserProfileDialog } from "../../components/user-profile-dialog"
 
 export default function TeamPage() {
   const [teamMembers] = useState([
@@ -162,7 +163,6 @@ export default function TeamPage() {
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Team</h1>
@@ -174,7 +174,6 @@ export default function TeamPage() {
               </Button>
             </div>
 
-            {/* Search */}
             <div className="mb-6">
               <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -182,7 +181,6 @@ export default function TeamPage() {
               </div>
             </div>
 
-            {/* Team Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <Card>
                 <CardContent className="p-6">
@@ -210,7 +208,6 @@ export default function TeamPage() {
               </Card>
             </div>
 
-            {/* Team Members Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {teamMembers.map((member) => (
                 <Card key={member.id} className="hover:shadow-lg transition-shadow">
@@ -243,7 +240,12 @@ export default function TeamPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Profile</DropdownMenuItem>
+                          <UserProfileDialog
+                            user={member}
+                            trigger={
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>View Profile</DropdownMenuItem>
+                            }
+                          />
                           <DropdownMenuItem>Send Message</DropdownMenuItem>
                           <DropdownMenuItem>Edit Role</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600">Remove</DropdownMenuItem>
@@ -253,10 +255,8 @@ export default function TeamPage() {
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    {/* Department Badge */}
                     <Badge variant={getDepartmentColor(member.department)}>{member.department}</Badge>
 
-                    {/* Contact Info */}
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center text-gray-600">
                         <Mail className="h-4 w-4 mr-2" />
@@ -276,7 +276,6 @@ export default function TeamPage() {
                       </div>
                     </div>
 
-                    {/* Stats */}
                     <div className="pt-3 border-t">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Tasks Completed</span>
@@ -288,7 +287,6 @@ export default function TeamPage() {
                       </div>
                     </div>
 
-                    {/* Projects */}
                     <div>
                       <p className="text-sm font-medium text-gray-900 mb-2">Current Projects</p>
                       <div className="flex flex-wrap gap-1">
