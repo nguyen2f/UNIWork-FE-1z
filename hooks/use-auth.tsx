@@ -3,74 +3,52 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import * as api from "@/lib/api"
+import {LoginRequest, RegisterRequest} from "@/types/request";
 
 interface User {
-  id: string
+  userId: string
   name: string
   email: string
-  role: "admin" | "manager" | "member"
-  avatar: string
-  createdAt: string
 }
 
 interface AuthContextType {
-  user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  login: (data: LoginRequest) => Promise<void>
+  register: (data : RegisterRequest) => Promise<void>
   logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    // Comment: Không load user từ localStorage nữa
-    // const savedUser = localStorage.getItem('user')
-    // if (savedUser) {
-    //   setUser(JSON.parse(savedUser))
-    // }
     setLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
-    const response = await api.login(email, password)
-    setUser(response.user)
+  const login = async (data : LoginRequest) => {
+    const response = await api.login(data)
 
-    // Comment: Không lưu vào localStorage
-    // localStorage.setItem('user', JSON.stringify(response.user))
-    // localStorage.setItem('token', response.token)
-
+    localStorage.setItem('userId', response.userId)
+    localStorage.setItem('Authorization', response.token)
     router.push("/dashboard")
   }
 
-  const register = async (name: string, email: string, password: string) => {
-    const response = await api.register(name, email, password)
-    setUser(response.user)
-
-    // Comment: Không lưu vào localStorage
-    // localStorage.setItem('user', JSON.stringify(response.user))
-    // localStorage.setItem('token', response.token)
-
-    router.push("/dashboard")
+  const register = async (data : RegisterRequest) => {
+    const response = await api.register(data)
+    router.push("/auth/login")
   }
 
   const logout = async () => {
     await api.logout()
-    setUser(null)
-
-    // Comment: Không xóa localStorage
-    // localStorage.removeItem('user')
-    // localStorage.removeItem('token')
-
+    localStorage.removeItem('userId')
+    localStorage.removeItem('token')
     router.push("/auth/login")
   }
 
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{loading, login, register, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

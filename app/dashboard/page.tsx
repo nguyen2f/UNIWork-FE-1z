@@ -19,15 +19,29 @@ import {
   Users,
   UserPlus,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState} from "react"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { InviteTeamMemberDialog } from "@/components/invite-team-member-dialog"
 
+import {
+  fetchProjectReport,
+  fetchTaskReport,
+  fetchPendingTasks,
+  fetchTasksPerformance,
+} from "@/lib/api"
+import {ProjectReport} from "@/types/response";
+import {Task} from "@/types";
+
 export default function DashboardPage() {
+  const [projectReport, setProjectReport] = useState<ProjectReport[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([])
   const [createProjectOpen, setCreateProjectOpen] = useState(false)
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null);
+
 
   const stats = [
     {
@@ -60,63 +74,63 @@ export default function DashboardPage() {
     },
   ]
 
-  const recentProjects = [
-    {
-      id: "1",
-      name: "Website Redesign",
-      progress: 75,
-      status: "In Progress",
-      team: 5,
-      deadline: "2024-01-20",
-    },
-    {
-      id: "2",
-      name: "Mobile App Development",
-      progress: 45,
-      status: "In Progress",
-      team: 8,
-      deadline: "2024-02-15",
-    },
-    {
-      id: "3",
-      name: "Marketing Campaign",
-      progress: 90,
-      status: "In Progress",
-      team: 4,
-      deadline: "2024-01-10",
-    },
-  ]
+  // const recentProjects = [
+  //   {
+  //     id: "1",
+  //     name: "Website Redesign",
+  //     progress: 75,
+  //     status: "In Progress",
+  //     team: 5,
+  //     deadline: "2024-01-20",
+  //   },
+  //   {
+  //     id: "2",
+  //     name: "Mobile App Development",
+  //     progress: 45,
+  //     status: "In Progress",
+  //     team: 8,
+  //     deadline: "2024-02-15",
+  //   },
+  //   {
+  //     id: "3",
+  //     name: "Marketing Campaign",
+  //     progress: 90,
+  //     status: "In Progress",
+  //     team: 4,
+  //     deadline: "2024-01-10",
+  //   },
+  // ]
 
-  const upcomingTasks = [
-    {
-      id: "1",
-      title: "Review design mockups",
-      project: "Website Redesign",
-      priority: "High",
-      dueDate: "Today",
-    },
-    {
-      id: "2",
-      title: "Update API documentation",
-      project: "Mobile App Development",
-      priority: "Medium",
-      dueDate: "Tomorrow",
-    },
-    {
-      id: "3",
-      title: "Client presentation",
-      project: "Marketing Campaign",
-      priority: "High",
-      dueDate: "Jan 15",
-    },
-    {
-      id: "4",
-      title: "Code review session",
-      project: "Mobile App Development",
-      priority: "Low",
-      dueDate: "Jan 16",
-    },
-  ]
+  // const upcomingTasks = [
+  //   {
+  //     id: "1",
+  //     title: "Review design mockups",
+  //     project: "Website Redesign",
+  //     priority: "High",
+  //     dueDate: "Today",
+  //   },
+  //   {
+  //     id: "2",
+  //     title: "Update API documentation",
+  //     project: "Mobile App Development",
+  //     priority: "Medium",
+  //     dueDate: "Tomorrow",
+  //   },
+  //   {
+  //     id: "3",
+  //     title: "Client presentation",
+  //     project: "Marketing Campaign",
+  //     priority: "High",
+  //     dueDate: "Jan 15",
+  //   },
+  //   {
+  //     id: "4",
+  //     title: "Code review session",
+  //     project: "Mobile App Development",
+  //     priority: "Low",
+  //     dueDate: "Jan 16",
+  //   },
+  // ]
 
   const teamActivity = [
     {
@@ -154,6 +168,43 @@ export default function DashboardPage() {
         return "default"
     }
   }
+
+  useEffect(() => {
+    fetchProjects();
+    fetchPendingTasks();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const result = await fetchProjectReport();
+
+      if (result.success && result.data) {
+        setProjectReport(result.data);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUpcomingTasks = async () => {
+    try {
+      setLoading(true);
+      const result = await fetchPendingTasks();
+
+      if (result.success && result.data) {
+        setPendingTasks(result.data);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -203,26 +254,26 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentProjects.map((project) => (
-                  <div key={project.id} className="space-y-2">
+                {projectReport.map((project) => (
+                  <div key={project.project.projectId} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{project.name}</p>
+                        <p className="font-medium">{project.project.name}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Users className="h-3 w-3" />
-                          <span>{project.team} members</span>
+                          <span>{project.countMember} members</span>
                           <Calendar className="h-3 w-3 ml-2" />
-                          <span>Due {project.deadline}</span>
+                          <span>Due {project.project.endDate}</span>
                         </div>
                       </div>
-                      <Badge variant="outline">{project.status}</Badge>
+                      <Badge variant="outline">{project.project.status}</Badge>
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium">{project.progress}%</span>
+                        <span className="font-medium">{project.completedPercent}%</span>
                       </div>
-                      <Progress value={project.progress} />
+                      <Progress value={project.completedPercent} />
                     </div>
                   </div>
                 ))}
@@ -238,11 +289,11 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {upcomingTasks.map((task) => (
+                {pendingTasks.map((task) => (
                   <div key={task.id} className="flex items-start justify-between p-3 rounded-lg border">
                     <div className="space-y-1">
                       <p className="font-medium">{task.title}</p>
-                      <p className="text-sm text-muted-foreground">{task.project}</p>
+                      <p className="text-sm text-muted-foreground">{task.projectId}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>

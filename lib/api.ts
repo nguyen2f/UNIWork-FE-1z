@@ -1,103 +1,98 @@
-// Mock API - Comment tất cả API calls thật
-interface User {
-  id: string
-  name: string
-  email: string
-  role: "admin" | "manager" | "member"
-  avatar: string
-  createdAt: string
-}
+import axios from "axios"
+import {LoginRequest, RegisterRequest} from "@/types/request";
+import {User} from "@/types/index"
+import {LoginResponse} from "@/types/response";
 
-interface LoginResponse {
-  user: User
-  token: string
-}
 
-interface RegisterResponse {
-  user: User
-  token: string
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-// Mock database
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "admin@company.com",
-    role: "admin",
-    avatar: "JD",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    name: "Sarah Miller",
-    email: "sarah@company.com",
-    role: "manager",
-    avatar: "SM",
-    createdAt: new Date().toISOString(),
-  },
-]
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
 
-// Mock login function
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  console.log("Mock login called with:", email, password)
+apiClient.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const userId = localStorage.getItem("userId");
+    const authorization = localStorage.getItem("Authorization");
 
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+    console.log("Headers being sent:", { userId, authorization });
 
-  // Find user
-  const user = mockUsers.find((u) => u.email === email)
-
-  if (!user || password !== "123456") {
-    throw new Error("Invalid email or password")
+    if (userId && authorization) {
+      config.headers["userId"] = userId;
+      config.headers["Authorization"] = authorization;
+    }
   }
+  return config;
+});
 
-  console.log("Login successful:", user)
 
-  return {
-    user,
-    token: "mock-token-" + Date.now(),
+
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+  try {
+    const response = await axios.post<LoginResponse>(`${API_BASE_URL}/user/login`, data);
+    return response.data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Login failed")
   }
 }
 
-// Mock register function
-export async function register(name: string, email: string, password: string): Promise<RegisterResponse> {
-  console.log("Mock register called with:", { name, email, password })
-
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  // Check if user exists
-  const existingUser = mockUsers.find((u) => u.email === email)
-  if (existingUser) {
-    throw new Error("Email already registered")
-  }
-
-  // Create new user
-  const newUser: User = {
-    id: String(mockUsers.length + 1),
-    name,
-    email,
-    role: "member",
-    avatar: name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase(),
-    createdAt: new Date().toISOString(),
-  }
-
-  mockUsers.push(newUser)
-  console.log("Register successful:", newUser)
-
-  return {
-    user: newUser,
-    token: "mock-token-" + Date.now(),
+export async function register(data: RegisterRequest): Promise<User> {
+  try {
+    const response = await axios.post<User>(`${API_BASE_URL}/user/register`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Registration failed");
   }
 }
 
-// Mock logout function
 export async function logout(): Promise<void> {
   console.log("Mock logout called")
   await new Promise((resolve) => setTimeout(resolve, 500))
 }
+
+export async function fetchProjectReport() {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/report/project-report`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch project report");
+  }
+}
+
+export async function fetchTaskReport() {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/report/task-report`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch task report");
+  }
+}
+
+export async function fetchPendingTasks() {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/report/task-report/pending-tasks`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch pending tasks");
+  }
+}
+
+export async function fetchTasksPerformance() {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/report/task-report/tasks-performance`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch tasks performance");
+  }
+}
+
+export async function fetchUpcomingEvents() {
+  try {
+    const response = await apiClient.get(`${API_BASE_URL}/report/event-report/upcoming-events`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch upcoming events");
+  }
+}
+
+export default apiClient;

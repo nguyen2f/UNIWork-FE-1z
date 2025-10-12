@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import Link from "next/link"
 import { Building2, Loader2 } from "lucide-react"
+import {LoginRequest} from "@/types/request";
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -25,7 +26,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await login(email, password)
+      await login({email, password} as LoginRequest)
     } catch (err: any) {
       setError(err.message || "Login failed")
     } finally {

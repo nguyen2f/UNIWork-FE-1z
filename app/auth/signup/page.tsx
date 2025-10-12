@@ -38,7 +38,7 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      await register(name, email, password)
+      await register({name, email, password})
     } catch (err: any) {
       setError(err.message || "Registration failed")
     } finally {
