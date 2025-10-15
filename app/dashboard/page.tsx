@@ -1,201 +1,386 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/use-auth"
-import { getProjects, getTasks } from "@/lib/api"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Building2, FolderKanban, ListTodo, Users, LogOut, TrendingUp, DollarSign } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
+import {
+  BarChart3,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FolderKanban,
+  ListTodo,
+  Plus,
+  TrendingUp,
+  Users,
+  UserPlus,
+} from "lucide-react"
+import { useEffect, useState} from "react"
+import { CreateProjectDialog } from "@/components/create-project-dialog"
+import { CreateTaskDialog } from "@/components/create-task-dialog"
+import { InviteTeamMemberDialog } from "@/components/invite-team-member-dialog"
+
+import {
+  fetchProjectReport,
+  fetchTaskReport,
+  fetchPendingTasks,
+  fetchTasksPerformance,
+} from "@/lib/api"
+import {ProjectReport} from "@/types/response";
+import {Task} from "@/types";
 
 export default function DashboardPage() {
-  const { user, logout, isLoading: authLoading } = useAuth()
-  const router = useRouter()
-  const [projects, setProjects] = useState<any[]>([])
-  const [tasks, setTasks] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [projectReport, setProjectReport] = useState<ProjectReport[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([])
+  const [createProjectOpen, setCreateProjectOpen] = useState(false)
+  const [createTaskOpen, setCreateTaskOpen] = useState(false)
+  const [inviteTeamOpen, setInviteTeamOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null);
+
+
+  const stats = [
+    {
+      title: "Active Projects",
+      value: "12",
+      change: "+2 this month",
+      icon: FolderKanban,
+      color: "text-blue-600",
+    },
+    {
+      title: "Tasks Completed",
+      value: "147",
+      change: "+23 this week",
+      icon: CheckCircle2,
+      color: "text-green-600",
+    },
+    {
+      title: "Team Members",
+      value: "28",
+      change: "+4 new",
+      icon: Users,
+      color: "text-purple-600",
+    },
+    {
+      title: "Pending Tasks",
+      value: "34",
+      change: "-8 from last week",
+      icon: Clock,
+      color: "text-orange-600",
+    },
+  ]
+
+  // const recentProjects = [
+  //   {
+  //     id: "1",
+  //     name: "Website Redesign",
+  //     progress: 75,
+  //     status: "In Progress",
+  //     team: 5,
+  //     deadline: "2024-01-20",
+  //   },
+  //   {
+  //     id: "2",
+  //     name: "Mobile App Development",
+  //     progress: 45,
+  //     status: "In Progress",
+  //     team: 8,
+  //     deadline: "2024-02-15",
+  //   },
+  //   {
+  //     id: "3",
+  //     name: "Marketing Campaign",
+  //     progress: 90,
+  //     status: "In Progress",
+  //     team: 4,
+  //     deadline: "2024-01-10",
+  //   },
+  // ]
+
+  // const upcomingTasks = [
+  //   {
+  //     id: "1",
+  //     title: "Review design mockups",
+  //     project: "Website Redesign",
+  //     priority: "High",
+  //     dueDate: "Today",
+  //   },
+  //   {
+  //     id: "2",
+  //     title: "Update API documentation",
+  //     project: "Mobile App Development",
+  //     priority: "Medium",
+  //     dueDate: "Tomorrow",
+  //   },
+  //   {
+  //     id: "3",
+  //     title: "Client presentation",
+  //     project: "Marketing Campaign",
+  //     priority: "High",
+  //     dueDate: "Jan 15",
+  //   },
+  //   {
+  //     id: "4",
+  //     title: "Code review session",
+  //     project: "Mobile App Development",
+  //     priority: "Low",
+  //     dueDate: "Jan 16",
+  //   },
+  // ]
+
+  const teamActivity = [
+    {
+      user: "Sarah Johnson",
+      action: "completed",
+      target: "Design Review",
+      time: "2 hours ago",
+      avatar: "/placeholder-user.jpg",
+    },
+    {
+      user: "Michael Chen",
+      action: "created",
+      target: "New API Endpoint",
+      time: "4 hours ago",
+      avatar: "/placeholder-user.jpg",
+    },
+    {
+      user: "Emma Wilson",
+      action: "updated",
+      target: "Project Timeline",
+      time: "5 hours ago",
+      avatar: "/placeholder-user.jpg",
+    },
+  ]
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High":
+        return "destructive"
+      case "Medium":
+        return "default"
+      case "Low":
+        return "secondary"
+      default:
+        return "default"
+    }
+  }
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/auth/signin")
-    }
-  }, [user, authLoading, router])
+    fetchProjects();
+    fetchPendingTasks();
+  }, []);
 
-  useEffect(() => {
-    if (user) {
-      loadData()
-    }
-  }, [user])
-
-  const loadData = async () => {
+  const fetchProjects = async () => {
     try {
-      const [projectsData, tasksData] = await Promise.all([getProjects(), getTasks()])
-      setProjects(projectsData)
-      setTasks(tasksData)
-    } catch (error) {
-      console.error("Error loading data:", error)
+      setLoading(true);
+      const result = await fetchProjectReport();
+
+      if (result.success && result.data) {
+        setProjectReport(result.data);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching projects:', err);
     } finally {
-      setIsLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleLogout = () => {
-    logout()
-    router.push("/auth/signin")
-  }
+  const fetchUpcomingTasks = async () => {
+    try {
+      setLoading(true);
+      const result = await fetchPendingTasks();
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Đang tải...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0)
-  const totalSpent = projects.reduce((sum, p) => sum + (p.spent || 0), 0)
-  const activeProjects = projects.filter((p) => p.status === "in-progress").length
-  const completedTasks = tasks.filter((t) => t.status === "completed").length
+      if (result.success && result.data) {
+        setPendingTasks(result.data);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching projects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">ProManage</h1>
-              <p className="text-sm text-muted-foreground">Enterprise Dashboard</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Đăng xuất
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          {/* Quick Actions */}
+          <div className="mb-6 flex gap-3">
+            <Button onClick={() => setCreateProjectOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+            <Button onClick={() => setCreateTaskOpen(true)} variant="outline" className="gap-2">
+              <ListTodo className="h-4 w-4" />
+              Create Task
+            </Button>
+            <Button onClick={() => setInviteTeamOpen(true)} variant="outline" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Invite Team Member
             </Button>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Chào mừng trở lại, {user?.name}!</h2>
-          <p className="text-muted-foreground">Đây là tổng quan về các dự án của bạn</p>
-        </div>
+          {/* Stats Grid */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            {stats.map((stat) => (
+              <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.change}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng dự án</CardTitle>
-              <FolderKanban className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{projects.length}</div>
-              <p className="text-xs text-muted-foreground">{activeProjects} đang hoạt động</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Công việc hoàn thành</CardTitle>
-              <ListTodo className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {completedTasks}/{tasks.length}
-              </div>
-              <p className="text-xs text-muted-foreground">{tasks.length - completedTasks} đang thực hiện</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng ngân sách</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalBudget.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">${totalSpent.toLocaleString()} đã chi</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hiệu suất</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{Math.round((completedTasks / tasks.length) * 100)}%</div>
-              <p className="text-xs text-muted-foreground">Tỷ lệ hoàn thành công việc</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Projects List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Dự án gần đây</CardTitle>
-            <CardDescription>Danh sách các dự án đang hoạt động</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {projects.slice(0, 5).map((project) => (
-                <div
-                  key={project.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{project.name}</h3>
-                    <p className="text-sm text-muted-foreground">{project.description}</p>
-                    <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {project.teamSize} thành viên
-                      </span>
-                      <span>Ngân sách: ${project.budget?.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 bg-secondary rounded-full h-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: `${project.progress}%` }} />
+          <div className="grid gap-6 lg:grid-cols-2 mb-6">
+            {/* Recent Projects */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FolderKanban className="h-5 w-5" />
+                  Recent Projects
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {projectReport.map((project) => (
+                  <div key={project.project.projectId} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{project.project.name}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="h-3 w-3" />
+                          <span>{project.countMember} members</span>
+                          <Calendar className="h-3 w-3 ml-2" />
+                          <span>Due {project.project.endDate}</span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">{project.progress}%</span>
+                      <Badge variant="outline">{project.project.status}</Badge>
                     </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        project.status === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : project.status === "in-progress"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {project.status === "completed"
-                        ? "Hoàn thành"
-                        : project.status === "in-progress"
-                          ? "Đang thực hiện"
-                          : "Lên kế hoạch"}
-                    </span>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium">{project.completedPercent}%</span>
+                      </div>
+                      <Progress value={project.completedPercent} />
+                    </div>
                   </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Tasks */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ListTodo className="h-5 w-5" />
+                  Upcoming Tasks
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {pendingTasks.map((task) => (
+                  <div key={task.id} className="flex items-start justify-between p-3 rounded-lg border">
+                    <div className="space-y-1">
+                      <p className="font-medium">{task.title}</p>
+                      <p className="text-sm text-muted-foreground">{task.projectId}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                      <span className="text-xs text-muted-foreground">{task.dueDate}</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Team Activity & Performance */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Team Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Team Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {teamActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={activity.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>{activity.user[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-sm">
+                        <span className="font-medium">{activity.user}</span>{" "}
+                        <span className="text-muted-foreground">{activity.action}</span>{" "}
+                        <span className="font-medium">{activity.target}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Performance Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Performance Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Tasks Completion Rate</span>
+                    <span className="font-medium">87%</span>
+                  </div>
+                  <Progress value={87} />
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </main>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>On-time Delivery</span>
+                    <span className="font-medium">92%</span>
+                  </div>
+                  <Progress value={92} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Team Productivity</span>
+                    <span className="font-medium">78%</span>
+                  </div>
+                  <Progress value={78} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Budget Utilization</span>
+                    <span className="font-medium">65%</span>
+                  </div>
+                  <Progress value={65} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+
+      <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
+      <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} />
+      <InviteTeamMemberDialog open={inviteTeamOpen} onOpenChange={setInviteTeamOpen} />
     </div>
   )
 }

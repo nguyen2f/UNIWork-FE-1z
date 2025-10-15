@@ -1,316 +1,228 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Search, Mail, Phone, MoreHorizontal, MapPin, Calendar } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Sidebar } from "../../components/sidebar"
-import { Header } from "../../components/header"
+import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
+import { UserProfileDialog } from "@/components/user-profile-dialog"
+import { Mail, MoreVertical, Search, UserPlus, Eye } from "lucide-react"
+import { toast } from "sonner"
 
 export default function TeamPage() {
-  const [teamMembers] = useState([
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+
+  const teamMembers = [
     {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@company.com",
-      role: "Project Manager",
-      department: "Management",
-      avatar: "/placeholder-user.jpg",
-      status: "Online",
-      location: "New York, NY",
-      joinDate: "Jan 2023",
-      projects: ["Website Redesign", "Mobile App"],
-      tasksCompleted: 45,
+      id: "1",
+      name: "Sarah Johnson",
+      email: "sarah.j@company.com",
       phone: "+1 (555) 123-4567",
-    },
-    {
-      id: 2,
-      name: "Sarah Miller",
-      email: "sarah.miller@company.com",
       role: "Senior Designer",
       department: "Design",
-      avatar: "/placeholder-user.jpg",
-      status: "Online",
       location: "San Francisco, CA",
-      joinDate: "Mar 2022",
-      projects: ["Website Redesign", "Marketing Campaign"],
-      tasksCompleted: 38,
-      phone: "+1 (555) 234-5678",
+      joinDate: "Jan 15, 2022",
+      avatar: "/placeholder-user.jpg",
+      bio: "Passionate designer with 8+ years of experience in creating user-centered digital experiences. Specializes in UI/UX design and design systems.",
+      skills: ["UI/UX Design", "Figma", "Design Systems", "Prototyping", "User Research"],
+      projects: [
+        { name: "Website Redesign", role: "Lead Designer" },
+        { name: "Mobile App", role: "UI Designer" },
+      ],
+      stats: {
+        projectsCompleted: 24,
+        tasksCompleted: 156,
+        hoursLogged: 1240,
+      },
     },
     {
-      id: 3,
-      name: "Alex Johnson",
-      email: "alex.johnson@company.com",
+      id: "2",
+      name: "Michael Chen",
+      email: "michael.c@company.com",
+      phone: "+1 (555) 234-5678",
       role: "Full Stack Developer",
       department: "Engineering",
+      location: "New York, NY",
+      joinDate: "Mar 10, 2021",
       avatar: "/placeholder-user.jpg",
-      status: "Away",
-      location: "Austin, TX",
-      joinDate: "Jun 2022",
-      projects: ["Mobile App", "API Integration"],
-      tasksCompleted: 52,
-      phone: "+1 (555) 345-6789",
+      bio: "Full-stack developer specializing in modern web technologies. Experienced in building scalable applications and leading technical teams.",
+      skills: ["React", "Node.js", "TypeScript", "PostgreSQL", "AWS"],
+      projects: [
+        { name: "Mobile App Development", role: "Lead Developer" },
+        { name: "API Platform", role: "Backend Engineer" },
+      ],
+      stats: {
+        projectsCompleted: 32,
+        tasksCompleted: 201,
+        hoursLogged: 1680,
+      },
     },
     {
-      id: 4,
-      name: "Rachel Wong",
-      email: "rachel.wong@company.com",
+      id: "3",
+      name: "Emma Wilson",
+      email: "emma.w@company.com",
+      phone: "+1 (555) 345-6789",
+      role: "Project Manager",
+      department: "Management",
+      location: "Austin, TX",
+      joinDate: "Jul 20, 2020",
+      avatar: "/placeholder-user.jpg",
+      bio: "Experienced project manager with a track record of delivering complex projects on time and within budget. Agile certified and team-oriented.",
+      skills: ["Project Management", "Agile", "Scrum", "Stakeholder Management", "Risk Management"],
+      projects: [
+        { name: "Marketing Campaign", role: "Project Manager" },
+        { name: "Enterprise Platform", role: "Program Manager" },
+      ],
+      stats: {
+        projectsCompleted: 45,
+        tasksCompleted: 312,
+        hoursLogged: 2150,
+      },
+    },
+    {
+      id: "4",
+      name: "David Brown",
+      email: "david.b@company.com",
+      phone: "+1 (555) 456-7890",
       role: "Frontend Developer",
       department: "Engineering",
-      avatar: "/placeholder-user.jpg",
-      status: "Online",
       location: "Seattle, WA",
-      joinDate: "Sep 2023",
-      projects: ["Website Redesign", "Mobile App"],
-      tasksCompleted: 29,
-      phone: "+1 (555) 456-7890",
-    },
-    {
-      id: 5,
-      name: "Tom Harris",
-      email: "tom.harris@company.com",
-      role: "DevOps Engineer",
-      department: "Engineering",
+      joinDate: "Nov 5, 2022",
       avatar: "/placeholder-user.jpg",
-      status: "Offline",
-      location: "Denver, CO",
-      joinDate: "Feb 2023",
-      projects: ["Database Migration", "Security Audit"],
-      tasksCompleted: 33,
-      phone: "+1 (555) 567-8901",
+      bio: "Frontend developer passionate about creating beautiful and performant web applications. Specializes in React and modern CSS.",
+      skills: ["React", "Next.js", "Tailwind CSS", "TypeScript", "Performance Optimization"],
+      projects: [
+        { name: "Website Redesign", role: "Frontend Developer" },
+        { name: "Dashboard App", role: "Frontend Lead" },
+      ],
+      stats: {
+        projectsCompleted: 18,
+        tasksCompleted: 142,
+        hoursLogged: 980,
+      },
     },
-    {
-      id: 6,
-      name: "Nina Kumar",
-      email: "nina.kumar@company.com",
-      role: "Database Administrator",
-      department: "Engineering",
-      avatar: "/placeholder-user.jpg",
-      status: "Online",
-      location: "Chicago, IL",
-      joinDate: "Nov 2022",
-      projects: ["Database Migration"],
-      tasksCompleted: 41,
-      phone: "+1 (555) 678-9012",
-    },
-    {
-      id: 7,
-      name: "Lisa Smith",
-      email: "lisa.smith@company.com",
-      role: "Marketing Manager",
-      department: "Marketing",
-      avatar: "/placeholder-user.jpg",
-      status: "Online",
-      location: "Los Angeles, CA",
-      joinDate: "Apr 2023",
-      projects: ["Marketing Campaign"],
-      tasksCompleted: 27,
-      phone: "+1 (555) 789-0123",
-    },
-    {
-      id: 8,
-      name: "Mike Rodriguez",
-      email: "mike.rodriguez@company.com",
-      role: "QA Engineer",
-      department: "Engineering",
-      avatar: "/placeholder-user.jpg",
-      status: "Away",
-      location: "Miami, FL",
-      joinDate: "Aug 2022",
-      projects: ["Mobile App", "API Integration"],
-      tasksCompleted: 35,
-      phone: "+1 (555) 890-1234",
-    },
-  ])
+  ]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Online":
-        return "bg-green-500"
-      case "Away":
-        return "bg-yellow-500"
-      case "Offline":
-        return "bg-gray-400"
-      default:
-        return "bg-gray-400"
-    }
+  const handleViewProfile = (member: any) => {
+    setSelectedUser(member)
+    setProfileDialogOpen(true)
   }
 
-  const getDepartmentColor = (department: string) => {
-    switch (department) {
-      case "Engineering":
-        return "default"
-      case "Design":
-        return "secondary"
-      case "Marketing":
-        return "outline"
-      case "Management":
-        return "destructive"
-      default:
-        return "secondary"
-    }
+  const handleSendMessage = (memberId: string) => {
+    toast.success("Message sent", {
+      description: "Your message has been sent successfully.",
+    })
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Team</h1>
-                <p className="text-gray-600 mt-2">Manage your team members and their roles</p>
-              </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Member
-              </Button>
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Team</h1>
+              <p className="text-muted-foreground">Manage your team members</p>
             </div>
+            <Button className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Invite Member
+            </Button>
+          </div>
 
-            {/* Search */}
-            <div className="mb-6">
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input placeholder="Search team members..." className="pl-10" />
-              </div>
+          {/* Search */}
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search team members..." className="pl-9" />
             </div>
+          </div>
 
-            {/* Team Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card>
+          {/* Team Members Grid */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {teamMembers.map((member) => (
+              <Card key={member.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-gray-900">24</div>
-                  <p className="text-sm text-gray-600">Total Members</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-green-600">18</div>
-                  <p className="text-sm text-gray-600">Online Now</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-blue-600">6</div>
-                  <p className="text-sm text-gray-600">Departments</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-purple-600">12</div>
-                  <p className="text-sm text-gray-600">Active Projects</p>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="flex items-start justify-between mb-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                      <AvatarFallback className="text-lg">{member.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewProfile(member)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSendMessage(member.id)}>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Send Message
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-            {/* Team Members Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {teamMembers.map((member) => (
-                <Card key={member.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={member.avatar || "/placeholder.svg"} alt={member.name} />
-                            <AvatarFallback>
-                              {member.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div
-                            className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${getStatusColor(member.status)}`}
-                          ></div>
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{member.name}</CardTitle>
-                          <p className="text-sm text-gray-600">{member.role}</p>
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Profile</DropdownMenuItem>
-                          <DropdownMenuItem>Send Message</DropdownMenuItem>
-                          <DropdownMenuItem>Edit Role</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">Remove</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">{member.name}</h3>
+                      <p className="text-sm text-muted-foreground">{member.role}</p>
                     </div>
-                  </CardHeader>
 
-                  <CardContent className="space-y-4">
-                    {/* Department Badge */}
-                    <Badge variant={getDepartmentColor(member.department)}>{member.department}</Badge>
+                    <div className="flex gap-2">
+                      <Badge variant="secondary">{member.department}</Badge>
+                    </div>
 
-                    {/* Contact Info */}
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Mail className="h-4 w-4 mr-2" />
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Mail className="h-4 w-4" />
                         <span className="truncate">{member.email}</span>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <Phone className="h-4 w-4 mr-2" />
-                        {member.phone}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-4 border-t">
+                      <div className="text-center">
+                        <div className="font-bold text-blue-600">{member.stats.projectsCompleted}</div>
+                        <div className="text-xs text-muted-foreground">Projects</div>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        {member.location}
+                      <div className="text-center">
+                        <div className="font-bold text-green-600">{member.stats.tasksCompleted}</div>
+                        <div className="text-xs text-muted-foreground">Tasks</div>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Joined {member.joinDate}
+                      <div className="text-center">
+                        <div className="font-bold text-purple-600">{member.stats.hoursLogged}</div>
+                        <div className="text-xs text-muted-foreground">Hours</div>
                       </div>
                     </div>
 
-                    {/* Stats */}
-                    <div className="pt-3 border-t">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Tasks Completed</span>
-                        <span className="font-medium">{member.tasksCompleted}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-gray-600">Active Projects</span>
-                        <span className="font-medium">{member.projects.length}</span>
-                      </div>
-                    </div>
-
-                    {/* Projects */}
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 mb-2">Current Projects</p>
-                      <div className="flex flex-wrap gap-1">
-                        {member.projects.slice(0, 2).map((project, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {project}
-                          </Badge>
-                        ))}
-                        {member.projects.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{member.projects.length - 2} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 bg-transparent"
+                      onClick={() => handleViewProfile(member)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      View Profile
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </main>
       </div>
+
+      <UserProfileDialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen} user={selectedUser} />
     </div>
   )
 }

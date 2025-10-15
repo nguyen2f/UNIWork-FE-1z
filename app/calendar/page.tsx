@@ -1,19 +1,39 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Plus, CalendarIcon, Clock, Users, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
+import { CreateEventDialog } from "../../components/create-event-dialog"
+import { EventDetailDialog } from "../../components/event-detail-dialog"
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+]
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [view, setView] = useState<'month' | 'week' | 'day'>('month')
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [showEventDetail, setShowEventDetail] = useState(false)
+  const [view, setView] = useState<"month" | "week" | "day">("month")
 
-  const events = [
+  const [events, setEvents] = useState([
     {
       id: 1,
       title: "CRM Migration Kickoff",
@@ -25,6 +45,8 @@ export default function CalendarPage() {
       attendees: ["JD", "SM", "AL"],
       location: "Conference Room A",
       priority: "High",
+      description:
+        "Initial kickoff meeting for the CRM migration project. We'll discuss timeline, resources, and key milestones.",
     },
     {
       id: 2,
@@ -37,6 +59,7 @@ export default function CalendarPage() {
       attendees: ["DK", "PL"],
       location: "Virtual",
       priority: "Critical",
+      description: "Review findings from the security audit and discuss remediation plans.",
     },
     {
       id: 3,
@@ -49,11 +72,12 @@ export default function CalendarPage() {
       attendees: ["RW", "KL", "MJ", "TH"],
       location: "Innovation Lab",
       priority: "High",
+      description: "Strategic planning workshop for digital transformation roadmap.",
     },
     {
       id: 4,
-      title: "Budget Review Meeting",
-      project: "Q1 Budget Planning",
+      title: "Sprint Planning",
+      project: "Q1 Planning",
       date: "2024-02-18",
       time: "11:00 AM",
       duration: "1.5 hours",
@@ -61,6 +85,7 @@ export default function CalendarPage() {
       attendees: ["JD", "SM", "LS"],
       location: "Executive Boardroom",
       priority: "Medium",
+      description: "Plan sprint objectives and allocate resources for Q1.",
     },
     {
       id: 5,
@@ -73,8 +98,66 @@ export default function CalendarPage() {
       attendees: ["MR", "JB", "KW"],
       location: "Multiple Locations",
       priority: "High",
+      description: "Phase 2 completion milestone for ERP rollout.",
     },
-  ]
+  ])
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startingDayOfWeek = firstDay.getDay()
+
+    return { daysInMonth, startingDayOfWeek }
+  }
+
+  const getEventsForDate = (date: Date) => {
+    const dateStr = date.toISOString().split("T")[0]
+    return events.filter((event) => event.date === dateStr)
+  }
+
+  const handlePreviousMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
+  }
+
+  const handleDateClick = (day: number) => {
+    const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+    setSelectedDate(clickedDate)
+
+    const dayEvents = getEventsForDate(clickedDate)
+    if (dayEvents.length === 1) {
+      setSelectedEvent(dayEvents[0])
+      setShowEventDetail(true)
+    }
+  }
+
+  const handleEventClick = (event: any) => {
+    setSelectedEvent(event)
+    setShowEventDetail(true)
+  }
+
+  const handleEventCreated = (newEvent: any) => {
+    setEvents([...events, newEvent])
+  }
+
+  const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate)
+  const calendarDays = []
+
+  // Empty cells for days before month starts
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    calendarDays.push(null)
+  }
+
+  // Days in the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    calendarDays.push(day)
+  }
 
   const getEventTypeColor = (type: string) => {
     switch (type) {
@@ -86,6 +169,8 @@ export default function CalendarPage() {
         return "bg-green-100 text-green-800 border-green-200"
       case "milestone":
         return "bg-orange-100 text-orange-800 border-orange-200"
+      case "deadline":
+        return "bg-red-100 text-red-800 border-red-200"
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
@@ -106,6 +191,15 @@ export default function CalendarPage() {
     }
   }
 
+  const today = new Date()
+  const isToday = (day: number) => {
+    return (
+      day === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear()
+    )
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -119,72 +213,122 @@ export default function CalendarPage() {
                 <h1 className="text-3xl font-bold text-gray-900">Project Calendar</h1>
                 <p className="text-gray-600 mt-2">Schedule and track project milestones, meetings, and deadlines</p>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                New Event
-              </Button>
+              <CreateEventDialog selectedDate={selectedDate || undefined} onEventCreated={handleEventCreated} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Calendar Controls */}
+              {/* Calendar */}
               <div className="lg:col-span-3">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
-                      <h2 className="text-xl font-semibold">February 2024</h2>
-                      <Button variant="outline" size="icon">
+                      <h2 className="text-xl font-semibold">
+                        {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+                      </h2>
+                      <Button variant="outline" size="icon" onClick={handleNextMonth}>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="flex space-x-2">
-                      <Button variant={view === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setView('month')}>
+                      <Button
+                        variant={view === "month" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("month")}
+                      >
                         Month
                       </Button>
-                      <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => setView('week')}>
+                      <Button
+                        variant={view === "week" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("week")}
+                      >
                         Week
                       </Button>
-                      <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setView('day')}>
+                      <Button variant={view === "day" ? "default" : "outline"} size="sm" onClick={() => setView("day")}>
                         Day
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
                     {/* Calendar Grid */}
-                    <div className="grid grid-cols-7 gap-1 mb-4">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {DAYS.map((day) => (
                         <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
                           {day}
                         </div>
                       ))}
-                      {Array.from({ length: 35 }, (_, i) => {
-                        const day = i - 2 // Adjust for month start
-                        const isCurrentMonth = day > 0 && day <= 29
-                        const hasEvent = isCurrentMonth && [15, 16, 17, 18, 20].includes(day)
-                        
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                      {calendarDays.map((day, index) => {
+                        if (day === null) {
+                          return <div key={`empty-${index}`} className="h-24 bg-gray-50" />
+                        }
+
+                        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+                        const dayEvents = getEventsForDate(date)
+                        const isTodayDate = isToday(day)
+
                         return (
                           <div
-                            key={i}
-                            className={`p-2 h-20 border border-gray-200 ${
-                              isCurrentMonth ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
-                            } cursor-pointer relative`}
+                            key={day}
+                            className={`h-24 border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer relative transition-colors ${
+                              isTodayDate ? "border-blue-500 border-2" : ""
+                            }`}
+                            onClick={() => handleDateClick(day)}
                           >
-                            {isCurrentMonth && (
-                              <>
-                                <span className={`text-sm ${day === 15 ? 'font-bold text-blue-600' : 'text-gray-900'}`}>
-                                  {day}
-                                </span>
-                                {hasEvent && (
-                                  <div className="mt-1">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
-                                    {day === 16 && <div className="w-2 h-2 bg-red-500 rounded-full mb-1"></div>}
-                                    {day === 17 && <div className="w-2 h-2 bg-green-500 rounded-full mb-1"></div>}
+                            <div className="p-2 h-full flex flex-col">
+                              <span
+                                className={`text-sm font-medium ${isTodayDate ? "text-blue-600" : "text-gray-900"}`}
+                              >
+                                {day}
+                              </span>
+                              <div className="flex-1 mt-1 overflow-hidden">
+                                {dayEvents.slice(0, 2).map((event) => (
+                                  <div
+                                    key={event.id}
+                                    className="text-xs truncate mb-1 px-1 py-0.5 rounded"
+                                    style={{
+                                      backgroundColor:
+                                        event.type === "meeting"
+                                          ? "#DBEAFE"
+                                          : event.type === "review"
+                                            ? "#F3E8FF"
+                                            : event.type === "workshop"
+                                              ? "#D1FAE5"
+                                              : event.type === "milestone"
+                                                ? "#FED7AA"
+                                                : "#FEE2E2",
+                                      color:
+                                        event.type === "meeting"
+                                          ? "#1E40AF"
+                                          : event.type === "review"
+                                            ? "#6B21A8"
+                                            : event.type === "workshop"
+                                              ? "#065F46"
+                                              : event.type === "milestone"
+                                                ? "#9A3412"
+                                                : "#991B1B",
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEventClick(event)
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-1">
+                                      <div className={`w-1.5 h-1.5 rounded-full ${getPriorityColor(event.priority)}`} />
+                                      <span className="truncate">{event.title}</span>
+                                    </div>
                                   </div>
+                                ))}
+                                {dayEvents.length > 2 && (
+                                  <div className="text-xs text-gray-500 px-1">+{dayEvents.length - 2} more</div>
                                 )}
-                              </>
-                            )}
+                              </div>
+                            </div>
                           </div>
                         )
                       })}
@@ -193,100 +337,97 @@ export default function CalendarPage() {
                 </Card>
               </div>
 
-              {/* Upcoming Events */}
+              {/* Upcoming Events Sidebar */}
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <CalendarIcon className="h-5 w-5 mr-2" />
-                      Upcoming Events
-                    </CardTitle>
+                    <CardTitle className="flex items-center text-base">Upcoming Events</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {events.slice(0, 4).map((event) => (
-                        <div key={event.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                          <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-medium text-sm">{event.title}</h4>
-                            <div className={`w-3 h-3 rounded-full ${getPriorityColor(event.priority)}`}></div>
-                          </div>
-                          <p className="text-xs text-gray-600 mb-2">{event.project}</p>
-                          <div className="space-y-1 text-xs text-gray-500">
-                            <div className="flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {event.time} ({event.duration})
+                    <div className="space-y-3">
+                      {events
+                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                        .slice(0, 5)
+                        .map((event) => (
+                          <div
+                            key={event.id}
+                            className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer"
+                            onClick={() => handleEventClick(event)}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium text-sm line-clamp-1">{event.title}</h4>
+                              <div className={`w-2.5 h-2.5 rounded-full ${getPriorityColor(event.priority)}`} />
                             </div>
-                            <div className="flex items-center">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {event.location}
+                            <p className="text-xs text-gray-600 mb-2 line-clamp-1">{event.project}</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center text-xs text-gray-500">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} •{" "}
+                                {event.time}
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {event.location}
+                              </div>
                             </div>
-                            <div className="flex items-center">
-                              <Users className="h-3 w-3 mr-1" />
-                              {event.attendees.length} attendees
+                            <div className="mt-2">
+                              <Badge variant="outline" className={`text-xs ${getEventTypeColor(event.type)}`}>
+                                {event.type}
+                              </Badge>
                             </div>
                           </div>
-                          <div className="mt-2">
-                            <Badge variant="outline" className={`text-xs ${getEventTypeColor(event.type)}`}>
-                              {event.type}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
-                    <Button variant="outline" className="w-full mt-4">
-                      View All Events
-                    </Button>
                   </CardContent>
                 </Card>
-              </div>
-            </div>
 
-            {/* Today's Schedule */}
-            <div className="mt-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Today's Schedule - February 15, 2024</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {events.filter(event => event.date === "2024-02-15").map((event) => (
-                      <div key={event.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-                        <div className="flex-shrink-0">
-                          <div className={`w-4 h-4 rounded-full ${getPriorityColor(event.priority)}`}></div>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium">{event.title}</h4>
-                          <p className="text-sm text-gray-600">{event.project}</p>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          <div className="flex items-center mb-1">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {event.time}
-                          </div>
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {event.location}
-                          </div>
-                        </div>
-                        <div className="flex -space-x-2">
-                          {event.attendees.map((attendee, idx) => (
-                            <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                              <AvatarFallback className="text-xs bg-blue-100 text-blue-700">{attendee}</AvatarFallback>
-                            </Avatar>
-                          ))}
-                        </div>
-                        <Badge variant="outline" className={getEventTypeColor(event.type)}>
-                          {event.type}
-                        </Badge>
+                {/* Selected Day Events */}
+                {selectedDate && (
+                  <Card className="mt-4">
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {selectedDate.toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {getEventsForDate(selectedDate).length === 0 ? (
+                          <p className="text-sm text-gray-500 text-center py-4">No events scheduled</p>
+                        ) : (
+                          getEventsForDate(selectedDate).map((event) => (
+                            <div
+                              key={event.id}
+                              className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer"
+                              onClick={() => handleEventClick(event)}
+                            >
+                              <div className="flex items-start justify-between mb-1">
+                                <h4 className="font-medium text-sm">{event.title}</h4>
+                                <Badge variant="outline" className={`text-xs ${getEventTypeColor(event.type)}`}>
+                                  {event.type}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center text-xs text-gray-500 mt-1">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {event.time}
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
         </main>
       </div>
+
+      <EventDetailDialog event={selectedEvent} open={showEventDetail} onOpenChange={setShowEventDetail} />
     </div>
   )
 }

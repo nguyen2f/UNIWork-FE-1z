@@ -1,80 +1,54 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+import * as api from "@/lib/api"
+import {LoginRequest, RegisterRequest} from "@/types/request";
 
 interface User {
-  id: string
+  userId: string
   name: string
   email: string
-  role: string
 }
 
 interface AuthContextType {
-  user: User | null
-  token: string | null
-  isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  loading: boolean
+  login: (data: LoginRequest) => Promise<void>
+  register: (data : RegisterRequest) => Promise<void>
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    // Check for existing session
-    const storedToken = localStorage.getItem("token")
-    const storedUser = localStorage.getItem("user")
-
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
-    }
-    setIsLoading(false)
+    setLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
-    const { login: apiLogin } = await import("@/lib/api")
-    const response = await apiLogin(email, password)
+  const login = async (data : LoginRequest) => {
+    const response = await api.login(data)
 
-    if (response.success) {
-      setUser(response.user)
-      setToken(response.token)
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
-    } else {
-      throw new Error("Login failed")
-    }
+    localStorage.setItem('userId', response.userId)
+    localStorage.setItem('Authorization', response.token)
+    router.push("/dashboard")
   }
 
-  const register = async (name: string, email: string, password: string) => {
-    const { register: apiRegister } = await import("@/lib/api")
-    const response = await apiRegister(name, email, password)
-
-    if (response.success) {
-      setUser(response.user)
-      setToken(response.token)
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
-    } else {
-      throw new Error("Registration failed")
-    }
+  const register = async (data : RegisterRequest) => {
+    const response = await api.register(data)
+    router.push("/auth/login")
   }
 
-  const logout = () => {
-    setUser(null)
-    setToken(null)
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
+  const logout = async () => {
+    await api.logout()
+    localStorage.removeItem('userId')
+    localStorage.removeItem('token')
+    router.push("/auth/login")
   }
 
-  return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>{children}</AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{loading, login, register, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
