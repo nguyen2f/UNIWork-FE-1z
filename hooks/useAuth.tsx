@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { api } from "@/lib/api"
+import { login as apiLogin, register as apiRegister } from "@/lib/api"
 
 interface User {
   id: string
@@ -47,17 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    const { token, userId } = await api.auth.login(email, password)
+    const response = await apiLogin({ email, password })
+    const { token, userId } = response.data
     localStorage.setItem("token", token)
     localStorage.setItem("userId", userId)
 
-    const profile = await api.auth.getProfile()
-    setUser(profile)
+    // const profile = await api.getProfile()
+    // setUser(profile)
     router.push("/dashboard")
   }
 
   const register = async (name: string, email: string, password: string) => {
-    await api.auth.register(name, email, password)
+    await apiRegister({ name, email, password })
     await login(email, password)
   }
 

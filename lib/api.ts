@@ -1,98 +1,149 @@
 import axios from "axios"
-import {LoginRequest, RegisterRequest} from "@/types/request";
-import {User} from "@/types/index"
-import {LoginResponse} from "@/types/response";
+import { LoginRequest, RegisterRequest } from "@/types/request";
+import { User } from "@/types/index"
+import { LoginResponse } from "@/types/response";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-});
+// apiClient.interceptors.request.use((config) => {
+//   if (typeof window !== "undefined") {
+//     const userId = localStorage.getItem("userId");
+//     const authorization = localStorage.getItem("Authorization");
 
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const userId = localStorage.getItem("userId");
-    const authorization = localStorage.getItem("Authorization");
+//     console.log("Headers being sent:", { userId, authorization });
 
-    console.log("Headers being sent:", { userId, authorization });
+//     if (userId && authorization) {
+//       config.headers["userId"] = userId;
+//       config.headers["Authorization"] = authorization;
+//     }
+//   }
+//   return config;
+// });
 
-    if (userId && authorization) {
-      config.headers["userId"] = userId;
-      config.headers["Authorization"] = authorization;
+import Qs from 'qs'
+// import { message } from "antd";
+
+const request = axios.create();
+
+request.interceptors.request.use(
+  (config) => {
+    // if (config.url.indexOf(tokenUrl) !== -1) {
+    //   delete config.headers.Authorization;
+    // }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error.response || { data: {} });
+  }
+);
+
+request.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (
+      (error.response && error.response.status === 401) ||
+      !localStorage.getItem("Authorization")
+    ) {
+      // message?.error(error?.response?.data?.status?.message)
+      localStorage.removeItem("Authorization");
+    } else {
+      return Promise.reject(error?.response || { data: {} });
     }
   }
-  return config;
-});
+);
 
+export const api_no_authen = (options: any) => {
+  let config = {
+    baseURL: API_BASE_URL,
+    ...options,
+    paramsSerializer: (params: any) =>
+      Qs.stringify(params, { arrayFormat: "repeat" }),
+    headers: {
+      ...options.headers,
+    },
+  };
+  return request(config);
+};
 
-
-export async function login(data: LoginRequest): Promise<LoginResponse> {
-  try {
-    const response = await axios.post<LoginResponse>(`${API_BASE_URL}/user/login`, data);
-    return response.data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Login failed")
+export const api = (options: any, notRequireToken: any, auth = false) => {
+  let config = {
+    baseURL: API_BASE_URL,
+    ...options,
+    paramsSerializer: (params: any) =>
+      Qs.stringify(params, { arrayFormat: "repeat" }),
+    headers: {
+      ...options.headers,
+    },
+  };
+  if (localStorage.getItem("Authorization") && !notRequireToken) {
+    config.headers.Authorization = `${localStorage.getItem("Authorization")}`;
   }
+  return request(config);
+};
+
+export default api
+
+
+
+
+export const login = (data: LoginRequest) => {
+  return api({
+    method: "POST",
+    url: "/user/login",
+    data: data,
+  }, true);
+};
+
+
+export const register = (data: RegisterRequest) => {
+  return api({
+    method: "POST",
+    url: "/user/register",
+    data: data,
+  }, true);
 }
 
-export async function register(data: RegisterRequest): Promise<User> {
-  try {
-    const response = await axios.post<User>(`${API_BASE_URL}/user/register`, data);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Registration failed");
-  }
+export const logout = () => {
+  return api({
+    method: "POST",
+    url: "/user/logout",
+  }, true);
 }
 
-export async function logout(): Promise<void> {
-  console.log("Mock logout called")
-  await new Promise((resolve) => setTimeout(resolve, 500))
+export const fetchProjectReport = () => {
+  return api({
+    method: "GET",
+    url: "/report/project-report",
+  }, true);
 }
 
-export async function fetchProjectReport() {
-  try {
-    const response = await apiClient.get(`${API_BASE_URL}/report/project-report`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch project report");
-  }
+export const fetchTaskReport = () => {
+  return api({
+    method: "GET",
+    url: "/report/task-report",
+  }, true);
 }
 
-export async function fetchTaskReport() {
-  try {
-    const response = await apiClient.get(`${API_BASE_URL}/report/task-report`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch task report");
-  }
+export const fetchPendingTasks = () => {
+  return api({
+    method: "GET",
+    url: "/report/task-report/pending-tasks",
+  }, true);
 }
 
-export async function fetchPendingTasks() {
-  try {
-    const response = await apiClient.get(`${API_BASE_URL}/report/task-report/pending-tasks`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch pending tasks");
-  }
+export const fetchTasksPerformance = () => {
+  return api({
+    method: "GET",
+    url: "/report/task-report/tasks-performance",
+  }, true);
 }
 
-export async function fetchTasksPerformance() {
-  try {
-    const response = await apiClient.get(`${API_BASE_URL}/report/task-report/tasks-performance`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch tasks performance");
-  }
+export const fetchUpcomingEvents = () => {
+  return api({
+    method: "GET",
+    url: "/report/event-report/upcoming-events",
+  }, true);
 }
-
-export async function fetchUpcomingEvents() {
-  try {
-    const response = await apiClient.get(`${API_BASE_URL}/report/event-report/upcoming-events`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch upcoming events");
-  }
-}
-
-export default apiClient;

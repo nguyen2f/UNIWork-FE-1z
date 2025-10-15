@@ -19,7 +19,7 @@ import {
   Users,
   UserPlus,
 } from "lucide-react"
-import { useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { InviteTeamMemberDialog } from "@/components/invite-team-member-dialog"
@@ -30,8 +30,8 @@ import {
   fetchPendingTasks,
   fetchTasksPerformance,
 } from "@/lib/api"
-import {ProjectReport} from "@/types/response";
-import {Task} from "@/types";
+import { ProjectReport } from "@/types/response";
+import { Task } from "@/types";
 
 export default function DashboardPage() {
   const [projectReport, setProjectReport] = useState<ProjectReport[]>([]);
@@ -171,7 +171,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchProjects();
-    fetchPendingTasks();
+    fetchUpcomingTasks();
   }, []);
 
   const fetchProjects = async () => {
@@ -179,7 +179,7 @@ export default function DashboardPage() {
       setLoading(true);
       const result = await fetchProjectReport();
 
-      if (result.success && result.data) {
+      if (result.data) {
         setProjectReport(result.data);
       }
     } catch (err: any) {
@@ -195,7 +195,7 @@ export default function DashboardPage() {
       setLoading(true);
       const result = await fetchPendingTasks();
 
-      if (result.success && result.data) {
+      if (result.data) {
         setPendingTasks(result.data);
       }
     } catch (err: any) {
