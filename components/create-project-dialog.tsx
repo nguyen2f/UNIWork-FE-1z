@@ -3,17 +3,26 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "lucide-react"
-import { toast } from "sonner"
-
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  InputNumber,
+  Avatar,
+  Tag,
+  Button,
+  Space,
+  Row,
+  Col,
+  message,
+  Drawer
+} from "antd"
+import { CalendarOutlined, UserOutlined } from "@ant-design/icons"
+import dayjs from "dayjs"
+import DateRangePicker from "@/components/ui/DateRangePicker"
+import { createProject } from "@/app/services/projectService"
 interface CreateProjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -27,190 +36,212 @@ const teamMembers = [
 ]
 
 export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    status: "planning",
-    priority: "medium",
-    startDate: "",
-    endDate: "",
-    budget: "",
-    assignedTo: [] as string[],
-  })
+  const [form] = Form.useForm()
+  const [assignedTo, setAssignedTo] = useState<string>()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (values: any) => {
+    try {
+      const { dateRange, ...rest } = values
+      const formData = {
+        ...rest,
+        startDate: dateRange?.[0]?.toISOString(),
+        endDate: dateRange?.[1]?.toISOString(),
+        assignedTo: teamMembers?.find((member) => member.id === assignedTo)?.name,
+      }
 
-    toast.success("Project created successfully!", {
-      description: `${formData.name} has been added to your projects.`,
-    })
+      const response = await createProject(formData)
 
-    onOpenChange(false)
-    setFormData({
-      name: "",
-      description: "",
-      status: "planning",
-      priority: "medium",
-      startDate: "",
-      endDate: "",
-      budget: "",
-      assignedTo: [],
-    })
+      message.success("Project created successfully!", 3)
+      onOpenChange(false)
+      form.resetFields()
+      setAssignedTo(undefined)
+    } catch (error) {
+      message.error("Failed to create project")
+    }
   }
 
   const toggleMember = (memberId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      assignedTo: prev.assignedTo.includes(memberId)
-        ? prev.assignedTo.filter((id) => id !== memberId)
-        : [...prev.assignedTo, memberId],
-    }))
+    // setAssignedTo(prev =>
+    //   prev.includes(memberId)
+    //     ? prev.filter((id) => id !== memberId)
+    //     : [...prev, memberId]
+    // )
+    setAssignedTo(memberId)
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter project name"
-                required
-              />
-            </div>
+    <Drawer
+      open={open}
+      onClose={() => onOpenChange(false)}
+      width={800}
+      title="Create Project"
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{
+          status: 1,
+          priority: 2,
+        }}
+      >
+        <Form.Item
+          label="Project Name"
+          name="name"
+          rules={[{ required: true, message: 'Please enter project name!' }]}
+        >
+          <Input placeholder="Enter project name" />
+        </Form.Item>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter project description"
-                rows={4}
-              />
-            </div>
+        <Form.Item
+          label="Description"
+          name="description"
+        >
+          <Input.TextArea
+            placeholder="Enter project description"
+            rows={4}
+          />
+        </Form.Item>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planning">Planning</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="on-hold">On Hold</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="Status"
+              name="status"
+            >
+              <Select placeholder="Select Status">
+                <Select.Option value={1}>Planning</Select.Option>
+                <Select.Option value={2}>In Progress</Select.Option>
+                <Select.Option value={3}>On Hold</Select.Option>
+                <Select.Option value={4}>Completed</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Priority"
+              name="priority"
+            >
+              <Select>
+                <Select.Option value={1}>Low</Select.Option>
+                <Select.Option value={2}>Medium</Select.Option>
+                <Select.Option value={3}>High</Select.Option>
+                <Select.Option value={4}>Critical</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+        <Form.Item
+          label="Select Date Range"
+          name="dateRange"
+        >
+          <DateRangePicker />
+        </Form.Item>
+        <Form.Item
+          label="Category"
+          name="category"
+          initialValue="Web Development"
+        >
+          <Select placeholder="Select Category">
+            <Select.Option value="Web Development">Web Development</Select.Option>
+            <Select.Option value="Mobile Development">Mobile Development</Select.Option>
+            <Select.Option value="UI/UX Design">UI/UX Design</Select.Option>
+            <Select.Option value="SEO">SEO</Select.Option>
+            <Select.Option value="Digital Marketing">Digital Marketing</Select.Option>
+            <Select.Option value="Content Writing">Content Writing</Select.Option>
+            <Select.Option value="Graphic Design">Graphic Design</Select.Option>
+            <Select.Option value="Video Editing">Video Editing</Select.Option>
+            <Select.Option value="Social Media Management">Social Media Management</Select.Option>
+          </Select>
+        </Form.Item>
+
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="Department"
+              name="department"
+              initialValue="IT"
+            >
+              <Select placeholder="Select Department">
+                <Select.Option value="IT">IT</Select.Option>
+                <Select.Option value="HR">HR</Select.Option>
+                <Select.Option value="Finance">Finance</Select.Option>
+                <Select.Option value="Marketing">Marketing</Select.Option>
+                <Select.Option value="Sales">Sales</Select.Option>
+                <Select.Option value="Customer Service">Customer Service</Select.Option>
+                <Select.Option value="Engineering">Engineering</Select.Option>
+                <Select.Option value="Design">Design</Select.Option>
+                <Select.Option value="Legal">Legal</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Risk Level"
+              name="riskLevel"
+            >
+              <Select placeholder="Select Risk Level">
+                <Select.Option value="Low">Low</Select.Option>
+                <Select.Option value="Medium">Medium</Select.Option>
+                <Select.Option value="High">High</Select.Option>
+                <Select.Option value="Critical">Critical</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item label="Assign Team Members">
+          <Row gutter={[8, 8]}>
+            {teamMembers.map((member) => (
+              <Col span={12} key={member.id}>
+                <div
+                  onClick={() => toggleMember(member?.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: '1px solid #d9d9d9',
+                    cursor: 'pointer',
+                    backgroundColor: assignedTo === member.id ? '#e6f7ff' : '#fff',
+                    borderColor: assignedTo === member.id ? '#1890ff' : '#d9d9d9',
+                    transition: 'all 0.3s'
+                  }}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
-                <div className="relative">
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  <Avatar
+                    size={32}
+                    src={member.avatar}
+                    icon={<UserOutlined />}
                   />
-                  <Calendar className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <div className="relative">
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  />
-                  <Calendar className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="budget">Budget ($)</Label>
-              <Input
-                id="budget"
-                type="number"
-                value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                placeholder="Enter budget amount"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Assign Team Members</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {teamMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    onClick={() => toggleMember(member.id)}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      formData.assignedTo.includes(member.id)
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:bg-accent"
-                    }`}
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>{member.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.role}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>
+                      {member.name}
                     </div>
-                    {formData.assignedTo.includes(member.id) && (
-                      <Badge variant="secondary" className="ml-auto">
-                        ✓
-                      </Badge>
-                    )}
+                    <div style={{ fontSize: 12, color: '#666' }}>
+                      {member.role}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  {assignedTo === member.id && (
+                    <Tag color="blue">✓</Tag>
+                  )}
+                </div>
+              </Col>
+            ))}
+          </Row>
+        </Form.Item>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+          <Space>
+            <Button onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Project</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <Button type="primary" htmlType="submit">
+              Create Project
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
+    </Drawer>
   )
 }

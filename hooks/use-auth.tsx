@@ -3,7 +3,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import * as api from "@/lib/api"
-import {LoginRequest, RegisterRequest} from "@/types/request";
+import { LoginRequest, RegisterRequest } from "@/types/request";
+import { LoginResponse } from "@/types/response";
 
 interface User {
   userId: string
@@ -14,7 +15,7 @@ interface User {
 interface AuthContextType {
   loading: boolean
   login: (data: LoginRequest) => Promise<void>
-  register: (data : RegisterRequest) => Promise<void>
+  register: (data: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
   }, [])
 
-  const login = async (data : LoginRequest) => {
+  const login = async (data: LoginRequest) => {
     const response = await api.login(data)
 
     localStorage.setItem('userId', response.userId)
@@ -36,19 +37,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard")
   }
 
-  const register = async (data : RegisterRequest) => {
+  const register = async (data: RegisterRequest) => {
     const response = await api.register(data)
     router.push("/auth/login")
   }
 
   const logout = async () => {
-    await api.logout()
     localStorage.removeItem('userId')
     localStorage.removeItem('token')
     router.push("/auth/login")
   }
 
-  return <AuthContext.Provider value={{loading, login, register, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ loading, login, register, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

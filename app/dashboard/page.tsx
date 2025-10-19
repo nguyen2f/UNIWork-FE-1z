@@ -254,7 +254,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {projectReport.map((project) => (
+                {projectReport?.map((project) => (
                   <div key={project.project.projectId} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
@@ -289,7 +289,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {pendingTasks.map((task) => (
+                {pendingTasks?.map((task) => (
                   <div key={task.id} className="flex items-start justify-between p-3 rounded-lg border">
                     <div className="space-y-1">
                       <p className="font-medium">{task.title}</p>

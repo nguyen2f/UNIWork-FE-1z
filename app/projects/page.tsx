@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,54 +15,32 @@ import { ViewLayoutToggle } from "@/components/view-layout-toggle"
 import { Calendar, DollarSign, MoreVertical, Plus, Search, Users, FolderKanban, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { getProjects } from "../services/projectService"
+import { Project } from "@/types"
+import { ProjectParams } from "@/types/projectType"
 
 export default function ProjectsPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [params, setParams] = useState<ProjectParams>({})
+  useEffect(() => {
+    fetchProjects()
+  }, [])
 
-  const projects = [
-    {
-      id: "1",
-      name: "Website Redesign",
-      description: "Complete overhaul of company website with modern design",
-      status: "In Progress",
-      priority: "High",
-      progress: 75,
-      startDate: "2024-01-01",
-      endDate: "2024-01-20",
-      budget: "50000",
-      teamSize: 5,
-      assignedTo: ["1", "2"],
-    },
-    {
-      id: "2",
-      name: "Mobile App Development",
-      description: "Native mobile app for iOS and Android",
-      status: "In Progress",
-      priority: "Critical",
-      progress: 45,
-      startDate: "2024-01-05",
-      endDate: "2024-02-15",
-      budget: "100000",
-      teamSize: 8,
-      assignedTo: ["2", "3", "4"],
-    },
-    {
-      id: "3",
-      name: "Marketing Campaign",
-      description: "Q1 marketing campaign across all channels",
-      status: "Planning",
-      priority: "Medium",
-      progress: 20,
-      startDate: "2024-01-10",
-      endDate: "2024-03-31",
-      budget: "75000",
-      teamSize: 4,
-      assignedTo: ["1", "3"],
-    },
-  ]
+  const fetchProjects = async () => {
+    try {
+      const res = await getProjects(params)
+      if (res) {
+        setProjects(res)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

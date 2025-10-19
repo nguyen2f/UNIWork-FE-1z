@@ -2,27 +2,12 @@ import axios from "axios"
 import { LoginRequest, RegisterRequest } from "@/types/request";
 import { User } from "@/types/index"
 import { LoginResponse } from "@/types/response";
+import Qs from 'qs'
+import { message } from "antd"
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
-// apiClient.interceptors.request.use((config) => {
-//   if (typeof window !== "undefined") {
-//     const userId = localStorage.getItem("userId");
-//     const authorization = localStorage.getItem("Authorization");
-
-//     console.log("Headers being sent:", { userId, authorization });
-
-//     if (userId && authorization) {
-//       config.headers["userId"] = userId;
-//       config.headers["Authorization"] = authorization;
-//     }
-//   }
-//   return config;
-// });
-
-import Qs from 'qs'
-// import { message } from "antd";
 
 const request = axios.create();
 
@@ -40,16 +25,17 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   (response) => {
-    return response;
+    return response?.data;
   },
   (error) => {
     if (
       (error.response && error.response.status === 401) ||
       !localStorage.getItem("Authorization")
     ) {
-      // message?.error(error?.response?.data?.status?.message)
+      message?.error(error?.response?.data?.message)
       localStorage.removeItem("Authorization");
     } else {
+      message?.error(error?.response?.data?.message)
       return Promise.reject(error?.response || { data: {} });
     }
   }
@@ -68,7 +54,7 @@ export const api_no_authen = (options: any) => {
   return request(config);
 };
 
-export const api = (options: any, notRequireToken: any, auth = false) => {
+export const api = <T = any>(options: any, notRequireToken?: boolean, auth = false): Promise<T> => {
   let config = {
     baseURL: API_BASE_URL,
     ...options,
@@ -78,8 +64,9 @@ export const api = (options: any, notRequireToken: any, auth = false) => {
       ...options.headers,
     },
   };
-  if (localStorage.getItem("Authorization") && !notRequireToken) {
+  if (localStorage.getItem("Authorization")) {
     config.headers.Authorization = `${localStorage.getItem("Authorization")}`;
+    config.headers.userId = `${localStorage.getItem("userId")}`;
   }
   return request(config);
 };
