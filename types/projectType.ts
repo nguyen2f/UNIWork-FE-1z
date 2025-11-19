@@ -1,4 +1,4 @@
-export interface CreateProject {
+export interface ProjectRequest {
     projectId?: number;
     name: string;
     description: string;
@@ -11,7 +11,6 @@ export interface CreateProject {
     department: string;
     riskLevel: string;
 }
-
 export interface ProjectParams {
     priority?: number
     status?: number

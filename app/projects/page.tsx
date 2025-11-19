@@ -34,7 +34,7 @@ export default function ProjectsPage() {
     try {
       const res = await getProjects(params)
       if (res) {
-        setProjects(res)
+        setProjects(res.data || [])
       }
     } catch (error) {
       console.error(error)
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
           {/* Grid View */}
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project) => (
+              {projects?.map((project) => (
                 <Card key={project.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -165,7 +165,7 @@ export default function ProjectsPage() {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{project.teamSize} members</span>
+                        <span>{5} members</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -238,7 +238,7 @@ export default function ProjectsPage() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
-                              <span>{project.teamSize}</span>
+                              <span>{5}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4" />
@@ -261,7 +261,7 @@ export default function ProjectsPage() {
                         </div>
                       </div>
                     </div>
-                  </CardContent>
+                  </CardContent>https://www.postman.com/workspace/My-Workspace~0d6d37fc-8877-409f-807c-20fb9593f9d3/request/38830317-5f0e8631-c970-461b-b671-92b23846d517
                 </Card>
               ))}
             </div>
