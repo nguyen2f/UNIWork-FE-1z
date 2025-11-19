@@ -190,46 +190,46 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
             </Form.Item>
           </Col>
         </Row>
-        {/*<Form.Item label="Assign Team Members">*/}
-        {/*  <Row gutter={[8, 8]}>*/}
-        {/*    {teamMembers.map((member) => (*/}
-        {/*      <Col span={12} key={member.id}>*/}
-        {/*        <div*/}
-        {/*          onClick={() => toggleMember(member?.id)}*/}
-        {/*          style={{*/}
-        {/*            display: 'flex',*/}
-        {/*            alignItems: 'center',*/}
-        {/*            gap: 12,*/}
-        {/*            padding: 12,*/}
-        {/*            borderRadius: 8,*/}
-        {/*            border: '1px solid #d9d9d9',*/}
-        {/*            cursor: 'pointer',*/}
-        {/*            backgroundColor: assignedTo === member.id ? '#e6f7ff' : '#fff',*/}
-        {/*            borderColor: assignedTo === member.id ? '#1890ff' : '#d9d9d9',*/}
-        {/*            transition: 'all 0.3s'*/}
-        {/*          }}*/}
-        {/*        >*/}
-        {/*          <Avatar*/}
-        {/*            size={32}*/}
-        {/*            src={member.avatar}*/}
-        {/*            icon={<UserOutlined />}*/}
-        {/*          />*/}
-        {/*          <div style={{ flex: 1, minWidth: 0 }}>*/}
-        {/*            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>*/}
-        {/*              {member.name}*/}
-        {/*            </div>*/}
-        {/*            <div style={{ fontSize: 12, color: '#666' }}>*/}
-        {/*              {member.role}*/}
-        {/*            </div>*/}
-        {/*          </div>*/}
-        {/*          {assignedTo === member.id && (*/}
-        {/*            <Tag color="blue">✓</Tag>*/}
-        {/*          )}*/}
-        {/*        </div>*/}
-        {/*      </Col>*/}
-        {/*    ))}*/}
-        {/*  </Row>*/}
-        {/*</Form.Item>*/}
+        <Form.Item label="Assign Team Members">
+          <Row gutter={[8, 8]}>
+            {teamMembers.map((member) => (
+              <Col span={12} key={member.id}>
+                <div
+                  onClick={() => toggleMember(member?.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: '1px solid #d9d9d9',
+                    cursor: 'pointer',
+                    backgroundColor: assignedTo === member.id ? '#e6f7ff' : '#fff',
+                    borderColor: assignedTo === member.id ? '#1890ff' : '#d9d9d9',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  <Avatar
+                    size={32}
+                    src={member.avatar}
+                    icon={<UserOutlined />}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>
+                      {member.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#666' }}>
+                      {member.role}
+                    </div>
+                  </div>
+                  {assignedTo === member.id && (
+                    <Tag color="blue">✓</Tag>
+                  )}
+                </div>
+              </Col>
+            ))}
+          </Row>
+        </Form.Item>
 
         <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
           <Space>

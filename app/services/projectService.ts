@@ -17,4 +17,3 @@ export const getProjects = async (params: ProjectParams) => {
         params,
     })
 }
-
