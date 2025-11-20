@@ -2,6 +2,7 @@ import axios from "axios"
 import type { LoginRequest, RegisterRequest } from "@/types/request"
 import Qs from "qs"
 import { message } from "antd"
+import exp from "node:constants";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -146,63 +147,4 @@ export const fetchUpcomingEvents = () => {
   )
 }
 
-export const projectsApi = {
-  getAll: () =>
-    api({
-      method: "GET",
-      url: "/project/get-all",
-    }),
-  getById: (id: string) =>
-    api({
-      method: "GET",
-      url: `/project/get-by-id/${id}`,
-    }),
-  create: (data: any) =>
-    api({
-      method: "POST",
-      url: "/project/create-project",
-      data,
-    }),
-  update: (id: string, data: any) =>
-    api({
-      method: "PUT",
-      url: `/project/update/${id}`,
-      data,
-    }),
-  delete: (id: string) =>
-    api({
-      method: "DELETE",
-      url: `/project/delete/${id}`,
-    }),
-}
 
-export const tasksApi = {
-  getByProject: (projectId: string) =>
-    api({
-      method: "GET",
-      url: `/task/get-by-project/${projectId}`,
-    }),
-  create: (data: any) =>
-    api({
-      method: "POST",
-      url: "/task/create-task",
-      data,
-    }),
-  update: (id: string, data: any) =>
-    api({
-      method: "PUT",
-      url: `/task/update/${id}`,
-      data,
-    }),
-  updateStatus: (id: string, status: string) =>
-    api({
-      method: "PUT",
-      url: `/task/update-status/${id}`,
-      data: { status },
-    }),
-  delete: (id: string) =>
-    api({
-      method: "DELETE",
-      url: `/task/delete/${id}`,
-    }),
-}

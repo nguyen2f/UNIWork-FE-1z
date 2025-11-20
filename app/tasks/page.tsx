@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import {useEffect, useState} from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,54 +15,33 @@ import { EditTaskDialog } from "@/components/edit-task-dialog"
 import { ViewLayoutToggle } from "@/components/view-layout-toggle"
 import { Calendar, MoreVertical, Plus, Search, ListTodo, Edit, Trash2, Clock } from "lucide-react"
 import { toast } from "sonner"
+import {getTask} from "@/app/services/taskService";
+import { Task } from "@/types"
+
 
 export default function TasksPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [params, setParams] = useState<>({})
 
-  const tasks = [
-    {
-      id: "1",
-      title: "Review design mockups",
-      description: "Review and provide feedback on new dashboard designs",
-      project: "1",
-      projectName: "Website Redesign",
-      status: "in-progress",
-      priority: "high",
-      dueDate: "2024-01-15",
-      assignedTo: "1",
-      assignedName: "Sarah Johnson",
-      assignedAvatar: "/placeholder-user.jpg",
-    },
-    {
-      id: "2",
-      title: "Update API documentation",
-      description: "Document all new API endpoints and update examples",
-      project: "2",
-      projectName: "Mobile App Development",
-      status: "todo",
-      priority: "medium",
-      dueDate: "2024-01-18",
-      assignedTo: "2",
-      assignedName: "Michael Chen",
-      assignedAvatar: "/placeholder-user.jpg",
-    },
-    {
-      id: "3",
-      title: "Client presentation",
-      description: "Prepare and deliver Q1 results presentation",
-      project: "3",
-      projectName: "Marketing Campaign",
-      status: "todo",
-      priority: "high",
-      dueDate: "2024-01-20",
-      assignedTo: "3",
-      assignedName: "Emma Wilson",
-      assignedAvatar: "/placeholder-user.jpg",
-    },
-  ]
+  useEffect(() => {
+    fetchTasks()
+  }, [])
+
+
+  const fetchTasks = async () => {
+    try {
+      const res = await getTask(params)
+      if (res) {
+        setSelectedTask(res.data || [])
+      }
+    } catch (error) {
+      console.error(error)
+    }
+
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -150,7 +129,7 @@ export default function TasksPage() {
           {/* Grid View */}
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {tasks.map((task) => (
+              {selectedTask?.map((task) => (
                 <Card key={task.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -189,13 +168,13 @@ export default function TasksPage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={task.assignedAvatar || "/placeholder.svg"} />
-                          <AvatarFallback>{task.assignedName[0]}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-muted-foreground">{task.assignedName}</span>
-                      </div>
+                      {/*<div className="flex items-center gap-2">*/}
+                      {/*  <Avatar className="h-6 w-6">*/}
+                      {/*    <AvatarImage src={task.assignedAvatar || "/placeholder.svg"} />*/}
+                      {/*    <AvatarFallback>{task.assignedName[0]}</AvatarFallback>*/}
+                      {/*  </Avatar>*/}
+                      {/*  <span className="text-sm text-muted-foreground">{task.assignedName}</span>*/}
+                      {/*</div>*/}
 
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
@@ -211,7 +190,7 @@ export default function TasksPage() {
           {/* List View */}
           {view === "list" && (
             <div className="space-y-3">
-              {tasks.map((task) => (
+              {selectedTask?.map((task) => (
                 <Card key={task.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-6">
@@ -239,13 +218,13 @@ export default function TasksPage() {
 
                           <div className="text-sm text-muted-foreground">{task.projectName}</div>
 
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={task.assignedAvatar || "/placeholder.svg"} />
-                              <AvatarFallback>{task.assignedName[0]}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm text-muted-foreground">{task.assignedName}</span>
-                          </div>
+                          {/*<div className="flex items-center gap-2">*/}
+                          {/*  <Avatar className="h-6 w-6">*/}
+                          {/*    <AvatarImage src={task.assignedAvatar || "/placeholder.svg"} />*/}
+                          {/*    <AvatarFallback>{task.assignedName[0]}</AvatarFallback>*/}
+                          {/*  </Avatar>*/}
+                          {/*  <span className="text-sm text-muted-foreground">{task.assignedName}</span>*/}
+                          {/*</div>*/}
 
                           <div className="flex items-center gap-1 text-sm text-muted-foreground ml-auto">
                             <Clock className="h-4 w-4" />

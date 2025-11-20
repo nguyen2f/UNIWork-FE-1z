@@ -15,7 +15,7 @@ import { ViewLayoutToggle } from "@/components/view-layout-toggle"
 import { Calendar, DollarSign, MoreVertical, Plus, Search, Users, FolderKanban, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { getProjects } from "../services/projectService"
+import { getAllProjects } from "../services/projectService"
 import { Project } from "@/types"
 import { ProjectParams } from "@/types/projectType"
 
@@ -32,7 +32,7 @@ export default function ProjectsPage() {
 
   const fetchProjects = async () => {
     try {
-      const res = await getProjects(params)
+      const res = await getAllProjects()
       if (res) {
         setProjects(res.data || [])
       }
@@ -114,7 +114,7 @@ export default function ProjectsPage() {
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {projects?.map((project) => (
-                <Card key={project.id} className="hover:shadow-lg transition-shadow">
+                <Card key={project.projectId} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function ProjectsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/projects/${project.id}`} className="cursor-pointer">
+                            <Link href={`/projects/${project.projectId}`} className="cursor-pointer">
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </Link>
@@ -138,7 +138,7 @@ export default function ProjectsPage() {
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(project.id)} className="text-destructive">
+                          <DropdownMenuItem onClick={() => handleDelete(project.projectId)} className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
@@ -189,7 +189,7 @@ export default function ProjectsPage() {
           {view === "list" && (
             <div className="space-y-3">
               {projects.map((project) => (
-                <Card key={project.id} className="hover:shadow-md transition-shadow">
+                <Card key={project.projectId} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-6">
                       <div className="flex-shrink-0">
@@ -212,7 +212,7 @@ export default function ProjectsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/projects/${project.id}`} className="cursor-pointer">
+                                <Link href={`/projects/${project.projectId}`} className="cursor-pointer">
                                   <Eye className="h-4 w-4 mr-2" />
                                   View Details
                                 </Link>
@@ -221,7 +221,7 @@ export default function ProjectsPage() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDelete(project.id)} className="text-destructive">
+                              <DropdownMenuItem onClick={() => handleDelete(project.projectId)} className="text-destructive">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>

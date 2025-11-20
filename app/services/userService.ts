@@ -1,20 +1,12 @@
 import { api } from "@/lib/api";
-import { Project } from "@/types";
-import { ProjectRequest, ProjectParams } from "@/types/projectType";
+import { User } from "@/types";
+import { UpdateProfileRequest, AssignMemberRequest, RemoveMemberRequest } from "@/types/userType";
 
-export const createProject = async (project: ProjectRequest) => {
-    return api<ProjectRequest>({
-        method: "POST",
-        url: "/project/create",
-        data: project,
-    })
-}
-
-export const getProjects = async (params: ProjectParams) => {
-    return api<Project[]>({
+export const getAllMember = async () => {
+    return api<any>({
         method: "GET",
-        url: "/project/all",
-        params,
+        url: "/user/all"
     })
 }
+
 

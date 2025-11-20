@@ -1,14 +1,14 @@
 export interface User {
-  id: string
+  userId: string
   email: string
   name: string
-  role: "admin" | "manager" | "member"
+  department: string
   avatar: string
   createdAt: string
 }
 
 export interface Project {
-  id: string
+  projectId: string
   name: string
   description: string
   status: "planning" | "active" | "completed" | "on-hold"

@@ -1,18 +1,23 @@
 "use client"
 
-import type React from "react"
+import React, {useEffect} from "react"
 
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "lucide-react"
 import { toast } from "sonner"
+import {Drawer, Form, message, Select, Row, Col, DatePicker, Input, Space, Tag} from "antd";
+import {createProject, getAllProjects} from "@/app/services/projectService";
+import {UserOutlined} from "@ant-design/icons";
+import {createTask} from "@/app/services/taskService";
+import {getAllMember} from "@/app/services/userService";
+import {Project} from "@/types";
+import {User} from "@/types";
 
 interface CreateTaskDialogProps {
   open: boolean
@@ -33,169 +38,176 @@ const teamMembers = [
 ]
 
 export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    project: "",
-    status: "todo",
-    priority: "medium",
-    dueDate: "",
-    assignedTo: "",
-  })
+  const [form] = Form.useForm()
+  const [assignedTo, setAssignedTo] = useState<string>()
+  const [allMembers, setAllMembers] = useState<User[]>([]);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  useEffect(() => {
+    fetchAllMember();
+    fetchAllProject();
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (values: any) => {
+    try {
+      const { dateRange, ...rest } = values
+      const formData = {
+        ...rest,
+        startDate: dateRange?.[0]?.toISOString(),
+        endDate: dateRange?.[1]?.toISOString()
+      }
 
-    toast.success("Task created successfully!", {
-      description: `${formData.title} has been added to your tasks.`,
-    })
+      const response = await createTask(formData)
 
-    onOpenChange(false)
-    setFormData({
-      title: "",
-      description: "",
-      project: "",
-      status: "todo",
-      priority: "medium",
-      dueDate: "",
-      assignedTo: "",
-    })
+      message.success("Project created successfully!", 3)
+      onOpenChange(false)
+      form.resetFields()
+      setAssignedTo(undefined)
+    } catch (error) {
+      message.error("Failed to create project")
+    }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Task Title *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter task title"
-                required
-              />
-            </div>
+  const fetchAllMember = async () => {
+    try {
+      const response = await getAllMember();
+      setAllMembers(response.data);
+    } catch (error) {
+      message.error("Failed to fetch team members");
+    }
+  };
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+  const fetchAllProject = async () => {
+    try {
+      const response = await getAllProjects();
+      setAllProjects(response.data);
+    } catch (error) {
+      message.error("Failed to fetch projects");
+    }
+  };
+
+  return (
+      <Drawer
+          open={open}
+          onClose={() => onOpenChange(false)}
+          width={800}
+          title="Create New Task"
+      >
+        <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            initialValues={{
+              status: 1,
+              priority: 2,
+            }}
+        >
+          <Form.Item
+              label="Task Title"
+              name="title"
+              rules={[{ required: true, message: 'Please enter task title!' }]}
+          >
+            <Input placeholder="Enter task title" />
+          </Form.Item>
+
+          <Form.Item
+              label="Description"
+              name="description"
+          >
+            <Input.TextArea
                 placeholder="Enter task description"
                 rows={4}
-              />
-            </div>
+            />
+          </Form.Item>
 
-            <div className="space-y-2">
-              <Label htmlFor="project">Project</Label>
-              <Select value={formData.project} onValueChange={(value) => setFormData({ ...formData, project: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <Form.Item
+              label="Project"
+              name="projectId"
+              rules={[{ required: true, message: 'Please select a project!' }]}
+          >
+            <Select
+                placeholder="Select a project"
+                showSearch
+                // filterOption={(input, option) =>
+                //     (option?.children?.toLowerCase() ?? '').includes(input.toLowerCase())
+                // }
+            >
+              {allProjects?.map((project) => (
+                  <Select.Option key={project.projectId} value={project.projectId}>
+                    {project.name}
+                  </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="review">In Review</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
-                  </SelectContent>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                  label="Status"
+                  name="status"
+              >
+                <Select placeholder="Select Status">
+                  <Select.Option value={1}>To Do</Select.Option>
+                  <Select.Option value={2}>In Progress</Select.Option>
+                  <Select.Option value={3}>In Review</Select.Option>
+                  <Select.Option value={4}>Done</Select.Option>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                  label="Priority"
+                  name="priority"
+              >
+                <Select>
+                  <Select.Option value={1}>Low</Select.Option>
+                  <Select.Option value={2}>Medium</Select.Option>
+                  <Select.Option value={3}>High</Select.Option>
+                  <Select.Option value={4}>Critical</Select.Option>
                 </Select>
-              </div>
-            </div>
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <div className="relative">
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                />
-                <Calendar className="absolute right-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
+          <Form.Item
+              label="Due Date"
+              name="dueDate"
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
 
-            <div className="space-y-2">
-              <Label>Assign To</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {teamMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    onClick={() => setFormData({ ...formData, assignedTo: member.id })}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      formData.assignedTo === member.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:bg-accent"
-                    }`}
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>{member.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.role}</p>
-                    </div>
-                    {formData.assignedTo === member.id && (
-                      <Badge variant="secondary" className="ml-auto">
-                        ✓
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <Form.Item
+              label="Assign To"
+              name="assignedTo"
+          >
+            <Select
+                mode="multiple"
+                placeholder="Select team members"
+                showSearch
+                // filterOption={(input, option) =>
+                //     (option?.children?.toLowerCase() ?? '').includes(input.toLowerCase())
+                // }
+                maxTagCount="responsive"
+            >
+              {allMembers.map((member) => (
+                  <Select.Option key={member.userId} value={member.userId}>
+                    {member.name} - {member.department}
+                  </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Create Task</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="primary" htmlType="submit">
+                Create Task
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Drawer>
   )
+
 }
