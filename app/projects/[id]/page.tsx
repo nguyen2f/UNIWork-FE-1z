@@ -21,12 +21,12 @@ import {
 } from "lucide-react"
 import { Sidebar } from "../../../components/sidebar"
 import { Header } from "../../../components/header"
-import { TaskList } from "../../../components/task-list"
 import { ProjectMembers } from "../../../components/project-members"
 import { ProjectMessages } from "../../../components/project-messages"
 import Link from "next/link"
 import type { Project } from "@/types"
 import { mockProjects, mockTasks, mockUsers } from "@/lib/data"
+import { ProjectDetailTasks } from "../../../components/project-detail-tasks"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -265,7 +265,7 @@ export default function ProjectDetailPage() {
               </TabsList>
 
               <TabsContent value="tasks" className="mt-6">
-                <TaskList projectId={project.id} tasks={project.tasks} />
+                <ProjectDetailTasks projectId={project.id} tasks={project.tasks} />
               </TabsContent>
 
               <TabsContent value="members" className="mt-6">
