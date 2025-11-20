@@ -1,10 +1,9 @@
 "use client"
 
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -12,34 +11,33 @@ import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { EditTaskDialog } from "@/components/edit-task-dialog"
+import { TaskDetailDialog } from "@/components/task-detail-dialog"
 import { ViewLayoutToggle } from "@/components/view-layout-toggle"
-import { Calendar, MoreVertical, Plus, Search, ListTodo, Edit, Trash2, Clock } from "lucide-react"
+import { Calendar, MoreVertical, Plus, Search, ListTodo, Edit, Trash2, Clock, Eye } from "lucide-react"
 import { toast } from "sonner"
-import {getTask} from "@/app/services/taskService";
-import { Task } from "@/types"
-
+import { getTask } from "@/app/services/taskService"
 
 export default function TasksPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [tasks, setTasks] = useState<any[]>([])
 
   useEffect(() => {
     fetchTasks()
   }, [])
 
-
   const fetchTasks = async () => {
     try {
       const res = await getTask()
       if (res) {
-        setSelectedTask(res.data || [])
+        setTasks(res.data || [])
       }
     } catch (error) {
       console.error(error)
     }
-
   }
 
   const getStatusColor = (status: string) => {
@@ -79,6 +77,11 @@ export default function TasksPage() {
     setEditDialogOpen(true)
   }
 
+  const handleViewDetail = (task: any) => {
+    setSelectedTask(task)
+    setDetailDialogOpen(true)
+  }
+
   const handleDelete = (taskId: string) => {
     toast.success("Task deleted", {
       description: "The task has been deleted successfully.",
@@ -115,7 +118,7 @@ export default function TasksPage() {
           {/* Grid View */}
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {selectedTask?.map((task) => (
+              {tasks?.map((task) => (
                 <Card key={task.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -133,6 +136,10 @@ export default function TasksPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewDetail(task)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(task)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
@@ -176,7 +183,7 @@ export default function TasksPage() {
           {/* List View */}
           {view === "list" && (
             <div className="space-y-3">
-              {selectedTask?.map((task) => (
+              {tasks?.map((task) => (
                 <Card key={task.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-6">
@@ -224,6 +231,10 @@ export default function TasksPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleViewDetail(task)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEdit(task)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
@@ -247,6 +258,7 @@ export default function TasksPage() {
 
       <CreateTaskDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
       <EditTaskDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} task={selectedTask} />
+      <TaskDetailDialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen} task={selectedTask} />
     </div>
   )
 }

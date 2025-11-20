@@ -2,7 +2,6 @@ import axios from "axios"
 import type { LoginRequest, RegisterRequest } from "@/types/request"
 import Qs from "qs"
 import { message } from "antd"
-import exp from "node:constants";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -147,4 +146,18 @@ export const fetchUpcomingEvents = () => {
   )
 }
 
+export const projectsApi = {
+  getAll: () => api({ method: "GET", url: "/project/all" }),
+  create: (data: any) => api({ method: "POST", url: "/project/create", data }),
+  update: (id: number, data: any) => api({ method: "PUT", url: `/project/${id}`, data }),
+  delete: (id: number) => api({ method: "DELETE", url: `/project/${id}` }),
+  getById: (id: number) => api({ method: "GET", url: `/project/${id}` }),
+}
 
+export const tasksApi = {
+  getAll: () => api({ method: "GET", url: "/task/all" }),
+  create: (data: any) => api({ method: "POST", url: "/task/create", data }),
+  update: (id: number, data: any) => api({ method: "PUT", url: `/task/${id}`, data }),
+  delete: (id: number) => api({ method: "DELETE", url: `/task/${id}` }),
+  getById: (id: number) => api({ method: "GET", url: `/task/${id}` }),
+}

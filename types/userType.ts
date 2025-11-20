@@ -18,4 +18,3 @@ export interface RemoveMemberRequest {
     projectId: number;
     memberId: number;
 }
-

@@ -16,4 +16,3 @@ export const getTask = async () => {
         url: "/task/all"
     })
 }
-
