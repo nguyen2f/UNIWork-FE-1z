@@ -1,17 +1,15 @@
 "use client"
 
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { MoreHorizontal, Send } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 import { getAllTasksByProjectId } from "@/app/services/taskService"
 import type { Task } from "@/types"
+import { ProjectTaskDetailDialog } from "./project-task-detail-dialog"
 
 interface ProjectDetailTasksProps {
   projectId: string
@@ -20,6 +18,8 @@ interface ProjectDetailTasksProps {
 export function ProjectDetailTasks({ projectId, tasks: initialTasks }: ProjectDetailTasksProps) {
   const [loading, setLoading] = useState(false)
   const [projectTasks, setProjectTasks] = useState<Task[]>()
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   const numericProjectId = Number(projectId)
 
@@ -38,9 +38,6 @@ export function ProjectDetailTasks({ projectId, tasks: initialTasks }: ProjectDe
   useEffect(() => {
     fetchTasks()
   }, [numericProjectId])
-
-
-
 
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
@@ -89,7 +86,14 @@ export function ProjectDetailTasks({ projectId, tasks: initialTasks }: ProjectDe
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>View Details</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSelectedTask(task)
+                      setDetailDialogOpen(true)
+                    }}
+                  >
+                    View Details
+                  </DropdownMenuItem>
                   <DropdownMenuItem>Edit Task</DropdownMenuItem>
                   <DropdownMenuItem className="text-red-600">Delete Task</DropdownMenuItem>
                 </DropdownMenuContent>
@@ -172,6 +176,8 @@ export function ProjectDetailTasks({ projectId, tasks: initialTasks }: ProjectDe
           </CardContent>
         </Card>
       ))}
+
+      <ProjectTaskDetailDialog task={selectedTask} open={detailDialogOpen} onOpenChange={setDetailDialogOpen} />
     </div>
   )
 }

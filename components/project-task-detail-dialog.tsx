@@ -4,12 +4,14 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Calendar, Clock, AlertCircle, User, Trash2, Send } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types"
 
-interface TaskDetailDialogProps {
+interface ProjectTaskDetailDialogProps {
   task: Task | null
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -25,8 +27,22 @@ interface Comment {
   createdAt: string
 }
 
-export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
-  const [newStatus, setNewStatus] = useState(task?.status || "todo")
+export function ProjectTaskDetailDialog({ task, open, onOpenChange }: ProjectTaskDetailDialogProps) {
+  const [comments, setComments] = useState<Comment[]>([
+    {
+      id: "1",
+      author: { name: "Nguyễn Văn A", avatar: "NA" },
+      content: "Đã hoàn thành phần giao diện",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "2",
+      author: { name: "Trần Thị B", avatar: "TB" },
+      content: "Cần sửa lại padding cho responsive",
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+    },
+  ])
+  const [newComment, setNewComment] = useState("")
 
   if (!task) return null
 
@@ -68,9 +84,31 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     })
   }
 
-  const handleStatusChange = (newStatus: string) => {
-    setNewStatus(newStatus)
-    toast.success("Task status updated")
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return
+
+    const comment: Comment = {
+      id: Date.now().toString(),
+      author: { name: "Current User", avatar: "CU" },
+      content: newComment,
+      createdAt: new Date().toISOString(),
+    }
+
+    setComments([...comments, comment])
+    setNewComment("")
+    toast.success("Comment added")
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    setComments(comments.filter((c) => c.id !== commentId))
+    toast.success("Comment deleted")
   }
 
   return (
@@ -128,44 +166,62 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
               </div>
             </div>
 
-            {/* Update Status Section */}
+            {/* Comments Section - CHANGE: Only show comments here, no status update */}
             <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-lg font-semibold">Update Status</h3>
-              <div className="flex flex-wrap gap-2">
-                {["todo", "in-progress", "review", "completed"].map((status) => (
-                  <Button
-                    key={status}
-                    variant={newStatus === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusChange(status)}
-                    className={newStatus === status ? "bg-blue-600 text-white" : ""}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
-                  </Button>
-                ))}
-              </div>
-            </div>
+              <h3 className="text-lg font-semibold">Comments ({comments.length})</h3>
 
-            {/* File Upload Section */}
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-lg font-semibold">Attachments</h3>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm font-medium text-gray-700">Drag and drop files or click to upload</p>
-                <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOC up to 10MB</p>
-              </div>
-            </div>
+              {/* Comments List */}
+              <ScrollArea className="max-h-64">
+                <div className="space-y-3 pr-4">
+                  {comments.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No comments yet</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                            {comment.author.avatar}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <p className="text-sm font-medium">{comment.author.name}</p>
+                            <p className="text-xs text-gray-500">{formatTime(comment.createdAt)}</p>
+                          </div>
+                          <p className="text-sm text-gray-700 break-words">{comment.content}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-1" />
-                Edit Task
-              </Button>
-              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete Task
-              </Button>
+              {/* Comment Input */}
+              <div className="flex gap-2 pt-2">
+                <Input
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleAddComment()
+                    }
+                  }}
+                  className="text-sm"
+                />
+                <Button onClick={handleAddComment} disabled={!newComment.trim()} size="sm">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </ScrollArea>
