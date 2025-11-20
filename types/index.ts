@@ -11,8 +11,8 @@ export interface Project {
   projectId: string
   name: string
   description: string
-  status: "planning" | "active" | "completed" | "on-hold"
-  priority: "low" | "medium" | "high" | "critical"
+  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED"
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
   startDate: string
   endDate: string
   budget: number
@@ -33,11 +33,11 @@ export interface ProjectMember {
 }
 
 export interface Task {
-  id: string
+  taskId: string
   title: string
   description: string
-  status: "todo" | "in-progress" | "review" | "completed"
-  priority: "low" | "medium" | "high" | "critical"
+  status: "PENDING" | "DOING" | "REVIEWING" | "COMPLETED" | "CANCELLED"
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
   assigneeId: string
   projectId: string
   dueDate: string
@@ -48,7 +48,7 @@ export interface Task {
 }
 
 export interface Message {
-  id: string
+  messageId: string
   content: string
   senderId: string
   projectId?: string
@@ -59,7 +59,7 @@ export interface Message {
 }
 
 export interface Notification {
-  id: string
+  notificationId: string
   title: string
   message: string
   type: "task" | "project" | "message" | "system"

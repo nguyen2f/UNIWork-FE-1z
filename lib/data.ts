@@ -73,7 +73,7 @@ export const mockProjects: Project[] = [
 
 export const mockTasks: Task[] = [
   {
-    id: "1",
+    taskId: "1",
     title: "Design Homepage Layout",
     description: "Create wireframes and mockups for homepage",
     status: "completed",
@@ -87,7 +87,7 @@ export const mockTasks: Task[] = [
     assignee: mockUsers[3],
   },
   {
-    id: "2",
+    taskId: "2",
     title: "Implement User Authentication",
     description: "Add login/register functionality",
     status: "in-progress",

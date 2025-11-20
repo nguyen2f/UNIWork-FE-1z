@@ -100,19 +100,19 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-3">
-                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={task.assignee.avatar || "/placeholder.svg"} />
-                        <AvatarFallback>{task.assignee.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <p className="text-sm font-medium">{task.assignee.name}</p>
-                    </div>
-                  </div>
-                </div>
+                {/*<div className="flex items-start space-x-3">*/}
+                {/*  <User className="h-5 w-5 text-gray-400 mt-0.5" />*/}
+                {/*  <div>*/}
+                {/*    <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>*/}
+                {/*    <div className="flex items-center gap-2 mt-1">*/}
+                {/*      <Avatar className="h-6 w-6">*/}
+                {/*        <AvatarImage src={task.assignee.avatar || "/placeholder.svg"} />*/}
+                {/*        <AvatarFallback>{task.assignee.name[0]}</AvatarFallback>*/}
+                {/*      </Avatar>*/}
+                {/*      <p className="text-sm font-medium">{task.assignee.name}</p>*/}
+                {/*    </div>*/}
+                {/*  </div>*/}
+                {/*</div>*/}
 
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />

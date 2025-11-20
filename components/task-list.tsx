@@ -89,7 +89,7 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
       <CardContent>
         <div className="space-y-4">
           {taskList.map((task) => (
-            <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+            <div key={task.taskId} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">{task.title}</h3>

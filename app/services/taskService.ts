@@ -16,3 +16,10 @@ export const getTask = async () => {
         url: "/task/all"
     })
 }
+
+export const getAllTasksByProjectId = async (projectId: number) => {
+    return api<any>({
+        method: "GET",
+        url: `/task/all/${projectId}`
+    })
+}

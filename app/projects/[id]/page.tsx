@@ -27,41 +27,43 @@ import Link from "next/link"
 import type { Project } from "@/types"
 import { mockProjects, mockTasks, mockUsers } from "@/lib/data"
 import { ProjectDetailTasks } from "../../../components/project-detail-tasks"
+import {getDetailProject} from "@/app/services/projectService";
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [project, setProject] = useState<Project | null>(null)
+  const [project, setProject] = useState<Project>()
   const [loading, setLoading] = useState(true)
+  const projectId = Number(params.id);
 
   useEffect(() => {
-    // Trong thực tế sẽ gọi API để lấy thông tin dự án
-    const projectData = mockProjects.find((p) => p.id === params.id)
-    if (projectData) {
-      setProject({
-        ...projectData,
-        tasks: mockTasks.filter((t) => t.projectId === params.id),
-        members: mockUsers.map((user) => ({
-          userId: user.id,
-          projectId: params.id as string,
-          role: user.role === "admin" ? "owner" : user.role === "manager" ? "manager" : "member",
-          joinedAt: "2024-02-01T00:00:00Z",
-          user,
-        })),
-      })
+    fetchProject(projectId)
+  }, []);
+
+  const fetchProject = async (projectId: number) => {
+    try {
+      setLoading(true)
+      const response = await getDetailProject(projectId)
+      setProject(response.data)
+      console.log(response.data)
+    } catch (error) {
+      console.error("Failed to fetch project details:", error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-  }, [params.id])
+  }
+
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "planning":
+      case "PLANNING":
         return "bg-yellow-100 text-yellow-800"
-      case "active":
+      case "ACTIVE":
         return "bg-green-100 text-green-800"
-      case "completed":
+      case "COMPLETED":
         return "bg-blue-100 text-blue-800"
-      case "on-hold":
+      case "ON-HOLD":
         return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -70,13 +72,13 @@ export default function ProjectDetailPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "low":
+      case "LOW":
         return "bg-green-100 text-green-800"
-      case "medium":
+      case "MEDIUM":
         return "bg-yellow-100 text-yellow-800"
-      case "high":
+      case "HIGH":
         return "bg-orange-100 text-orange-800"
-      case "critical":
+      case "CRITICAL":
         return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -85,13 +87,13 @@ export default function ProjectDetailPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "planning":
+      case "PLANNING":
         return "Lên kế hoạch"
-      case "active":
+      case "ACTIVE":
         return "Đang thực hiện"
-      case "completed":
+      case "COMPLETED":
         return "Hoàn thành"
-      case "on-hold":
+      case "ON-HOLD":
         return "Tạm dừng"
       default:
         return status
@@ -100,13 +102,13 @@ export default function ProjectDetailPage() {
 
   const getPriorityText = (priority: string) => {
     switch (priority) {
-      case "low":
+      case "LOW":
         return "Thấp"
-      case "medium":
+      case "MEDIUM":
         return "Trung bình"
-      case "high":
+      case "HIGH":
         return "Cao"
-      case "critical":
+      case "CRITICAL":
         return "Khẩn cấp"
       default:
         return priority
@@ -229,12 +231,9 @@ export default function ProjectDetailPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Ngân sách</p>
+                      <p className="text-sm font-medium text-gray-600">Deadline</p>
                       <p className="text-2xl font-bold text-gray-900 mt-2">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(project.budget)}
+                        {project.endDate}
                       </p>
                     </div>
                     <DollarSign className="h-8 w-8 text-green-600" />
@@ -265,15 +264,15 @@ export default function ProjectDetailPage() {
               </TabsList>
 
               <TabsContent value="tasks" className="mt-6">
-                <ProjectDetailTasks projectId={project.id} tasks={project.tasks} />
+                <ProjectDetailTasks projectId={project.projectId} tasks={project.tasks} />
               </TabsContent>
 
               <TabsContent value="members" className="mt-6">
-                <ProjectMembers projectId={project.id} members={project.members} />
+                <ProjectMembers projectId={project.projectId} members={project.members} />
               </TabsContent>
 
               <TabsContent value="messages" className="mt-6">
-                <ProjectMessages projectId={project.id} />
+                <ProjectMessages projectId={project.projectId} />
               </TabsContent>
 
               <TabsContent value="overview" className="mt-6">
@@ -304,33 +303,33 @@ export default function ProjectDetailPage() {
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Thống kê</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Tổng số công việc</span>
-                        <span className="text-sm font-medium">{project.tasks.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Hoàn thành</span>
-                        <span className="text-sm font-medium text-green-600">
-                          {project.tasks.filter((t) => t.status === "completed").length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Đang thực hiện</span>
-                        <span className="text-sm font-medium text-blue-600">
-                          {project.tasks.filter((t) => t.status === "in-progress").length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Thành viên</span>
-                        <span className="text-sm font-medium">{project.members.length}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {/*<Card>*/}
+                  {/*  <CardHeader>*/}
+                  {/*    <CardTitle>Thống kê</CardTitle>*/}
+                  {/*  </CardHeader>*/}
+                  {/*  <CardContent className="space-y-4">*/}
+                  {/*    <div className="flex justify-between">*/}
+                  {/*      <span className="text-sm text-gray-600">Tổng số công việc</span>*/}
+                  {/*      <span className="text-sm font-medium">{project.tasks.length}</span>*/}
+                  {/*    </div>*/}
+                  {/*    <div className="flex justify-between">*/}
+                  {/*      <span className="text-sm text-gray-600">Hoàn thành</span>*/}
+                  {/*      <span className="text-sm font-medium text-green-600">*/}
+                  {/*        {project.tasks.filter((t) => t.status === "completed").length}*/}
+                  {/*      </span>*/}
+                  {/*    </div>*/}
+                  {/*    <div className="flex justify-between">*/}
+                  {/*      <span className="text-sm text-gray-600">Đang thực hiện</span>*/}
+                  {/*      <span className="text-sm font-medium text-blue-600">*/}
+                  {/*        {project.tasks.filter((t) => t.status === "in-progress").length}*/}
+                  {/*      </span>*/}
+                  {/*    </div>*/}
+                  {/*    <div className="flex justify-between">*/}
+                  {/*      <span className="text-sm text-gray-600">Thành viên</span>*/}
+                  {/*      <span className="text-sm font-medium">{project.members.length}</span>*/}
+                  {/*    </div>*/}
+                  {/*  </CardContent>*/}
+                  {/*</Card>*/}
                 </div>
               </TabsContent>
             </Tabs>

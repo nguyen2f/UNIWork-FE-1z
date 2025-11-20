@@ -16,3 +16,18 @@ export const getAllProjects = async () => {
         url: "/project/all"
     })
 }
+
+export const getDetailProject = async (projectId: number) => {
+    return api<any>({
+        method: "GET",
+        url: `/project/detail/${projectId}`
+    })
+}
+
+
+export const getProjectMembers = async (projectId: number) => {
+    return api<any>({
+        method: "GET",
+        url: `/project/${projectId}/members`
+    })
+}

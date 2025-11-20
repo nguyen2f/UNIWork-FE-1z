@@ -1,6 +1,7 @@
 "use client"
 
-import type React from "react"
+import React, {useEffect} from "react"
+import { useRouter } from "next/navigation";
 
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
@@ -19,6 +20,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = localStorage.getItem("Authorization")
+    const userId = localStorage.getItem("userId")
+
+    if (token && userId) {
+      router.push("/dashboard")
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

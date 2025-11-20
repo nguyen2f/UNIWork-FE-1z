@@ -285,7 +285,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {pendingTasks?.map((task) => (
-                  <div key={task.id} className="flex items-start justify-between p-3 rounded-lg border">
+                  <div key={task.taskId} className="flex items-start justify-between p-3 rounded-lg border">
                     <div className="space-y-1">
                       <p className="font-medium">{task.title}</p>
                       <p className="text-sm text-muted-foreground">{task.projectId}</p>
