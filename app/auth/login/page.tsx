@@ -42,7 +42,7 @@ export default function LoginPage() {
             <Building2 className="h-10 w-10 text-white" />
           </div>
           <div>
-            <CardTitle className="text-3xl font-bold">ProManage Enterprise</CardTitle>
+            <CardTitle className="text-3xl font-bold">UNIWORK</CardTitle>
             <CardDescription className="text-base mt-2">Sign in to access your workspace</CardDescription>
           </div>
         </CardHeader>
@@ -98,9 +98,6 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <div className="pt-4 border-t">
-              <p className="text-xs text-gray-500 text-center">Test account: admin@company.com / 123456</p>
-            </div>
           </form>
         </CardContent>
       </Card>

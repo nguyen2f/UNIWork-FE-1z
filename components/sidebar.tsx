@@ -33,7 +33,7 @@ export function Sidebar() {
       <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r">
         <div className="flex items-center flex-shrink-0 px-4">
           <FolderKanban className="h-8 w-8 text-blue-600" />
-          <span className="ml-2 text-xl font-bold text-gray-900">ProjectHub</span>
+          <span className="ml-2 text-xl font-bold text-gray-900">UNIWORK</span>
         </div>
         <div className="mt-8 flex-grow flex flex-col">
           <nav className="flex-1 px-2 space-y-1">

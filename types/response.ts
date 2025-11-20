@@ -27,3 +27,10 @@ export interface ProjectReport {
     completedPercent: number;
     countMember: number;
 }
+
+export interface TaskPerformance {
+    userId: number;
+    totalTasks: number;
+    doneTasks: number;
+    performance: number;
+}

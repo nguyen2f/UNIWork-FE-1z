@@ -43,8 +43,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [allMembers, setAllMembers] = useState<User[]>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   useEffect(() => {
-    fetchAllMember();
-    fetchAllProject();
+      fetchAllMember();
+      fetchAllProject();
   }, []);
 
   const handleSubmit = async (values: any) => {

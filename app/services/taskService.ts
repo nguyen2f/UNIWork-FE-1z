@@ -10,11 +10,10 @@ export const createTask = async (task: any) => {
     })
 }
 
-export const getTask = async (params: any) => {
+export const getTask = async () => {
     return api<Project[]>({
         method: "GET",
-        url: "/task/all",
-        params,
+        url: "/task/all"
     })
 }
 

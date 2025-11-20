@@ -1,5 +1,6 @@
 "use client"
 
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -18,6 +19,7 @@ import {
   TrendingUp,
   Users,
   UserPlus,
+    MapPin,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
@@ -29,13 +31,16 @@ import {
   fetchTaskReport,
   fetchPendingTasks,
   fetchTasksPerformance,
+  fetchUpcomingEvents,
 } from "@/lib/api"
-import { ProjectReport } from "@/types/response";
-import { Task } from "@/types";
+import {ProjectReport, TaskPerformance} from "@/types/response";
+import { Task, Event } from "@/types";
 
 export default function DashboardPage() {
   const [projectReport, setProjectReport] = useState<ProjectReport[]>([]);
   const [pendingTasks, setPendingTasks] = useState<Task[]>([])
+  const [tasksPerformance, setTasksPerformance] = useState<TaskPerformance>();
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [createProjectOpen, setCreateProjectOpen] = useState(false)
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false)
@@ -74,105 +79,66 @@ export default function DashboardPage() {
     },
   ]
 
-  // const recentProjects = [
-  //   {
-  //     id: "1",
-  //     name: "Website Redesign",
-  //     progress: 75,
-  //     status: "In Progress",
-  //     team: 5,
-  //     deadline: "2024-01-20",
-  //   },
-  //   {
-  //     id: "2",
-  //     name: "Mobile App Development",
-  //     progress: 45,
-  //     status: "In Progress",
-  //     team: 8,
-  //     deadline: "2024-02-15",
-  //   },
-  //   {
-  //     id: "3",
-  //     name: "Marketing Campaign",
-  //     progress: 90,
-  //     status: "In Progress",
-  //     team: 4,
-  //     deadline: "2024-01-10",
-  //   },
-  // ]
 
-  // const upcomingTasks = [
-  //   {
-  //     id: "1",
-  //     title: "Review design mockups",
-  //     project: "Website Redesign",
-  //     priority: "High",
-  //     dueDate: "Today",
-  //   },
-  //   {
-  //     id: "2",
-  //     title: "Update API documentation",
-  //     project: "Mobile App Development",
-  //     priority: "Medium",
-  //     dueDate: "Tomorrow",
-  //   },
-  //   {
-  //     id: "3",
-  //     title: "Client presentation",
-  //     project: "Marketing Campaign",
-  //     priority: "High",
-  //     dueDate: "Jan 15",
-  //   },
-  //   {
-  //     id: "4",
-  //     title: "Code review session",
-  //     project: "Mobile App Development",
-  //     priority: "Low",
-  //     dueDate: "Jan 16",
-  //   },
-  // ]
-
-  const teamActivity = [
-    {
-      user: "Sarah Johnson",
-      action: "completed",
-      target: "Design Review",
-      time: "2 hours ago",
-      avatar: "/placeholder-user.jpg",
-    },
-    {
-      user: "Michael Chen",
-      action: "created",
-      target: "New API Endpoint",
-      time: "4 hours ago",
-      avatar: "/placeholder-user.jpg",
-    },
-    {
-      user: "Emma Wilson",
-      action: "updated",
-      target: "Project Timeline",
-      time: "5 hours ago",
-      avatar: "/placeholder-user.jpg",
-    },
-  ]
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "High":
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "HIGH":
         return "destructive"
-      case "Medium":
+      case "MEDIUM":
         return "default"
-      case "Low":
+      case "LOW":
         return "secondary"
       default:
         return "default"
     }
   }
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'CRITICAL':
+        return 'destructive';
+      case 'HIGH':
+        return 'default';
+      case 'MEDIUM':
+        return 'secondary';
+      case 'LOW':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+
+  const getTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      'MEETING': 'bg-blue-100 text-blue-700',
+      'DEADLINE': 'bg-red-100 text-red-700',
+      'REVIEW': 'bg-purple-100 text-purple-700',
+      'PRESENTATION': 'bg-green-100 text-green-700',
+      'WORKSHOP': 'bg-orange-100 text-orange-700',
+    };
+    return colors[type.toUpperCase()] || 'bg-gray-100 text-gray-700';
+  };
+
   useEffect(() => {
     fetchProjects();
     fetchUpcomingTasks();
+    fetchPerformance();
+    fetchEvents();
   }, []);
+
+  const chartData = [
+    {
+      name: 'Total Tasks',
+      value: tasksPerformance?.totalTasks,
+      fill: '#8884d8'
+    },
+    {
+      name: 'Done',
+      value: tasksPerformance?.doneTasks,
+      fill: '#22c55e'
+    }
+  ];
 
   const fetchProjects = async () => {
     try {
@@ -203,6 +169,35 @@ export default function DashboardPage() {
       console.error('Error fetching projects:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPerformance = async () => {
+    try {
+      setLoading(true);
+      const result = await fetchTasksPerformance();
+
+      if (result.data) {
+        setTasksPerformance(result.data);
+      }
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching tasks performance:', err);
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+        setLoading(true);
+        const result = await fetchUpcomingEvents();
+
+        if (result.data) {
+            setUpcomingEvents(result.data);
+        }
+
+    } catch (err: any) {
+        setError(err.message);
+        console.error('Error fetching upcoming events:', err);
     }
   };
 
@@ -266,7 +261,7 @@ export default function DashboardPage() {
                           <span>Due {project.project.endDate}</span>
                         </div>
                       </div>
-                      <Badge variant="outline">{project.project.status}</Badge>
+                      <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
@@ -296,7 +291,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-muted-foreground">{task.projectId}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                      <Badge variant={getStatusColor(task.status)}>{task.status}</Badge>
                       <span className="text-xs text-muted-foreground">{task.dueDate}</span>
                     </div>
                   </div>
@@ -311,27 +306,59 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Team Activity
+                  <Calendar className="h-5 w-5" />
+                  Upcoming Events
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {teamActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={activity.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>{activity.user[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm">
-                        <span className="font-medium">{activity.user}</span>{" "}
-                        <span className="text-muted-foreground">{activity.action}</span>{" "}
-                        <span className="font-medium">{activity.target}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                {upcomingEvents.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No upcoming events
                     </div>
-                  </div>
-                ))}
+                ) : (
+                    upcomingEvents.map((event) => (
+                        <div
+                            key={event.eventId}
+                            className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-sm mb-1">{event.title}</h4>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                <Badge
+                                    variant={getPriorityColor(event.priority)}
+                                    className="text-xs"
+                                >
+                                  {event.priority}
+                                </Badge>
+                                <span className={`text-xs px-2 py-1 rounded-md ${getTypeColor(event.type)}`}>
+                      {event.type}
+                    </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              <span>{event.date}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{event.duration}</span>
+                            </div>
+
+                            {event.location && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{event.location}</span>
+                                </div>
+                            )}
+                          </div>
+                        </div>
+                    ))
+                )}
               </CardContent>
             </Card>
 
@@ -343,37 +370,63 @@ export default function DashboardPage() {
                   Performance Overview
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Tasks Completion Rate</span>
-                    <span className="font-medium">87%</span>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Performance percentage */}
+                  <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Completion Rate</p>
+                      <p className="text-3xl font-bold text-primary">{tasksPerformance?.performance.toFixed(1)}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Done / Total</p>
+                      <p className="text-xl font-semibold">
+                        {tasksPerformance?.doneTasks} / {tasksPerformance?.totalTasks}
+                      </p>
+                    </div>
                   </div>
-                  <Progress value={87} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>On-time Delivery</span>
-                    <span className="font-medium">92%</span>
+
+                  {/* Bar Chart */}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-blue-600">
+                        {tasksPerformance?.totalTasks}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total Tasks</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-green-600">
+                        {tasksPerformance?.doneTasks}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Completed</p>
+                    </div>
+                    {/*<div className="text-center">*/}
+                    {/*  <p className="text-2xl font-bold text-orange-600">*/}
+                    {/*    {tasksPerformance?.totalTasks - tasksPerformance?.doneTasks}*/}
+                    {/*  </p>*/}
+                    {/*  <p className="text-sm text-muted-foreground">In Progress</p>*/}
+                    {/*</div>*/}
                   </div>
-                  <Progress value={92} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Team Productivity</span>
-                    <span className="font-medium">78%</span>
-                  </div>
-                  <Progress value={78} />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Budget Utilization</span>
-                    <span className="font-medium">65%</span>
-                  </div>
-                  <Progress value={65} />
                 </div>
               </CardContent>
             </Card>
+
           </div>
         </main>
       </div>

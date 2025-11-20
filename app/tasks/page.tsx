@@ -24,7 +24,6 @@ export default function TasksPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
-  const [params, setParams] = useState<>({})
 
   useEffect(() => {
     fetchTasks()
@@ -33,7 +32,7 @@ export default function TasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await getTask(params)
+      const res = await getTask()
       if (res) {
         setSelectedTask(res.data || [])
       }
@@ -45,43 +44,30 @@ export default function TasksPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "todo":
+      case "PENDING":
         return "secondary"
-      case "in-progress":
+      case "DOING":
         return "default"
-      case "review":
+      case "REVIEWING":
         return "outline"
-      case "done":
+      case "COMPLETED":
         return "default"
+      case "CANCELLED":
+        return "destructive"
       default:
         return "secondary"
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "todo":
-        return "To Do"
-      case "in-progress":
-        return "In Progress"
-      case "review":
-        return "In Review"
-      case "done":
-        return "Done"
-      default:
-        return status
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "critical":
+      case "CRITICAL":
         return "destructive"
-      case "high":
+      case "HIGH":
         return "destructive"
-      case "medium":
+      case "MEDIUM":
         return "default"
-      case "low":
+      case "LOW":
         return "secondary"
       default:
         return "secondary"
@@ -163,7 +149,7 @@ export default function TasksPage() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
 
                     <div className="flex gap-2">
-                      <Badge variant={getStatusColor(task.status)}>{getStatusLabel(task.status)}</Badge>
+                      <Badge variant={getStatusColor(task.status)}>{getStatusColor(task.status)}</Badge>
                       <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>
                     </div>
 
@@ -212,7 +198,7 @@ export default function TasksPage() {
 
                         <div className="flex items-center gap-4 flex-wrap">
                           <div className="flex gap-2">
-                            <Badge variant={getStatusColor(task.status)}>{getStatusLabel(task.status)}</Badge>
+                            <Badge variant={getStatusColor(task.status)}>{getStatusColor(task.status)}</Badge>
                             <Badge variant={getPriorityColor(task.priority)}>{task.priority}</Badge>
                           </div>
 

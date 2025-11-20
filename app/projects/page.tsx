@@ -18,13 +18,15 @@ import { toast } from "sonner"
 import { getAllProjects } from "../services/projectService"
 import { Project } from "@/types"
 import { ProjectParams } from "@/types/projectType"
+import {fetchProjectReport} from "@/lib/api";
+import {ProjectReport} from "@/types/response";
 
 export default function ProjectsPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<any>(null)
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<ProjectReport[]>([])
   const [params, setParams] = useState<ProjectParams>({})
   useEffect(() => {
     fetchProjects()
@@ -32,7 +34,7 @@ export default function ProjectsPage() {
 
   const fetchProjects = async () => {
     try {
-      const res = await getAllProjects()
+      const res = await fetchProjectReport()
       if (res) {
         setProjects(res.data || [])
       }
@@ -44,13 +46,13 @@ export default function ProjectsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Planning":
+      case "PLANNING":
         return "secondary"
-      case "In Progress":
+      case "IN_PROGRESS":
         return "default"
-      case "On Hold":
+      case "ON_HOLD":
         return "outline"
-      case "Completed":
+      case "COMPLETED":
         return "default"
       default:
         return "secondary"
@@ -61,9 +63,9 @@ export default function ProjectsPage() {
     switch (priority) {
       case "Critical":
         return "destructive"
-      case "High":
+      case "HIGH":
         return "destructive"
-      case "Medium":
+      case "MEDIUM":
         return "default"
       case "Low":
         return "secondary"
@@ -114,12 +116,12 @@ export default function ProjectsPage() {
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {projects?.map((project) => (
-                <Card key={project.projectId} className="hover:shadow-lg transition-shadow">
+                <Card key={project.project.projectId} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <FolderKanban className="h-5 w-5 text-blue-600" />
-                        <CardTitle className="text-lg">{project.name}</CardTitle>
+                        <CardTitle className="text-lg">{project.project.name}</CardTitle>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -129,7 +131,7 @@ export default function ProjectsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/projects/${project.projectId}`} className="cursor-pointer">
+                            <Link href={`/projects/${project.project.projectId}`} className="cursor-pointer">
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </Link>
@@ -138,7 +140,7 @@ export default function ProjectsPage() {
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(project.projectId)} className="text-destructive">
+                          <DropdownMenuItem onClick={() => handleDelete(project.project.projectId)} className="text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
@@ -147,36 +149,32 @@ export default function ProjectsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{project.project.description}</p>
 
                     <div className="flex gap-2">
-                      <Badge variant={getStatusColor(project.status)}>{project.status}</Badge>
-                      <Badge variant={getPriorityColor(project.priority)}>{project.priority}</Badge>
+                      <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
+                      <Badge variant={getPriorityColor(project.project.priority)}>{project.project.priority}</Badge>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium">{project.progress}%</span>
+                        <span className="font-medium">{project.completedPercent}%</span>
                       </div>
-                      <Progress value={project.progress} />
+                      <Progress value={project.completedPercent} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{5} members</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span>${project.budget}</span>
+                        <span>{project.countMember} members</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {project.startDate} - {project.endDate}
+                        {project.project.startDate} - {project.project.endDate}
                       </span>
                     </div>
                   </CardContent>
@@ -189,7 +187,7 @@ export default function ProjectsPage() {
           {view === "list" && (
             <div className="space-y-3">
               {projects.map((project) => (
-                <Card key={project.projectId} className="hover:shadow-md transition-shadow">
+                <Card key={project.project.projectId} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-6">
                       <div className="flex-shrink-0">
@@ -201,8 +199,8 @@ export default function ProjectsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="font-semibold text-lg">{project.name}</h3>
-                            <p className="text-sm text-muted-foreground">{project.description}</p>
+                            <h3 className="font-semibold text-lg">{project.project.name}</h3>
+                            <p className="text-sm text-muted-foreground">{project.project.description}</p>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -212,7 +210,7 @@ export default function ProjectsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/projects/${project.projectId}`} className="cursor-pointer">
+                                <Link href={`/projects/${project.project.projectId}`} className="cursor-pointer">
                                   <Eye className="h-4 w-4 mr-2" />
                                   View Details
                                 </Link>
@@ -221,7 +219,7 @@ export default function ProjectsPage() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDelete(project.projectId)} className="text-destructive">
+                              <DropdownMenuItem onClick={() => handleDelete(project.project.projectId)} className="text-destructive">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -231,37 +229,37 @@ export default function ProjectsPage() {
 
                         <div className="flex items-center gap-4 flex-wrap">
                           <div className="flex gap-2">
-                            <Badge variant={getStatusColor(project.status)}>{project.status}</Badge>
-                            <Badge variant={getPriorityColor(project.priority)}>{project.priority}</Badge>
+                            <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
+                            <Badge variant={getPriorityColor(project.project.priority)}>{project.project.priority}</Badge>
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              <span>{5}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
-                              <span>${project.budget}</span>
-                            </div>
+                            {/*<div className="flex items-center gap-1">*/}
+                            {/*  <Users className="h-4 w-4" />*/}
+                            {/*  <span>{5}</span>*/}
+                            {/*</div>*/}
+                            {/*<div className="flex items-center gap-1">*/}
+                            {/*  <DollarSign className="h-4 w-4" />*/}
+                            {/*  <span>${project.budget}</span>*/}
+                            {/*</div>*/}
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
                               <span>
-                                {project.startDate} - {project.endDate}
+                                {project.project.startDate} - {project.project.endDate}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3 ml-auto">
-                            <div className="w-32">
-                              <Progress value={project.progress} />
-                            </div>
-                            <span className="text-sm font-medium w-12">{project.progress}%</span>
-                          </div>
+                          {/*<div className="flex items-center gap-3 ml-auto">*/}
+                          {/*  <div className="w-32">*/}
+                          {/*    <Progress value={project.progress} />*/}
+                          {/*  </div>*/}
+                          {/*  <span className="text-sm font-medium w-12">{project.progress}%</span>*/}
+                          {/*</div>*/}
                         </div>
                       </div>
                     </div>
-                  </CardContent>https://www.postman.com/workspace/My-Workspace~0d6d37fc-8877-409f-807c-20fb9593f9d3/request/38830317-5f0e8631-c970-461b-b671-92b23846d517
+                  </CardContent>
                 </Card>
               ))}
             </div>

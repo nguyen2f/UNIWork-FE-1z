@@ -68,3 +68,15 @@ export interface Notification {
   createdAt: string
   data?: any
 }
+
+export interface Event {
+  eventId: string
+  title: string
+  projectId: number
+  date: string
+  duration: string
+  type: string
+  location: string
+  priority: string
+  createdBy: number
+}
