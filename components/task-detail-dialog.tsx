@@ -4,9 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Calendar, Clock, AlertCircle, User, Edit, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Send } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types"
 
@@ -16,8 +17,33 @@ interface TaskDetailDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
+interface Comment {
+  id: string
+  author: {
+    name: string
+    avatar: string
+  }
+  content: string
+  createdAt: string
+}
+
 export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
   const [newStatus, setNewStatus] = useState(task?.status || "todo")
+  const [comments, setComments] = useState<Comment[]>([
+    {
+      id: "1",
+      author: { name: "Nguyễn Văn A", avatar: "NA" },
+      content: "Đã hoàn thành phần giao diện",
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "2",
+      author: { name: "Trần Thị B", avatar: "TB" },
+      content: "Cần sửa lại padding cho responsive",
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+    },
+  ])
+  const [newComment, setNewComment] = useState("")
 
   if (!task) return null
 
@@ -71,6 +97,26 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     toast.success("Task status updated")
   }
 
+  const handleAddComment = () => {
+    if (!newComment.trim()) return
+
+    const comment: Comment = {
+      id: Date.now().toString(),
+      author: { name: "Current User", avatar: "CU" },
+      content: newComment,
+      createdAt: new Date().toISOString(),
+    }
+
+    setComments([...comments, comment])
+    setNewComment("")
+    toast.success("Comment added")
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    setComments(comments.filter((c) => c.id !== commentId))
+    toast.success("Comment deleted")
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -100,20 +146,6 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                   </div>
                 </div>
 
-                {/*<div className="flex items-start space-x-3">*/}
-                {/*  <User className="h-5 w-5 text-gray-400 mt-0.5" />*/}
-                {/*  <div>*/}
-                {/*    <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>*/}
-                {/*    <div className="flex items-center gap-2 mt-1">*/}
-                {/*      <Avatar className="h-6 w-6">*/}
-                {/*        <AvatarImage src={task.assignee.avatar || "/placeholder.svg"} />*/}
-                {/*        <AvatarFallback>{task.assignee.name[0]}</AvatarFallback>*/}
-                {/*      </Avatar>*/}
-                {/*      <p className="text-sm font-medium">{task.assignee.name}</p>*/}
-                {/*    </div>*/}
-                {/*  </div>*/}
-                {/*</div>*/}
-
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
@@ -127,6 +159,14 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                   <div>
                     <p className="text-xs text-gray-500 font-medium">CREATED</p>
                     <p className="text-sm font-medium">{formatDate(task.createdAt)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
+                    <p className="text-sm font-medium">Team Member</p>
                   </div>
                 </div>
               </div>
@@ -147,6 +187,64 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                     {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
                   </Button>
                 ))}
+              </div>
+            </div>
+
+            {/* Comments Section */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-lg font-semibold">Comments ({comments.length})</h3>
+
+              {/* Comments List */}
+              <ScrollArea className="max-h-64">
+                <div className="space-y-3 pr-4">
+                  {comments.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No comments yet</p>
+                  ) : (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
+                            {comment.author.avatar}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <p className="text-sm font-medium">{comment.author.name}</p>
+                            <p className="text-xs text-gray-500">{formatTime(comment.createdAt)}</p>
+                          </div>
+                          <p className="text-sm text-gray-700 break-words">{comment.content}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+
+              {/* Comment Input */}
+              <div className="flex gap-2 pt-2">
+                <Input
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleAddComment()
+                    }
+                  }}
+                  className="text-sm"
+                />
+                <Button onClick={handleAddComment} disabled={!newComment.trim()} size="sm">
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
