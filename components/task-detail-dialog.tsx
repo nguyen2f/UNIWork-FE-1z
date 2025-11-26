@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types"
+import {updateTask} from "@/app/services/taskService";
+import {TaskRequest} from "@/types/taskType";
 
 interface TaskDetailDialogProps {
   task: Task | null
@@ -15,18 +16,8 @@ interface TaskDetailDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-interface Comment {
-  id: string
-  author: {
-    name: string
-    avatar: string
-  }
-  content: string
-  createdAt: string
-}
 
 export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
-  const [newStatus, setNewStatus] = useState(task?.status || "todo")
 
   if (!task) return null
 
@@ -40,10 +31,21 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         return "bg-purple-100 text-purple-800"
       case "completed":
         return "bg-green-100 text-green-800"
+        case "cancelled":
+            return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
+
+  const TaskStatusCodeMap = {
+    "PENDING": 0,        // PENDING
+    "DOING": 1, // DOING
+    "REVIEWING": 2,      // REVIEWING
+    "COMPLETED": 3,   // COMPLETED
+    "CANCELLED": 4    // CANCELLED (nếu có dùng)
+  }
+
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -68,10 +70,25 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     })
   }
 
-  const handleStatusChange = (newStatus: string) => {
-    setNewStatus(newStatus)
-    toast.success("Task status updated")
-  }
+  console.log(task)
+
+  // const numericProjectId = number(task.projectId)
+
+
+  const handleStatusChange = async (body: TaskRequest) => {
+    try {
+      await updateTask(
+          task.projectId,  // projectId
+          task.taskId,     // taskId
+          body
+      );
+
+      toast.success("Task status updated successfully.");
+      onOpenChange(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,20 +148,36 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
             {/* Update Status Section */}
             <div className="space-y-4 pt-4 border-t">
               <h3 className="text-lg font-semibold">Update Status</h3>
+
               <div className="flex flex-wrap gap-2">
-                {["todo", "in-progress", "review", "completed"].map((status) => (
-                  <Button
-                    key={status}
-                    variant={newStatus === status ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStatusChange(status)}
-                    className={newStatus === status ? "bg-blue-600 text-white" : ""}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
-                  </Button>
-                ))}
+
+                {[  
+                  { ui: "todo", be: "PENDING", label: "To do", color: "bg-gray-500" },
+                  { ui: "in-progress", be: "DOING", label: "In Progress", color: "bg-blue-500" },
+                  { ui: "review", be: "REVIEWING", label: "Reviewing", color: "bg-yellow-500" },
+                  { ui: "completed", be: "COMPLETED", label: "Completed", color: "bg-green-600" },
+                    {ui: "cancelled", be: "CANCELLED", label: "Cancelled", color: "bg-red-600" },
+                ].map((item) => {
+                  const isActive = task.status === TaskStatusCodeMap[item.be];
+
+                  return (
+                      <Button
+                          key={item.ui}
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          onClick={() =>
+                              handleStatusChange({ status: TaskStatusCodeMap[item.be] })
+                          }
+                          className={isActive ? `${item.color} text-white` : ""}
+                      >
+                        {item.label}
+                      </Button>
+                  );
+                })}
+
               </div>
             </div>
+
 
             {/* File Upload Section */}
             <div className="space-y-4 pt-4 border-t">

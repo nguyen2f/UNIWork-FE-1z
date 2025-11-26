@@ -23,3 +23,14 @@ export const getAllTasksByProjectId = async (projectId: number) => {
         url: `/task/all/${projectId}`
     })
 }
+
+export const updateTask = async (projectId: number, taskId: number, body: TaskRequest) => {
+    return api({
+        method: "POST",
+        url: `/task/${projectId}/${taskId}/update`,
+        data: body,
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+}
