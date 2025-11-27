@@ -12,7 +12,19 @@ import { Sidebar } from "@/components/sidebar"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { EditProjectDialog } from "@/components/edit-project-dialog"
 import { ViewLayoutToggle } from "@/components/view-layout-toggle"
-import { Calendar, DollarSign, MoreVertical, Plus, Search, Users, FolderKanban, Edit, Trash2, Eye } from "lucide-react"
+import {
+    Calendar,
+    DollarSign,
+    MoreVertical,
+    Plus,
+    Search,
+    Users,
+    FolderKanban,
+    Edit,
+    Trash2,
+    Eye,
+    ChevronLeft, ChevronRight
+} from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { getAllProjects } from "../services/projectService"
@@ -28,21 +40,84 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [projects, setProjects] = useState<ProjectReport[]>([])
   const [params, setParams] = useState<ProjectParams>({})
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null);
   useEffect(() => {
-    fetchProjects()
+    fetchProjects(projectPage)
   }, [])
 
-  const fetchProjects = async () => {
-    try {
-      const res = await fetchProjectReport()
-      if (res) {
-        setProjects(res.data || [])
-      }
-    } catch (error) {
-      console.error(error)
-    }
+    const [projectPage, setProjectPage] = useState(0); // Backend dùng 0-indexed
+    const [projectPagination, setProjectPagination] = useState({
+        currentPage: 0,
+        pageSize: 5,
+        totalElements: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false
+    });
 
-  }
+    const handleProjectPageChange = (newPage: number) => {
+        if (newPage < 0 || newPage >= projectPagination.totalPages) return;
+        setProjectPage(newPage);
+        fetchProjects(newPage);
+    };
+
+
+
+    const fetchProjects = async (page: number = 0) => {
+        try {
+            setLoading(true);
+            const result = await fetchProjectReport(page, 5);
+
+            if (result.data) {
+                setProjects(result.data);
+                if (result.pagination) {
+                    setProjectPagination(result.pagination);
+                }
+            }
+        } catch (err: any) {
+            setError(err.message);
+            console.error('Error fetching projects:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const Pagination = ({ currentPage, totalPages, onPageChange, hasNext, hasPrevious }: {
+        currentPage: number;
+        totalPages: number;
+        onPageChange: (page: number) => void;
+        hasNext: boolean;
+        hasPrevious: boolean;
+    }) => {
+        return (
+            <div className="flex items-center justify-between pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                    Page {currentPage + 1} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage - 1)}  // ← Đúng rồi
+                        disabled={!hasPrevious}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage + 1)}  // ← Đúng rồi
+                        disabled={!hasNext}
+                    >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        );
+    };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -79,11 +154,13 @@ export default function ProjectsPage() {
     setEditDialogOpen(true)
   }
 
-  const handleDelete = (projectId: string) => {
+  const handleDelete = (projectId: number) => {
     toast.success("Project deleted", {
       description: "The project has been deleted successfully.",
     })
   }
+
+
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -182,7 +259,6 @@ export default function ProjectsPage() {
               ))}
             </div>
           )}
-
           {/* List View */}
           {view === "list" && (
             <div className="space-y-3">
@@ -264,6 +340,15 @@ export default function ProjectsPage() {
               ))}
             </div>
           )}
+            {projectPagination.totalPages > 1 && (
+                <Pagination
+                    currentPage={projectPagination.currentPage}
+                    totalPages={projectPagination.totalPages}
+                    hasNext={projectPagination.hasNext}
+                    hasPrevious={projectPagination.hasPrevious}
+                    onPageChange={handleProjectPageChange}
+                />
+            )}
         </main>
       </div>
 

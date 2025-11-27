@@ -33,4 +33,5 @@ export interface TaskPerformance {
     totalTasks: number;
     doneTasks: number;
     performance: number;
+    remainingTasks: number;
 }

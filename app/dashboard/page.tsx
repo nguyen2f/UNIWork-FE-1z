@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Pie} from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -9,17 +9,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import {
-  BarChart3,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  FolderKanban,
-  ListTodo,
-  Plus,
-  TrendingUp,
-  Users,
-  UserPlus,
-    MapPin,
+    BarChart3,
+    Calendar,
+    CheckCircle2,
+    Clock,
+    FolderKanban,
+    ListTodo,
+    Plus,
+    TrendingUp,
+    Users,
+    UserPlus,
+    MapPin, ChevronLeft, ChevronRight, PieChart,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
@@ -37,18 +37,66 @@ import {ProjectReport, TaskPerformance} from "@/types/response";
 import { Task, Event } from "@/types";
 
 export default function DashboardPage() {
-  const [projectReport, setProjectReport] = useState<ProjectReport[]>([]);
-  const [pendingTasks, setPendingTasks] = useState<Task[]>([])
+    const [projectPage, setProjectPage] = useState(0); // Backend dùng 0-indexed
+    const [projectPagination, setProjectPagination] = useState({
+        currentPage: 0,
+        pageSize: 5,
+        totalElements: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrevious: false
+    });
+
+    const [pendingTasks, setPendingTasks] = useState<Task[]>([])
   const [tasksPerformance, setTasksPerformance] = useState<TaskPerformance>();
+    const [projectReport, setProjectReport] = useState<ProjectReport[]>();
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [createProjectOpen, setCreateProjectOpen] = useState(false)
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null);
+    const data = [
+        { name: "Done", value: tasksPerformance?.doneTasks || 0 },
+        { name: "Remaining", value: tasksPerformance?.remainingTasks || 0 },
+    ];
+    const Pagination = ({ currentPage, totalPages, onPageChange, hasNext, hasPrevious }: {
+        currentPage: number;
+        totalPages: number;
+        onPageChange: (page: number) => void;
+        hasNext: boolean;
+        hasPrevious: boolean;
+    }) => {
+        return (
+            <div className="flex items-center justify-between pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                    Page {currentPage + 1} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage - 1)}  // ← Đúng rồi
+                        disabled={!hasPrevious}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage + 1)}  // ← Đúng rồi
+                        disabled={!hasNext}
+                    >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        );
+    };
 
-
-  const stats = [
+    const stats = [
     {
       title: "Active Projects",
       value: "12",
@@ -121,7 +169,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchProjects();
+    fetchProjects(projectPage);
     fetchUpcomingTasks();
     fetchPerformance();
     fetchEvents();
@@ -140,23 +188,27 @@ export default function DashboardPage() {
     }
   ];
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const result = await fetchProjectReport();
+    const fetchProjects = async (page: number = 0) => {
+        try {
+            setLoading(true);
+            const result = await fetchProjectReport(page, 5);
 
-      if (result.data) {
-        setProjectReport(result.data);
-      }
-    } catch (err: any) {
-      setError(err.message);
-      console.error('Error fetching projects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (result.data) {
+                setProjectReport(result.data);
+                if (result.pagination) {
+                    setProjectPagination(result.pagination);
+                }
+            }
+        } catch (err: any) {
+            setError(err.message);
+            console.error('Error fetching projects:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const fetchUpcomingTasks = async () => {
+
+    const fetchUpcomingTasks = async () => {
     try {
       setLoading(true);
       const result = await fetchPendingTasks();
@@ -186,6 +238,9 @@ export default function DashboardPage() {
     }
   };
 
+
+
+
   const fetchEvents = async () => {
     try {
         setLoading(true);
@@ -201,7 +256,13 @@ export default function DashboardPage() {
     }
   };
 
-  return (
+    const handleProjectPageChange = (newPage: number) => {
+        if (newPage < 0 || newPage >= projectPagination.totalPages) return;
+        setProjectPage(newPage);
+        fetchProjects(newPage);
+    };
+
+    return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -223,6 +284,8 @@ export default function DashboardPage() {
             </Button>
           </div>
 
+
+
           {/* Stats Grid */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
             {stats.map((stat) => (
@@ -238,44 +301,137 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-
-          <div className="grid gap-6 lg:grid-cols-2 mb-6">
-            {/* Recent Projects */}
+            {/* Performance Overview */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FolderKanban className="h-5 w-5" />
-                  Recent Projects
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {projectReport?.map((project) => (
-                  <div key={project.project.projectId} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{project.project.name}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          <span>{project.countMember} members</span>
-                          <Calendar className="h-3 w-3 ml-2" />
-                          <span>Due {project.project.endDate}</span>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Performance Overview
+                    </CardTitle>
+                </CardHeader>
+
+
+                <CardContent>
+                    <div className="space-y-6">
+                        {/* Performance percentage */}
+                        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Completion Rate</p>
+                                <p className="text-3xl font-bold text-primary">
+                                    {tasksPerformance?.performance?.toFixed(1)}%
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm text-muted-foreground">Done / Total</p>
+                                <p className="text-xl font-semibold">
+                                    {tasksPerformance?.doneTasks} / {tasksPerformance?.totalTasks}
+                                </p>
+                            </div>
                         </div>
-                      </div>
-                      <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
+
+
+                        {/* Pie Chart */}
+                        <div className="w-full h-56">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={data}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={80}
+                                        label
+                                    >
+                                        <Cell fill="#4ade80" /> {/* green for done */}
+                                        <Cell fill="#f97316" /> {/* orange for remaining */}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+
+
+                        <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-blue-600">
+                                    {tasksPerformance?.totalTasks}
+                                </p>
+                                <p className="text-sm text-muted-foreground">Total Tasks</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-green-600">
+                                    {tasksPerformance?.doneTasks}
+                                </p>
+                                <p className="text-sm text-muted-foreground">Completed</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-orange-600">
+                                    {tasksPerformance?.remainingTasks}
+                                </p>
+                                <p className="text-sm text-muted-foreground">Remaining</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium">{project.completedPercent}%</span>
-                      </div>
-                      <Progress value={project.completedPercent} />
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
+                </CardContent>
             </Card>
 
-            {/* Upcoming Tasks */}
+
+            <div className="grid gap-6 lg:grid-cols-2 mb-6">
+            {/* Recent Projects */}
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                          <FolderKanban className="h-5 w-5" />
+                          Recent Projects
+                          {/* ✅ THÊM: Badge hiển thị tổng số */}
+                          <Badge variant="secondary" className="ml-auto">
+                              {projectPagination.totalElements} total
+                          </Badge>
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <div className="space-y-4">
+                          {projectReport?.map((project) => (
+                              <div key={project.project.projectId} className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                      <div>
+                                          <p className="font-medium">{project.project.name}</p>
+                                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                              <Users className="h-3 w-3" />
+                                              <span>{project.countMember} members</span>
+                                              <Calendar className="h-3 w-3 ml-2" />
+                                              <span>Due {project.project.endDate}</span>
+                                          </div>
+                                      </div>
+                                      <Badge variant={getStatusColor(project.project.status)}>
+                                          {project.project.status}
+                                      </Badge>
+                                  </div>
+                                  <div className="space-y-1">
+                                      <div className="flex justify-between text-sm">
+                                          <span className="text-muted-foreground">Progress</span>
+                                          <span className="font-medium">{project.completedPercent}%</span>
+                                      </div>
+                                      <Progress value={project.completedPercent} />
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+
+                      {/* ✅ THÊM: Pagination cho projects */}
+                      {projectPagination.totalPages > 1 && (
+                          <Pagination
+                              currentPage={projectPagination.currentPage}
+                              totalPages={projectPagination.totalPages}
+                              hasNext={projectPagination.hasNext}
+                              hasPrevious={projectPagination.hasPrevious}
+                              onPageChange={handleProjectPageChange}
+                          />
+                      )}
+                  </CardContent>
+              </Card>
+
+              {/* Upcoming Tasks */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -301,133 +457,70 @@ export default function DashboardPage() {
           </div>
 
           {/* Team Activity & Performance */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Team Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {upcomingEvents.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No upcoming events
-                    </div>
-                ) : (
-                    upcomingEvents.map((event) => (
-                        <div
-                            key={event.eventId}
-                            className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-sm mb-1">{event.title}</h4>
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                <Badge
-                                    variant={getPriorityColor(event.priority)}
-                                    className="text-xs"
-                                >
-                                  {event.priority}
-                                </Badge>
-                                <span className={`text-xs px-2 py-1 rounded-md ${getTypeColor(event.type)}`}>
-                      {event.type}
-                    </span>
-                              </div>
-                            </div>
-                          </div>
+          {/*<div className="grid gap-6 lg:grid-cols-2">*/}
+          {/*  /!* Team Activity *!/*/}
+          {/*  <Card>*/}
+          {/*    <CardHeader>*/}
+          {/*      <CardTitle className="flex items-center gap-2">*/}
+          {/*        <Calendar className="h-5 w-5" />*/}
+          {/*        Upcoming Events*/}
+          {/*      </CardTitle>*/}
+          {/*    </CardHeader>*/}
+          {/*    <CardContent className="space-y-4">*/}
+          {/*      {upcomingEvents.length === 0 ? (*/}
+          {/*          <div className="text-center py-8 text-muted-foreground">*/}
+          {/*            No upcoming events*/}
+          {/*          </div>*/}
+          {/*      ) : (*/}
+          {/*          upcomingEvents.map((event) => (*/}
+          {/*              <div*/}
+          {/*                  key={event.eventId}*/}
+          {/*                  className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"*/}
+          {/*              >*/}
+          {/*                <div className="flex items-start justify-between gap-2">*/}
+          {/*                  <div className="flex-1">*/}
+          {/*                    <h4 className="font-semibold text-sm mb-1">{event.title}</h4>*/}
+          {/*                    <div className="flex flex-wrap gap-2 mb-2">*/}
+          {/*                      <Badge*/}
+          {/*                          variant={getPriorityColor(event.priority)}*/}
+          {/*                          className="text-xs"*/}
+          {/*                      >*/}
+          {/*                        {event.priority}*/}
+          {/*                      </Badge>*/}
+          {/*                      <span className={`text-xs px-2 py-1 rounded-md ${getTypeColor(event.type)}`}>*/}
+          {/*            {event.type}*/}
+          {/*          </span>*/}
+          {/*                    </div>*/}
+          {/*                  </div>*/}
+          {/*                </div>*/}
 
-                          <div className="space-y-2 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span>{event.date}</span>
-                            </div>
+          {/*                <div className="space-y-2 text-sm text-muted-foreground">*/}
+          {/*                  <div className="flex items-center gap-2">*/}
+          {/*                    <Calendar className="h-4 w-4" />*/}
+          {/*                    <span>{event.date}</span>*/}
+          {/*                  </div>*/}
 
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              <span>{event.duration}</span>
-                            </div>
+          {/*                  <div className="flex items-center gap-2">*/}
+          {/*                    <Clock className="h-4 w-4" />*/}
+          {/*                    <span>{event.duration}</span>*/}
+          {/*                  </div>*/}
 
-                            {event.location && (
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="h-4 w-4" />
-                                  <span>{event.location}</span>
-                                </div>
-                            )}
-                          </div>
-                        </div>
-                    ))
-                )}
-              </CardContent>
-            </Card>
+          {/*                  {event.location && (*/}
+          {/*                      <div className="flex items-center gap-2">*/}
+          {/*                        <MapPin className="h-4 w-4" />*/}
+          {/*                        <span>{event.location}</span>*/}
+          {/*                      </div>*/}
+          {/*                  )}*/}
+          {/*                </div>*/}
+          {/*              </div>*/}
+          {/*          ))*/}
+          {/*      )}*/}
+          {/*    </CardContent>*/}
+          {/*  </Card>*/}
 
-            {/* Performance Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Performance Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Performance percentage */}
-                  <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Completion Rate</p>
-                      <p className="text-3xl font-bold text-primary">{tasksPerformance?.performance.toFixed(1)}%</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Done / Total</p>
-                      <p className="text-xl font-semibold">
-                        {tasksPerformance?.doneTasks} / {tasksPerformance?.totalTasks}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Bar Chart */}
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                        {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">
-                        {tasksPerformance?.totalTasks}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Total Tasks</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">
-                        {tasksPerformance?.doneTasks}
-                      </p>
-                      <p className="text-sm text-muted-foreground">Completed</p>
-                    </div>
-                    {/*<div className="text-center">*/}
-                    {/*  <p className="text-2xl font-bold text-orange-600">*/}
-                    {/*    {tasksPerformance?.totalTasks - tasksPerformance?.doneTasks}*/}
-                    {/*  </p>*/}
-                    {/*  <p className="text-sm text-muted-foreground">In Progress</p>*/}
-                    {/*</div>*/}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-          </div>
+          {/*</div>*/}
         </main>
       </div>
 

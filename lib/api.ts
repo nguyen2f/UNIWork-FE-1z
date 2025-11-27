@@ -96,15 +96,20 @@ export const logout = () => {
   )
 }
 
-export const fetchProjectReport = () => {
-  return api(
-    {
-      method: "GET",
-      url: "/report/project-report",
-    },
-    true,
-  )
+export const fetchProjectReport = (page?: number, size?: number) => {
+    return api(
+        {
+            method: "GET",
+            url: "/report/project-report",
+            params: {
+                page,
+                size
+            }
+        },
+        true,
+    )
 }
+
 
 export const fetchTaskReport = () => {
   return api(

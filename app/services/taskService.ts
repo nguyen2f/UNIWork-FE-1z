@@ -31,7 +31,7 @@ export const getTaskDetail = async (projectId: number, taskId: number) => {
   })
 }
 
-export const updateTask = async (projectId: number, taskId: number, body: TaskRequest) => {
+export const updateTask = async (projectId: number, taskId: number,  body: Pick<TaskRequest, "status">) => {
   return api({
     method: "POST",
     url: `/task/${projectId}/${taskId}/update`,

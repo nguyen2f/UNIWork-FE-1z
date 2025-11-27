@@ -5,7 +5,7 @@ export interface TaskRequest {
     title: string;
     description: string;
     priority: number;
-    status: number;
+    status?: number;
     dueDate: string;
     createdDate: string;
     updatedDate: string;
