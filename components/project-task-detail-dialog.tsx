@@ -58,31 +58,31 @@ export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }:
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
 
+
   useEffect(() => {
     if (open && task) {
       fetchTaskDetail()
     }
   }, [open, task])
 
-  const fetchTaskDetail = async () => {
-    if (!task) return
-    try {
-      setLoading(true)
-      const response = await getTaskDetail(projectId, task.taskId)
-      setTaskDetail(response.data)
-      // Set comments from API response if available
-      if (response.data?.comments) {
-        setComments(response.data.comments)
-      }
-    } catch (error) {
-      console.error("Failed to fetch task detail:", error)
-      toast.error("Failed to load task details")
-    } finally {
-      setLoading(false)
+    const fetchTaskDetail = async () => {
+        if (!task) return
+        try {
+            setLoading(true)
+            const response = await getTaskDetail(task.projectId, task.taskId)
+
+            const data = response.data.data.task
+
+            setTaskDetail({data})
+        } catch (error) {
+            console.error("Failed to fetch task detail:", error)
+        } finally {
+            setLoading(false)
+        }
     }
-  }
 
   if (!task) return null
+
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A"
@@ -122,10 +122,9 @@ export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }:
 
   // Use taskDetail if available, otherwise fallback to task prop
   const displayTask = taskDetail || task
-  const currentStatus =
-    typeof displayTask.status === "number" ? getStatusByCode(displayTask.status) : getStatusByCode(0)
-  const currentPriority =
-    typeof displayTask.priority === "number" ? getPriorityByCode(displayTask.priority) : getPriorityByCode(0)
+    console.log(taskDetail)
+    const currentStatus = StatusMap[displayTask.status] || StatusMap.PENDING
+    const currentPriority = PriorityMap[displayTask.priority] || PriorityMap.LOW
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,10 +144,10 @@ export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }:
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">{displayTask.description}</p>
 
-                <div className="flex gap-2 flex-wrap">
-                  <Badge className={currentStatus.color}>{currentStatus.label}</Badge>
-                  <Badge className={currentPriority.color}>{currentPriority.label}</Badge>
-                </div>
+                {/*<div className="flex gap-2 flex-wrap">*/}
+                {/*  <Badge className={currentStatus.color}>{currentStatus.label}</Badge>*/}
+                {/*  <Badge className={currentPriority.color}>{currentPriority.label}</Badge>*/}
+                {/*</div>*/}
 
                 {/* Task Details Grid */}
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
@@ -172,7 +171,7 @@ export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }:
                     <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
                       <p className="text-xs text-gray-500 font-medium">CREATED</p>
-                      <p className="text-sm font-medium">{formatDate(displayTask.createdAt)}</p>
+                      <p className="text-sm font-medium">{formatDate(displayTask.createdDate)}</p>
                     </div>
                   </div>
 
@@ -180,7 +179,7 @@ export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }:
                     <User className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
                       <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
-                      <p className="text-sm font-medium">{displayTask.assigneeName || "Team Member"}</p>
+                      <p className="text-sm font-medium">{displayTask.assignedTo || ""}</p>
                     </div>
                   </div>
                 </div>

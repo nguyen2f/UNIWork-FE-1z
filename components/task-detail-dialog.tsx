@@ -11,194 +11,197 @@ import type { Task } from "@/types"
 import { updateTask, getTaskDetail } from "@/app/services/taskService"
 
 interface TaskDetailDialogProps {
-  task: Task | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+    task: Task | null
+    open: boolean
+    onOpenChange: (open: boolean) => void
 }
 
 const StatusMap = {
-  PENDING: { code: 0, label: "Pending", color: "bg-gray-500 text-white" },
-  DOING: { code: 1, label: "In Progress", color: "bg-blue-500 text-white" },
-  REVIEWING: { code: 2, label: "Reviewing", color: "bg-yellow-500 text-white" },
-  COMPLETED: { code: 3, label: "Completed", color: "bg-green-500 text-white" },
-  CANCELLED: { code: 4, label: "Cancelled", color: "bg-red-500 text-white" },
+    PENDING: { code: 0, label: "Pending", color: "bg-gray-500 text-white" },
+    DOING: { code: 1, label: "In Progress", color: "bg-blue-500 text-white" },
+    REVIEWING: { code: 2, label: "Reviewing", color: "bg-yellow-500 text-white" },
+    COMPLETED: { code: 3, label: "Completed", color: "bg-green-500 text-white" },
+    CANCELLED: { code: 4, label: "Cancelled", color: "bg-red-500 text-white" },
 }
 
 const PriorityMap = {
-  LOW: { code: 0, label: "Low", color: "bg-green-500 text-white" },
-  MEDIUM: { code: 1, label: "Medium", color: "bg-yellow-500 text-white" },
-  HIGH: { code: 2, label: "High", color: "bg-red-500 text-white" },
-}
-
-// Helper functions to get status/priority info by code
-const getStatusByCode = (code: number) => {
-  return Object.values(StatusMap).find((s) => s.code === code) || StatusMap.PENDING
-}
-
-const getPriorityByCode = (code: number) => {
-  return Object.values(PriorityMap).find((p) => p.code === code) || PriorityMap.LOW
+    LOW: { code: 0, label: "Low", color: "bg-green-500 text-white" },
+    MEDIUM: { code: 1, label: "Medium", color: "bg-yellow-500 text-white" },
+    HIGH: { code: 2, label: "High", color: "bg-red-500 text-white" },
 }
 
 export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
-  const [taskDetail, setTaskDetail] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+    const [taskDetail, setTaskDetail] = useState<any>(null)
+    const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (open && task) {
-      fetchTaskDetail()
+    useEffect(() => {
+        if (open && task) fetchTaskDetail()
+    }, [open, task])
+
+    const fetchTaskDetail = async () => {
+        if (!task) return
+        try {
+            setLoading(true)
+            const response = await getTaskDetail(task.projectId, task.taskId)
+
+            const data = response.data.data.task
+
+            setTaskDetail({data})
+        } catch (error) {
+            console.error("Failed to fetch task detail:", error)
+        } finally {
+            setLoading(false)
+        }
     }
-  }, [open, task])
 
-  const fetchTaskDetail = async () => {
-    if (!task) return
-    try {
-      setLoading(true)
-      const response = await getTaskDetail(task.projectId, task.taskId)
-      setTaskDetail(response.data)
-    } catch (error) {
-      console.error("Failed to fetch task detail:", error)
-      toast.error("Failed to load task details")
-    } finally {
-      setLoading(false)
+    if (!task) return null
+
+    const displayTask = taskDetail || task
+
+    // Map status & priority
+    const currentStatus = StatusMap[displayTask.status] || StatusMap.PENDING
+    const currentPriority = PriorityMap[displayTask.priority] || PriorityMap.LOW
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "N/A"
+        return new Date(dateString).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
     }
-  }
 
-  if (!task) return null
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A"
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
-
-  const handleStatusChange = async (statusCode: number) => {
-    try {
-      await updateTask(task.projectId, task.taskId, { status: statusCode })
-      toast.success("Task status updated successfully.")
-      fetchTaskDetail() // Refresh detail
-    } catch (err) {
-      console.error(err)
-      toast.error("Failed to update status")
+    const handleStatusChange = async (statusCode: number) => {
+        try {
+            await updateTask(task.projectId, task.taskId, { status: statusCode })
+            toast.success("Task status updated successfully.")
+            fetchTaskDetail()
+        } catch (err) {
+            console.error(err)
+            toast.error("Failed to update status")
+        }
     }
-  }
 
-  // Use taskDetail if available, otherwise fallback to task prop
-  const displayTask = taskDetail || task
-  const currentStatus =
-    typeof displayTask.status === "number" ? getStatusByCode(displayTask.status) : getStatusByCode(0)
-  const currentPriority =
-    typeof displayTask.priority === "number" ? getPriorityByCode(displayTask.priority) : getPriorityByCode(0)
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl">{displayTask.title}</DialogTitle>
+                </DialogHeader>
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">{displayTask.title || displayTask.name}</DialogTitle>
-        </DialogHeader>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        ) : (
-          <ScrollArea className="flex-1 overflow-hidden">
-            <div className="space-y-6 pr-4">
-              {/* Task Info */}
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">{displayTask.description}</p>
-
-                <div className="flex gap-2 flex-wrap">
-                  <Badge className={currentStatus.color}>{currentStatus.label}</Badge>
-                  <Badge className={currentPriority.color}>{currentPriority.label}</Badge>
-                </div>
-
-                {/* Task Details Grid */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div className="flex items-start space-x-3">
-                    <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">DUE DATE</p>
-                      <p className="text-sm font-medium">{formatDate(displayTask.dueDate || displayTask.endDate)}</p>
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                     </div>
-                  </div>
+                ) : (
+                    <ScrollArea className="flex-1 overflow-hidden">
+                        <div className="space-y-6 pr-4">
 
-                  <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">PRIORITY</p>
-                      <Badge className={`mt-1 ${currentPriority.color}`}>{currentPriority.label}</Badge>
-                    </div>
-                  </div>
+                            {/* Task Info */}
+                            <div className="space-y-4">
+                                <p className="text-sm text-muted-foreground">{displayTask.description}</p>
 
-                  <div className="flex items-start space-x-3">
-                    <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">CREATED</p>
-                      <p className="text-sm font-medium">{formatDate(displayTask.createdAt)}</p>
-                    </div>
-                  </div>
+                                {/* Status + Priority */}
+                                <div className="flex gap-2 flex-wrap">
+                                    <Badge className={currentStatus.color}>{currentStatus.label}</Badge>
+                                    <Badge className={currentPriority.color}>{currentPriority.label}</Badge>
+                                </div>
 
-                  <div className="flex items-start space-x-3">
-                    <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
-                      <p className="text-sm font-medium">{displayTask.assigneeName || "Team Member"}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                                {/* Task Details Grid */}
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
 
-              {/* Update Status Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-semibold">Update Status</h3>
+                                    <div className="flex items-start space-x-3">
+                                        <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">DUE DATE</p>
+                                            <p className="text-sm font-medium">
+                                                {formatDate(displayTask.dueDate)}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(StatusMap).map(([key, value]) => {
-                    const isActive = currentStatus.code === value.code
+                                    <div className="flex items-start space-x-3">
+                                        <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">PRIORITY</p>
+                                            <Badge className={`mt-1 ${currentPriority.color}`}>
+                                                {currentPriority.label}
+                                            </Badge>
+                                        </div>
+                                    </div>
 
-                    return (
-                      <Button
-                        key={key}
-                        variant={isActive ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleStatusChange(value.code)}
-                        className={isActive ? value.color : ""}
-                      >
-                        {value.label}
-                      </Button>
-                    )
-                  })}
-                </div>
-              </div>
+                                    <div className="flex items-start space-x-3">
+                                        <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">CREATED</p>
+                                            <p className="text-sm font-medium">
+                                                {formatDate(displayTask.createdDate)}
+                                            </p>
+                                        </div>
+                                    </div>
 
-              {/* File Upload Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-semibold">Attachments</h3>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                  <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm font-medium text-gray-700">Drag and drop files or click to upload</p>
-                  <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOC up to 10MB</p>
-                </div>
-              </div>
+                                    <div className="flex items-start space-x-3">
+                                        <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
+                                            <p className="text-sm font-medium">
+                                                {displayTask.assignedTo || "Team Member"}
+                                            </p>
+                                        </div>
+                                    </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" size="sm">
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit Task
-                </Button>
-                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete Task
-                </Button>
-              </div>
-            </div>
-          </ScrollArea>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
+                                </div>
+                            </div>
+
+                            {/* Update Status */}
+                            <div className="space-y-4 pt-4 border-t">
+                                <h3 className="text-lg font-semibold">Update Status</h3>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(StatusMap).map(([key, value]) => {
+                                        const isActive = displayTask.status === key
+
+                                        return (
+                                            <Button
+                                                key={key}
+                                                variant={isActive ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => handleStatusChange(value.code)}
+                                                className={isActive ? value.color : ""}
+                                            >
+                                                {value.label}
+                                            </Button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* File Upload */}
+                            <div className="space-y-4 pt-4 border-t">
+                                <h3 className="text-lg font-semibold">Attachments</h3>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                                    <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                                    <p className="text-sm font-medium text-gray-700">Drag and drop files or click to upload</p>
+                                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOC up to 10MB</p>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-end gap-2 pt-4 border-t">
+                                <Button variant="outline" size="sm">
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit Task
+                                </Button>
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete Task
+                                </Button>
+                            </div>
+
+                        </div>
+                    </ScrollArea>
+                )}
+            </DialogContent>
+        </Dialog>
+    )
 }

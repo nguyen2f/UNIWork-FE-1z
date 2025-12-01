@@ -103,13 +103,13 @@ export default function ProjectDetailPage() {
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case "LOW":
-        return "Thấp"
+        return "LOW"
       case "MEDIUM":
-        return "Trung bình"
+        return "MEDIUM"
       case "HIGH":
-        return "Cao"
+        return "HIGH"
       case "CRITICAL":
-        return "Khẩn cấp"
+        return "CRITICAL"
       default:
         return priority
     }
@@ -142,6 +142,10 @@ export default function ProjectDetailPage() {
       </div>
     )
   }
+
+  console.log(project)
+
+
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -193,7 +197,7 @@ export default function ProjectDetailPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Trạng thái</p>
+                      <p className="text-sm font-medium text-gray-600">Status</p>
                       <Badge className={`mt-2 ${getStatusColor(project.status)}`}>
                         {getStatusText(project.status)}
                       </Badge>
@@ -206,7 +210,7 @@ export default function ProjectDetailPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Độ ưu tiên</p>
+                      <p className="text-sm font-medium text-gray-600">Priority</p>
                       <Badge className={`mt-2 ${getPriorityColor(project.priority)}`}>
                         {getPriorityText(project.priority)}
                       </Badge>
@@ -219,8 +223,8 @@ export default function ProjectDetailPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Tiến độ</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-2">{project.progress}%</p>
+                      <p className="text-sm font-medium text-gray-600">Risk Level</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-2">{project.riskLevel}</p>
                     </div>
                   </div>
                   <Progress value={project.progress} className="mt-2" />
@@ -236,7 +240,6 @@ export default function ProjectDetailPage() {
                         {project.endDate}
                       </p>
                     </div>
-                    <DollarSign className="h-8 w-8 text-green-600" />
                   </div>
                 </CardContent>
               </Card>

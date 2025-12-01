@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "lucide-react"
 import { toast } from "sonner"
-import {Drawer, Form, message, Select, Row, Col, DatePicker, Input, Space, Tag} from "antd";
+import {Drawer, Form, message, Select, Row, Col, DatePicker, Input, Space, Tag, Modal} from "antd";
 import {createProject, getAllProjects} from "@/app/services/projectService";
 import {UserOutlined} from "@ant-design/icons";
 import {createTask} from "@/app/services/taskService";
@@ -86,11 +86,12 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   };
 
   return (
-      <Drawer
+      <Modal
           open={open}
           onClose={() => onOpenChange(false)}
           width={800}
           title="Create New Task"
+          footer={null}
       >
         <Form
             form={form}
@@ -207,7 +208,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </Space>
           </Form.Item>
         </Form>
-      </Drawer>
+      </Modal>
   )
 
 }

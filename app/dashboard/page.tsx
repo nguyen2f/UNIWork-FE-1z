@@ -328,8 +328,6 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-
-
                 {/* Pie Chart */}
                 <div className="w-full h-56">
                   <ResponsiveContainer width="100%" height="100%">
@@ -350,7 +348,6 @@ export default function DashboardPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-
 
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                   <div className="text-center">

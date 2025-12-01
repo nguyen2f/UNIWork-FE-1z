@@ -10,7 +10,7 @@ import { Send } from "lucide-react"
 import { mockMessages } from "@/lib/data"
 
 interface ProjectMessagesProps {
-  projectId: string
+  projectId: number
 }
 
 export function ProjectMessages({ projectId }: ProjectMessagesProps) {
@@ -21,19 +21,16 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
     if (newMessage.trim()) {
       // Trong thực tế sẽ gọi API để gửi tin nhắn
       const message = {
-        id: Date.now().toString(),
+        messageId: 1,
         content: newMessage,
-        senderId: "1", // Current user ID
+        senderId: 1, // Current user ID
         projectId,
         type: "project" as const,
         createdAt: new Date().toISOString(),
         sender: {
-          id: "1",
+          userId: 1,
           name: "Bạn",
           email: "you@company.com",
-          role: "admin" as const,
-          avatar: "B",
-          createdAt: new Date().toISOString(),
         },
       }
       setMessages([...messages, message])
@@ -50,7 +47,7 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4">
             {messages.map((message) => (
-              <div key={message.id} className="flex items-start space-x-3">
+              <div key={message.messageId} className="flex items-start space-x-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">{message.sender.avatar}</AvatarFallback>
                 </Avatar>

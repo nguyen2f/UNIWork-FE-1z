@@ -12,7 +12,7 @@ import {message} from "antd";
 import {getProjectMembers} from "@/app/services/projectService";
 
 interface ProjectMembersProps {
-  projectId: string
+  projectId: number
   members: ProjectMember[]
 }
 

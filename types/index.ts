@@ -2,26 +2,30 @@ export interface User {
   userId: number
   email: string
   name: string
-  department: string
-  avatar: string
-  createdAt: string
+  department?: string
+  avatar?: string
+  createdAt?: string
 }
 
 export interface Project {
-  projectId: number
-  name: string
-  description: string
-  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED"
-  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
-  startDate: string
-  endDate: string
-  budget: number
-  progress: number
-  createdBy: string
-  members: ProjectMember[]
-  tasks: Task[]
-  createdAt: string
-  updatedAt: string
+    projectId: number
+    name: string
+    description: string
+    status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED"
+    priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+    startDate: string
+    endDate: string
+    budget: number
+    progress: number
+    client: string            // Khách hàng (ví dụ: SFIN JSC)
+    department: string        // Phòng ban phụ trách (ví dụ: IT Department)
+    riskLevel: "Low" | "Medium" | "High" // Mức độ rủi ro
+    ownerId: number           // ID người sở hữu dự án
+    createdBy: string
+    members: ProjectMember[]
+    tasks: Task[]
+    createdAt: string
+    updatedAt: string | null  // Cho phép null nếu chưa cập nhật
 }
 
 export interface ProjectMember {
@@ -42,8 +46,8 @@ export interface Task {
   projectId: number
   dueDate: string
   createdBy: string
-  createdAt: string
-  updatedAt: string
+    createdDate: string
+  updatedDate: string
   assignee: User
 }
 
