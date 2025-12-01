@@ -11,7 +11,7 @@ import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload, Loader2, Send
 import { toast } from "sonner"
 import type { Task } from "@/types"
 import { updateTask, getTaskDetail } from "@/app/services/taskService"
-import { getTaskComments, addTaskComment } from "@/app/services/commentService"
+import { getAllCommentsByTaskId, addComment } from "@/app/services/commentService"
 
 interface TaskDetailDialogProps {
     task: Task | null
@@ -66,8 +66,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         if (!task) return
         try {
             setLoadingComments(true)
-            const response = await getTaskComments(task.projectId, task.taskId)
-            // Giả sử response.data chứa array comments
+            const response = await getAllCommentsByTaskId(task.taskId)
             setComments(response.data || [])
         } catch (error) {
             console.error("Failed to fetch comments:", error)
@@ -77,25 +76,33 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         }
     }
 
-    const handleAddComment = async () => {
-        if (!task || !newComment.trim()) return
-
+    const handleAddComment = async (values: any) => {
+        if (!task || !newComment.trim()) return;
         try {
-            setSubmitting(true)
-            await addTaskComment(task.projectId, task.taskId, {
-                content: newComment.trim()
-            })
+            setSubmitting(true);
+            const commentPayload = {
+                taskId: task.taskId,
+                authorId: window.localStorage.getItem("userId")
+                    ? Number(window.localStorage.getItem("userId"))
+                    : 0,
+                posterId: taskDetail.assignedTo,
+                content: newComment.trim(),
+                createdDate: new Date().toISOString()
+            };
 
-            toast.success("Comment added successfully")
-            setNewComment("")
-            fetchComments() // Refresh comments list
+            const response = await addComment(commentPayload);
+
+            console.log(response)
+            toast.success("Comment added successfully");
+            // setNewComment("");
+            // fetchComments();
         } catch (error) {
-            console.error("Failed to add comment:", error)
-            toast.error("Failed to add comment")
+            console.error("Failed to add comment:", error);
+            toast.error("Failed to add comment");
         } finally {
-            setSubmitting(false)
+            setSubmitting(false);
         }
-    }
+    };
 
     const handleStatusChange = async (statusCode: number) => {
         if (!task) return

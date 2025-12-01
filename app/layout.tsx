@@ -8,7 +8,7 @@ import { Toaster } from "sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ProManage Enterprise - Project Management Platform",
+  title: "UNIWORK - Project Management Platform",
   description: "Enterprise-grade project management and collaboration platform",
   generator: "v0.app",
 }

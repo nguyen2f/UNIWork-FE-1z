@@ -55,7 +55,7 @@ export default function SignupPage() {
           </div>
           <div>
             <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
-            <CardDescription className="text-base mt-2">Join ProManage Enterprise today</CardDescription>
+            <CardDescription className="text-base mt-2">Join UNIWORK today</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
