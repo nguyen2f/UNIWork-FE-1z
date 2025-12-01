@@ -24,19 +24,6 @@ interface CreateTaskDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-const projects = [
-  { id: "1", name: "Website Redesign" },
-  { id: "2", name: "Mobile App Development" },
-  { id: "3", name: "Marketing Campaign" },
-]
-
-const teamMembers = [
-  { id: "1", name: "Sarah Johnson", role: "Designer", avatar: "/placeholder-user.jpg" },
-  { id: "2", name: "Michael Chen", role: "Developer", avatar: "/placeholder-user.jpg" },
-  { id: "3", name: "Emma Wilson", role: "Manager", avatar: "/placeholder-user.jpg" },
-  { id: "4", name: "David Brown", role: "Developer", avatar: "/placeholder-user.jpg" },
-]
-
 export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
   const [form] = Form.useForm()
   const [assignedTo, setAssignedTo] = useState<string>()
@@ -88,7 +75,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   return (
       <Modal
           open={open}
-          onClose={() => onOpenChange(false)}
+          onCancel={() => onOpenChange(false)}
           width={800}
           title="Create New Task"
           footer={null}

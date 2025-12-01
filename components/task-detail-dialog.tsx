@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload, Loader2 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload, Loader2, Send, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types"
 import { updateTask, getTaskDetail } from "@/app/services/taskService"
+import { getTaskComments, addTaskComment } from "@/app/services/commentService"
 
 interface TaskDetailDialogProps {
     task: Task | null
@@ -33,9 +36,16 @@ const PriorityMap = {
 export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
     const [taskDetail, setTaskDetail] = useState<any>(null)
     const [loading, setLoading] = useState(false)
+    const [comments, setComments] = useState<any[]>([])
+    const [loadingComments, setLoadingComments] = useState(false)
+    const [newComment, setNewComment] = useState("")
+    const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
-        if (open && task) fetchTaskDetail()
+        if (open && task) {
+            fetchTaskDetail()
+            fetchComments()
+        }
     }, [open, task])
 
     const fetchTaskDetail = async () => {
@@ -43,10 +53,8 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         try {
             setLoading(true)
             const response = await getTaskDetail(task.projectId, task.taskId)
-
             const data = response.data.data.task
-
-            setTaskDetail({data})
+            setTaskDetail({ data })
         } catch (error) {
             console.error("Failed to fetch task detail:", error)
         } finally {
@@ -54,24 +62,43 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         }
     }
 
-    if (!task) return null
+    const fetchComments = async () => {
+        if (!task) return
+        try {
+            setLoadingComments(true)
+            const response = await getTaskComments(task.projectId, task.taskId)
+            // Giả sử response.data chứa array comments
+            setComments(response.data || [])
+        } catch (error) {
+            console.error("Failed to fetch comments:", error)
+            setComments([])
+        } finally {
+            setLoadingComments(false)
+        }
+    }
 
-    const displayTask = taskDetail || task
+    const handleAddComment = async () => {
+        if (!task || !newComment.trim()) return
 
-    // Map status & priority
-    const currentStatus = StatusMap[displayTask.status] || StatusMap.PENDING
-    const currentPriority = PriorityMap[displayTask.priority] || PriorityMap.LOW
+        try {
+            setSubmitting(true)
+            await addTaskComment(task.projectId, task.taskId, {
+                content: newComment.trim()
+            })
 
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A"
-        return new Date(dateString).toLocaleDateString("vi-VN", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        })
+            toast.success("Comment added successfully")
+            setNewComment("")
+            fetchComments() // Refresh comments list
+        } catch (error) {
+            console.error("Failed to add comment:", error)
+            toast.error("Failed to add comment")
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     const handleStatusChange = async (statusCode: number) => {
+        if (!task) return
         try {
             await updateTask(task.projectId, task.taskId, { status: statusCode })
             toast.success("Task status updated successfully.")
@@ -82,9 +109,45 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         }
     }
 
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "N/A"
+        return new Date(dateString).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
+    }
+
+    const formatCommentDate = (dateString: string) => {
+        if (!dateString) return ""
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffMs = now.getTime() - date.getTime()
+        const diffMins = Math.floor(diffMs / 60000)
+        const diffHours = Math.floor(diffMs / 3600000)
+        const diffDays = Math.floor(diffMs / 86400000)
+
+        if (diffMins < 1) return "Just now"
+        if (diffMins < 60) return `${diffMins}m ago`
+        if (diffHours < 24) return `${diffHours}h ago`
+        if (diffDays < 7) return `${diffDays}d ago`
+
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        })
+    }
+
+    if (!task) return null
+
+    const displayTask = taskDetail || task
+    const currentStatus = StatusMap[displayTask.status] || StatusMap.PENDING
+    const currentPriority = PriorityMap[displayTask.priority] || PriorityMap.LOW
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="text-2xl">{displayTask.title}</DialogTitle>
                 </DialogHeader>
@@ -96,7 +159,6 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                 ) : (
                     <ScrollArea className="flex-1 overflow-hidden">
                         <div className="space-y-6 pr-4">
-
                             {/* Task Info */}
                             <div className="space-y-4">
                                 <p className="text-sm text-muted-foreground">{displayTask.description}</p>
@@ -109,7 +171,6 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
 
                                 {/* Task Details Grid */}
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-
                                     <div className="flex items-start space-x-3">
                                         <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
                                         <div>
@@ -149,18 +210,15 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                             </p>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
 
                             {/* Update Status */}
                             <div className="space-y-4 pt-4 border-t">
                                 <h3 className="text-lg font-semibold">Update Status</h3>
-
                                 <div className="flex flex-wrap gap-2">
                                     {Object.entries(StatusMap).map(([key, value]) => {
                                         const isActive = displayTask.status === key
-
                                         return (
                                             <Button
                                                 key={key}
@@ -173,6 +231,79 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                             </Button>
                                         )
                                     })}
+                                </div>
+                            </div>
+
+                            {/* Comments Section */}
+                            <div className="space-y-4 pt-4 border-t">
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare className="h-5 w-5 text-gray-600" />
+                                    <h3 className="text-lg font-semibold">
+                                        Comments ({comments.length})
+                                    </h3>
+                                </div>
+
+                                {/* Add Comment */}
+                                <div className="space-y-2">
+                                    <Textarea
+                                        placeholder="Write a comment..."
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        className="min-h-[80px] resize-none"
+                                    />
+                                    <div className="flex justify-end">
+                                        <Button
+                                            size="sm"
+                                            onClick={handleAddComment}
+                                            disabled={!newComment.trim() || submitting}
+                                        >
+                                            {submitting ? (
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <Send className="h-4 w-4 mr-2" />
+                                            )}
+                                            Post Comment
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Comments List */}
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                    {loadingComments ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                        </div>
+                                    ) : comments.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                                            <p className="text-sm">No comments yet</p>
+                                            <p className="text-xs">Be the first to comment!</p>
+                                        </div>
+                                    ) : (
+                                        comments.map((comment) => (
+                                            <div key={comment.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={comment.userAvatar} />
+                                                    <AvatarFallback>
+                                                        {comment.userName?.charAt(0) || "U"}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold text-sm">
+                                                            {comment.userName || "User"}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {formatCommentDate(comment.createdDate)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-700">
+                                                        {comment.content}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
 
@@ -192,12 +323,11 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                     <Edit className="h-4 w-4 mr-1" />
                                     Edit Task
                                 </Button>
-                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
                                     <Trash2 className="h-4 w-4 mr-1" />
                                     Delete Task
                                 </Button>
                             </div>
-
                         </div>
                     </ScrollArea>
                 )}

@@ -17,7 +17,7 @@ export interface AddComment {
     authorId: number;
     content: string;
     createdDate: string;
-    updatedDate: string;
+    updatedDate?: string;
 }
 
 export interface UploadFileAttachmentRequest {

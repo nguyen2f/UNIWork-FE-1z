@@ -4,76 +4,59 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
-import { Calendar, Clock, AlertCircle, User, Trash2, Send, Loader2 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload, Loader2, Send, MessageSquare } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types"
-import { getTaskDetail } from "@/app/services/taskService"
+import { updateTask, getTaskDetail } from "@/app/services/taskService"
+import { addComment, getAllCommentsByTaskId } from "@/app/services/commentService"
+import {AddComment} from "@/types/request";
 
-interface ProjectTaskDetailDialogProps {
-  task: Task | null
-  projectId: number
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
-
-interface Comment {
-  id: string
-  author: {
-    name: string
-    avatar: string
-  }
-  content: string
-  createdAt: string
+interface TaskDetailDialogProps {
+    task: Task | null
+    open: boolean
+    onOpenChange: (open: boolean) => void
 }
 
 const StatusMap = {
-  PENDING: { code: 0, label: "Pending", color: "bg-gray-500 text-white" },
-  DOING: { code: 1, label: "In Progress", color: "bg-blue-500 text-white" },
-  REVIEWING: { code: 2, label: "Reviewing", color: "bg-yellow-500 text-white" },
-  COMPLETED: { code: 3, label: "Completed", color: "bg-green-500 text-white" },
-  CANCELLED: { code: 4, label: "Cancelled", color: "bg-red-500 text-white" },
+    PENDING: { code: 0, label: "Pending", color: "bg-gray-500 text-white" },
+    DOING: { code: 1, label: "In Progress", color: "bg-blue-500 text-white" },
+    REVIEWING: { code: 2, label: "Reviewing", color: "bg-yellow-500 text-white" },
+    COMPLETED: { code: 3, label: "Completed", color: "bg-green-500 text-white" },
+    CANCELLED: { code: 4, label: "Cancelled", color: "bg-red-500 text-white" },
 }
 
 const PriorityMap = {
-  LOW: { code: 0, label: "Low", color: "bg-green-500 text-white" },
-  MEDIUM: { code: 1, label: "Medium", color: "bg-yellow-500 text-white" },
-  HIGH: { code: 2, label: "High", color: "bg-red-500 text-white" },
+    LOW: { code: 0, label: "Low", color: "bg-green-500 text-white" },
+    MEDIUM: { code: 1, label: "Medium", color: "bg-yellow-500 text-white" },
+    HIGH: { code: 2, label: "High", color: "bg-red-500 text-white" },
 }
 
-// Helper functions to get status/priority info by code
-const getStatusByCode = (code: number) => {
-  return Object.values(StatusMap).find((s) => s.code === code) || StatusMap.PENDING
-}
+export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
+    const [taskDetail, setTaskDetail] = useState<any>(null)
+    const [loading, setLoading] = useState(false)
+    const [comments, setComments] = useState<any[]>([])
+    const [loadingComments, setLoadingComments] = useState(false)
+    const [newComment, setNewComment] = useState("")
+    const [submitting, setSubmitting] = useState(false)
 
-const getPriorityByCode = (code: number) => {
-  return Object.values(PriorityMap).find((p) => p.code === code) || PriorityMap.LOW
-}
-
-export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }: ProjectTaskDetailDialogProps) {
-  const [taskDetail, setTaskDetail] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [newComment, setNewComment] = useState("")
-
-
-  useEffect(() => {
-    if (open && task) {
-      fetchTaskDetail()
-    }
-  }, [open, task])
+    useEffect(() => {
+        if (open && task) {
+            fetchTaskDetail()
+            // fetchComments()
+        }
+    }, [open, task])
 
     const fetchTaskDetail = async () => {
         if (!task) return
         try {
             setLoading(true)
             const response = await getTaskDetail(task.projectId, task.taskId)
-
             const data = response.data.data.task
-
-            setTaskDetail({data})
+            setTaskDetail({ data })
+            setComments(data.data.comments)
         } catch (error) {
             console.error("Failed to fetch task detail:", error)
         } finally {
@@ -81,171 +64,283 @@ export function ProjectTaskDetailDialog({ task, projectId, open, onOpenChange }:
         }
     }
 
-  if (!task) return null
+    // const fetchComments = async () => {
+    //     if (!task) return
+    //     try {
+    //         setLoadingComments(true)
+    //         const response = await getAllCommentsByTaskId(task.taskId)
+    //         console.log("Comments response:", response)
+    //         setComments(response.data || [])
+    //     } catch (error) {
+    //         console.error("Failed to fetch comments:", error)
+    //         setComments([])
+    //     } finally {
+    //         setLoadingComments(false)
+    //     }
+    // }
 
+    const handleAddComment = async (values: any) => {
+        if (!task || !newComment.trim()) return;
+        try {
+            setSubmitting(true);
+            const commentPayload = {
+                taskId: task.taskId,
+                authorId: window.localStorage.getItem("userId")
+                    ? Number(window.localStorage.getItem("userId"))
+                    : 0,
+                posterId: taskDetail.assignedTo,
+                content: newComment.trim(),
+                createdDate: new Date().toISOString()
+            };
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A"
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
+            const response = await addComment(commentPayload);
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
+            console.log(response)
+            toast.success("Comment added successfully");
+            // setNewComment("");
+            // fetchComments();
+        } catch (error) {
+            console.error("Failed to add comment:", error);
+            toast.error("Failed to add comment");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return
-
-    const comment: Comment = {
-      id: Date.now().toString(),
-      author: { name: "Current User", avatar: "CU" },
-      content: newComment,
-      createdAt: new Date().toISOString(),
+    const handleStatusChange = async (statusCode: number) => {
+        if (!task) return
+        try {
+            await updateTask(task.projectId, task.taskId, { status: statusCode })
+            toast.success("Task status updated successfully.")
+            fetchTaskDetail()
+        } catch (err) {
+            console.error(err)
+            toast.error("Failed to update status")
+        }
     }
 
-    setComments([...comments, comment])
-    setNewComment("")
-    toast.success("Comment added")
-  }
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "N/A"
+        return new Date(dateString).toLocaleDateString("vi-VN", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
+    }
 
-  const handleDeleteComment = (commentId: string) => {
-    setComments(comments.filter((c) => c.id !== commentId))
-    toast.success("Comment deleted")
-  }
+    const formatCommentDate = (dateString: string) => {
+        if (!dateString) return ""
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffMs = now.getTime() - date.getTime()
+        const diffMins = Math.floor(diffMs / 60000)
+        const diffHours = Math.floor(diffMs / 3600000)
+        const diffDays = Math.floor(diffMs / 86400000)
 
-  // Use taskDetail if available, otherwise fallback to task prop
-  const displayTask = taskDetail || task
-    console.log(taskDetail)
+        if (diffMins < 1) return "Just now"
+        if (diffMins < 60) return `${diffMins}m ago`
+        if (diffHours < 24) return `${diffHours}h ago`
+        if (diffDays < 7) return `${diffDays}d ago`
+
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        })
+    }
+
+    if (!task) return null
+
+    const displayTask = taskDetail || task
     const currentStatus = StatusMap[displayTask.status] || StatusMap.PENDING
     const currentPriority = PriorityMap[displayTask.priority] || PriorityMap.LOW
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">{displayTask.title || displayTask.name}</DialogTitle>
-        </DialogHeader>
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl">{displayTask.title}</DialogTitle>
+                </DialogHeader>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        ) : (
-          <ScrollArea className="flex-1 overflow-hidden">
-            <div className="space-y-6 pr-4">
-              {/* Task Info */}
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">{displayTask.description}</p>
-
-                {/*<div className="flex gap-2 flex-wrap">*/}
-                {/*  <Badge className={currentStatus.color}>{currentStatus.label}</Badge>*/}
-                {/*  <Badge className={currentPriority.color}>{currentPriority.label}</Badge>*/}
-                {/*</div>*/}
-
-                {/* Task Details Grid */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div className="flex items-start space-x-3">
-                    <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">DUE DATE</p>
-                      <p className="text-sm font-medium">{formatDate(displayTask.dueDate || displayTask.endDate)}</p>
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                     </div>
-                  </div>
+                ) : (
+                    <ScrollArea className="flex-1 overflow-hidden">
+                        <div className="space-y-6 pr-4">
+                            {/* Task Info */}
+                            <div className="space-y-4">
+                                <p className="text-sm text-muted-foreground">{displayTask.description}</p>
 
-                  <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">PRIORITY</p>
-                      <Badge className={`mt-1 ${currentPriority.color}`}>{currentPriority.label}</Badge>
-                    </div>
-                  </div>
+                                {/* Status + Priority */}
+                                <div className="flex gap-2 flex-wrap">
+                                    <Badge className={currentStatus.color}>{currentStatus.label}</Badge>
+                                    <Badge className={currentPriority.color}>{currentPriority.label}</Badge>
+                                </div>
 
-                  <div className="flex items-start space-x-3">
-                    <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">CREATED</p>
-                      <p className="text-sm font-medium">{formatDate(displayTask.createdDate)}</p>
-                    </div>
-                  </div>
+                                {/* Task Details Grid */}
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                                    <div className="flex items-start space-x-3">
+                                        <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">DUE DATE</p>
+                                            <p className="text-sm font-medium">
+                                                {formatDate(displayTask.dueDate)}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                  <div className="flex items-start space-x-3">
-                    <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
-                      <p className="text-sm font-medium">{displayTask.assignedTo || ""}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                                    <div className="flex items-start space-x-3">
+                                        <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">PRIORITY</p>
+                                            <Badge className={`mt-1 ${currentPriority.color}`}>
+                                                {currentPriority.label}
+                                            </Badge>
+                                        </div>
+                                    </div>
 
-              {/* Comments Section - Only for project task detail */}
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-semibold">Comments ({comments.length})</h3>
+                                    <div className="flex items-start space-x-3">
+                                        <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">CREATED</p>
+                                            <p className="text-sm font-medium">
+                                                {formatDate(displayTask.createdDate)}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                {/* Comments List */}
-                <ScrollArea className="max-h-64">
-                  <div className="space-y-3 pr-4">
-                    {comments.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-4">No comments yet</p>
-                    ) : (
-                      comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50">
-                          <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
-                              {comment.author.avatar}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <p className="text-sm font-medium">{comment.author.name}</p>
-                              <p className="text-xs text-gray-500">{formatTime(comment.createdAt)}</p>
+                                    <div className="flex items-start space-x-3">
+                                        <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
+                                            <p className="text-sm font-medium">
+                                                {displayTask.assignedTo || "Team Member"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-700 break-words">{comment.content}</p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
 
-                {/* Comment Input */}
-                <div className="flex gap-2 pt-2">
-                  <Input
-                    placeholder="Add a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault()
-                        handleAddComment()
-                      }
-                    }}
-                    className="text-sm"
-                  />
-                  <Button onClick={handleAddComment} disabled={!newComment.trim()} size="sm">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
+                            {/* Update Status */}
+                            <div className="space-y-4 pt-4 border-t">
+                                <h3 className="text-lg font-semibold">Update Status</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(StatusMap).map(([key, value]) => {
+                                        const isActive = displayTask.status === key
+                                        return (
+                                            <Button
+                                                key={key}
+                                                variant={isActive ? "default" : "outline"}
+                                                size="sm"
+                                                onClick={() => handleStatusChange(value.code)}
+                                                className={isActive ? value.color : ""}
+                                            >
+                                                {value.label}
+                                            </Button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Comments Section */}
+                            <div className="space-y-4 pt-4 border-t">
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare className="h-5 w-5 text-gray-600" />
+                                    <h3 className="text-lg font-semibold">
+                                        Comments ({comments.length})
+                                    </h3>
+                                </div>
+
+                                {/* Add Comment */}
+                                <div className="space-y-2">
+                                    <Textarea
+                                        placeholder="Write a comment..."
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        className="min-h-[80px] resize-none"
+                                    />
+                                    <div className="flex justify-end">
+                                        <Button
+                                            size="sm"
+                                            onClick={handleAddComment}
+                                            disabled={!newComment.trim() || submitting}
+                                        >
+                                            {submitting ? (
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <Send className="h-4 w-4 mr-2" />
+                                            )}
+                                            Post Comment
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Comments List */}
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                    {loadingComments ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                        </div>
+                                    ) : comments.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                                            <p className="text-sm">No comments yet</p>
+                                            <p className="text-xs">Be the first to comment!</p>
+                                        </div>
+                                    ) : (
+                                        comments.map((comment) => (
+                                            <div key={comment.commentId} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarFallback>
+                                                        {comment.posterId?.toString().charAt(0) || "U"}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold text-sm">
+                                                            User {comment.posterId}
+                                                        </span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {formatCommentDate(comment.createdDate)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-700">
+                                                        {comment.content}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* File Upload */}
+                            <div className="space-y-4 pt-4 border-t">
+                                <h3 className="text-lg font-semibold">Attachments</h3>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                                    <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                                    <p className="text-sm font-medium text-gray-700">Drag and drop files or click to upload</p>
+                                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF, DOC up to 10MB</p>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-end gap-2 pt-4 border-t">
+                                <Button variant="outline" size="sm">
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit Task
+                                </Button>
+                                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete Task
+                                </Button>
+                            </div>
+                        </div>
+                    </ScrollArea>
+                )}
+            </DialogContent>
+        </Dialog>
+    )
 }

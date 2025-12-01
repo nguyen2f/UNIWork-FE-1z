@@ -162,7 +162,6 @@ export default function ProjectsPage() {
 
   console.log(projects)
 
-
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -230,11 +229,11 @@ export default function ProjectsPage() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{project.project.description}</p>
 
                     <div className="flex gap-2">
-                        <Badge variant={project.status}>
-                            {project.status}
+                        <Badge variant={project.project.status}>
+                            {project.project.status}
                         </Badge>
-                        <Badge variant={project.priority}>
-                            {project.priority}
+                        <Badge variant={project.project.priority}>
+                            {project.project.priority}
                         </Badge>
                     </div>
 

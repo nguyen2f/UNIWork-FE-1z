@@ -62,6 +62,16 @@ export interface Message {
   sender: User
 }
 
+export interface Comment {
+    commentId: number
+    taskId: number
+    posterId: number
+    authorId: number
+    content: string
+    createdDate: string
+    updatedDate: string
+}
+
 export interface Notification {
   notificationId: number
   title: string
