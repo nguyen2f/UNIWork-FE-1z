@@ -49,7 +49,7 @@ export default function ProjectsPage() {
     const [projectPage, setProjectPage] = useState(0); // Backend dùng 0-indexed
     const [projectPagination, setProjectPagination] = useState({
         currentPage: 0,
-        pageSize: 5,
+        pageSize: 6,
         totalElements: 0,
         totalPages: 0,
         hasNext: false,
@@ -67,7 +67,7 @@ export default function ProjectsPage() {
     const fetchProjects = async (page: number = 0) => {
         try {
             setLoading(true);
-            const result = await fetchProjectReport(page, 5);
+            const result = await fetchProjectReport(page, 6);
 
             if (result.data) {
                 setProjects(result.data);

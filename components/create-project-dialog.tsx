@@ -70,9 +70,9 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
   }
 
   return (
-    <Drawer
+    <Modal
       open={open}
-      onClose={() => onOpenChange(false)}
+      onCancel={() => onOpenChange(false)}
       width={800}
       title="Create Project"
     >
@@ -242,6 +242,6 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
           </Space>
         </Form.Item>
       </Form>
-    </Drawer>
+    </Modal>
   )
 }
