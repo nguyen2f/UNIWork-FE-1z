@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { User, Bell, Shield, Palette, Globe, Save, Upload } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sidebar } from "../../components/sidebar"
-import { Header } from "../../components/header"
+import { Sidebar } from "@/components/sidebar"
+import { Header } from "@/components/header"
+import { getUserProfile, updateUserProfile } from "@/app/services/userService"
+import { message } from "antd"
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({
@@ -24,6 +26,7 @@ export default function SettingsPage() {
     bio: "Experienced project director with 10+ years in enterprise software implementation and digital transformation initiatives.",
     timezone: "America/New_York",
     language: "en",
+    address: "",
   })
 
   const [notifications, setNotifications] = useState({
@@ -44,6 +47,76 @@ export default function SettingsPage() {
     defaultView: "dashboard",
     itemsPerPage: "25",
   })
+
+  const [loadingProfile, setLoadingProfile] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchProfile = async () => {
+      const userId = localStorage.getItem("userId")
+      if (!userId) return
+
+      try {
+        setLoadingProfile(true)
+        setProfileError(null)
+        const res = await getUserProfile(userId)
+        // api(...) interceptor returns response?.data by default, so res should be the payload directly
+        // server returns { success, code, message, data: { ... } }, so extract inner `data`
+        const data = (res && res.data) ? res.data : res
+        setProfile((prev) => ({
+          ...prev,
+          name: data.name ?? prev.name,
+          email: data.email ?? prev.email,
+          phone: data.phone ?? prev.phone,
+          bio: data.bio ?? prev.bio,
+          address: data.address ?? prev.address,
+          department: data.department ?? prev.department,
+        }))
+      } catch (err: any) {
+        console.error("Failed to fetch profile", err)
+        setProfileError(err?.message || "Failed to load profile")
+      } finally {
+        if (!cancelled) setLoadingProfile(false)
+      }
+    }
+
+    fetchProfile()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleSave = async () => {
+    const userId = localStorage.getItem("userId")
+    if (!userId) {
+      message.error("User not found. Please login again.")
+      return
+    }
+
+    const body = {
+      name: profile.name,
+      phone: profile.phone,
+      email: profile.email,
+      bio: profile.bio,
+      address: profile.address,
+      department: profile.department,
+    }
+
+    try {
+      setSaving(true)
+      await updateUserProfile(userId, body)
+      message.success("Profile updated successfully")
+    } catch (err: any) {
+      console.error("Failed to update profile", err)
+      message.error(err?.message || "Failed to update profile")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -77,6 +150,10 @@ export default function SettingsPage() {
                     <CardDescription>Update your personal information and profile details</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {profileError && (
+                      <div className="text-sm text-red-600">{profileError}</div>
+                    )}
+
                     {/* Profile Picture */}
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-20 w-20">
@@ -167,9 +244,9 @@ export default function SettingsPage() {
                       />
                     </div>
 
-                    <Button>
+                    <Button disabled={loadingProfile || saving} onClick={handleSave}>
                       <Save className="h-4 w-4 mr-2" />
-                      Save Changes
+                      {saving ? "Saving..." : loadingProfile ? "Loading..." : "Save Changes"}
                     </Button>
                   </CardContent>
                 </Card>

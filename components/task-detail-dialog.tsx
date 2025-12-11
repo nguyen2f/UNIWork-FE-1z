@@ -104,14 +104,25 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         }
     };
 
-    const handleStatusChange = async (statusCode: number) => {
+    const handleStatusChange = async (statusKey: string, statusCode: number) => {
         if (!task) return
         try {
-            await updateTask(task.projectId, task.taskId, { status: statusCode })
+            console.log("🔄 Updating status:", { statusKey, statusCode })
+
+            // Gửi code number lên API
+            const response = await updateTask(task.projectId, task.taskId, { status: statusCode })
+            console.log("✅ API response:", response.data)
+
             toast.success("Task status updated successfully.")
-            fetchTaskDetail()
+
+            // Lấy data từ response (không cần fetch lại)
+            const updatedTask = response.data?.data
+            if (updatedTask) {
+                setTaskDetail(updatedTask)
+                console.log("✅ Local state updated to:", updatedTask.status)
+            }
         } catch (err) {
-            console.error(err)
+            console.error("❌ Update failed:", err)
             toast.error("Failed to update status")
         }
     }
@@ -231,8 +242,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                                 key={key}
                                                 variant={isActive ? "default" : "outline"}
                                                 size="sm"
-                                                onClick={() => handleStatusChange(value.code)}
-                                                className={isActive ? value.color : ""}
+                                                onClick={() => handleStatusChange(key, value.code)}                                                className={isActive ? value.color : ""}
                                             >
                                                 {value.label}
                                             </Button>

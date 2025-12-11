@@ -44,9 +44,9 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       const { dateRange, ...rest } = values
       const formData = {
         ...rest,
-        startDate: dateRange?.[0]?.toISOString(),
-        endDate: dateRange?.[1]?.toISOString(),
-        assignedTo: teamMembers?.find((member) => member.id === assignedTo)?.name,
+          startDate: dateRange?.[0] ? dayjs(dateRange[0]).format("YYYY-MM-DD HH:mm:ss") : null,
+          endDate:   dateRange?.[1] ? dayjs(dateRange[1]).format("YYYY-MM-DD HH:mm:ss") : null,
+          assignedTo: teamMembers?.find((member) => member.id === assignedTo)?.name,
       }
 
       const response = await createProject(formData)
@@ -75,6 +75,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       onCancel={() => onOpenChange(false)}
       width={800}
       title="Create Project"
+      footer={null}
     >
       <Form
         form={form}

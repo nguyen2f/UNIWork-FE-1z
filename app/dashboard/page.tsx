@@ -331,21 +331,25 @@ export default function DashboardPage() {
                 {/* Pie Chart */}
                 <div className="w-full h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[{ name: "Done", value: tasksPerformance?.doneTasks },
-                        { name: "Total", value: tasksPerformance?.totalTasks }]}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label
-                      >
-                        <Cell fill="#22c55e" /> {/* green for done */}
-                        <Cell fill="#2563eb" /> {/* orange for remaining */}
-                      </Pie>
-                    </PieChart>
+                      <PieChart>
+                          <Pie
+                              data={[
+                                  { name: "Completed", value: tasksPerformance?.doneTasks || 0 },
+                                  { name: "Remaining", value: tasksPerformance?.remainingTasks || 0 }
+                              ]}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label
+                          >
+                              <Cell fill="#cf0837" /> {/* green for completed */}
+                              <Cell fill="#1616f9" /> {/* orange for remaining */}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                      </PieChart>
                   </ResponsiveContainer>
                 </div>
 

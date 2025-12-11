@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Calendar } from "lucide-react"
 import { toast } from "sonner"
+import { default as dayjs} from "dayjs"
 import {Drawer, Form, message, Select, Row, Col, DatePicker, Input, Space, Tag, Modal} from "antd";
 import {createProject, getAllProjects} from "@/app/services/projectService";
 import {UserOutlined} from "@ant-design/icons";
@@ -39,18 +40,19 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       const { dateRange, ...rest } = values
       const formData = {
         ...rest,
-        startDate: dateRange?.[0]?.toISOString(),
-        endDate: dateRange?.[1]?.toISOString()
+          dueDate: values.dueDate
+              ? dayjs(values.dueDate).format("YYYY-MM-DD HH:mm:ss")
+              : null,
       }
 
       const response = await createTask(formData)
 
-      message.success("Project created successfully!", 3)
+      message.success("Task created successfully!", 3)
       onOpenChange(false)
       form.resetFields()
       setAssignedTo(undefined)
     } catch (error) {
-      message.error("Failed to create project")
+      message.error("Failed to create task")
     }
   }
 
