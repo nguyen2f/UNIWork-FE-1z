@@ -24,6 +24,8 @@
     "@radix-ui/react-slot": "latest",
     "@radix-ui/react-switch": "latest",
     "@radix-ui/react-tabs": "latest",
+    "@simplewebauthn/browser": "latest",
+    "@simplewebauthn/server": "latest",
     "antd": "latest",
     "axios": "latest",
     "bcryptjs": "latest",

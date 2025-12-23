@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Send, Search, Plus, Paperclip, MoreHorizontal, Phone, Video } from 'lucide-react'
+import { useState, useEffect, Suspense } from "react"
+import { Send, Search, Plus, Paperclip, MoreHorizontal, Phone, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -11,12 +10,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
+import { sendMessage, getUserChats } from "@/app/services/chatService"
+import { toast } from "sonner"
+import type { ChatMessageDTO } from "@/types/chatType"
 
-export default function MessagesPage() {
+function MessagesContent() {
   const [selectedConversation, setSelectedConversation] = useState(1)
   const [newMessage, setNewMessage] = useState("")
-
-  const [conversations] = useState([
+  const [conversations, setConversations] = useState([
     {
       id: 1,
       name: "CRM Migration Team",
@@ -107,7 +108,8 @@ export default function MessagesPage() {
       conversationId: 1,
       sender: "John Doe",
       senderAvatar: "JD",
-      message: "Great work everyone. The data migration is scheduled for this weekend. Please make sure all stakeholders are informed.",
+      message:
+        "Great work everyone. The data migration is scheduled for this weekend. Please make sure all stakeholders are informed.",
       timestamp: "9:15 AM",
       type: "text",
     },
@@ -122,13 +124,38 @@ export default function MessagesPage() {
     },
   ])
 
-  const currentConversation = conversations.find(c => c.id === selectedConversation)
-  const conversationMessages = messages.filter(m => m.conversationId === selectedConversation)
+  useEffect(() => {
+    const loadChats = async () => {
+      try {
+        const data = await getUserChats()
+        console.log("[v0] Chats loaded:", data)
+      } catch (error) {
+        console.log("[v0] Error loading chats:", error)
+      }
+    }
+    loadChats()
+  }, [])
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      // Add message logic here
-      setNewMessage("")
+  const currentConversation = conversations.find((c) => c.id === selectedConversation)
+  const conversationMessages = messages.filter((m) => m.conversationId === selectedConversation)
+
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && selectedConversation) {
+      try {
+        const messageData: ChatMessageDTO = {
+          chatId: selectedConversation,
+          senderId: 1,
+          content: newMessage,
+          timestamp: new Date().toISOString(),
+        }
+
+        await sendMessage(messageData)
+        toast.success("Message sent")
+        setNewMessage("")
+      } catch (error) {
+        toast.error("Failed to send message")
+        console.log("[v0] Error sending message:", error)
+      }
     }
   }
 
@@ -163,8 +190,8 @@ export default function MessagesPage() {
                       onClick={() => setSelectedConversation(conversation.id)}
                       className={`p-3 rounded-lg cursor-pointer transition-colors mb-1 ${
                         selectedConversation === conversation.id
-                          ? 'bg-blue-50 border border-blue-200'
-                          : 'hover:bg-gray-50'
+                          ? "bg-blue-50 border border-blue-200"
+                          : "hover:bg-gray-50"
                       }`}
                     >
                       <div className="flex items-start space-x-3">
@@ -189,9 +216,7 @@ export default function MessagesPage() {
                               {conversation.project}
                             </Badge>
                             {conversation.unreadCount > 0 && (
-                              <Badge className="bg-blue-500 text-white text-xs">
-                                {conversation.unreadCount}
-                              </Badge>
+                              <Badge className="bg-blue-500 text-white text-xs">{conversation.unreadCount}</Badge>
                             )}
                           </div>
                         </div>
@@ -218,10 +243,9 @@ export default function MessagesPage() {
                         <div>
                           <h3 className="font-semibold">{currentConversation.name}</h3>
                           <p className="text-sm text-gray-600">
-                            {currentConversation.type === "group" 
+                            {currentConversation.type === "group"
                               ? `${currentConversation.participants.length} members`
-                              : "Online"
-                            }
+                              : "Online"}
                           </p>
                         </div>
                       </div>
@@ -276,7 +300,7 @@ export default function MessagesPage() {
                           onChange={(e) => setNewMessage(e.target.value)}
                           className="min-h-[40px] max-h-32 resize-none"
                           onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
+                            if (e.key === "Enter" && !e.shiftKey) {
                               e.preventDefault()
                               handleSendMessage()
                             }
@@ -302,5 +326,13 @@ export default function MessagesPage() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MessagesContent />
+    </Suspense>
   )
 }
