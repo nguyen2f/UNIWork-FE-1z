@@ -1,13 +1,21 @@
 import { api } from "@/lib/api"
 import type { ChatMessageDTO, CreateGroupDTO } from "@/types/chatType"
+import {getStompClient} from "@/app/services/socket";
 
-export const sendMessage = async (message: ChatMessageDTO) => {
-  return api<any>({
-    method: "POST",
-    url: "/chat/send",
-    data: message,
-  })
+export const sendMessage = (message: ChatMessageDTO) => {
+    const client = getStompClient()
+
+    if (!client || !client.connected) {
+        console.error("WebSocket not connected")
+        return
+    }
+
+    client.publish({
+        destination: "/app/send", // ✅ QUAN TRỌNG
+        body: JSON.stringify(message),
+    })
 }
+
 
 export const createDirectChat = async (user1: number, user2: number) => {
   return api<number>({

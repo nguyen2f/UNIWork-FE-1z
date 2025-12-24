@@ -3,7 +3,7 @@ export interface ChatMessageDTO {
   chatId: number
   senderId: number
   content: string
-  timestamp: string
+  timestamp?: string
   createdAt?: string
 }
 

@@ -11,9 +11,10 @@ import { createDirectChat, createGroupChat } from "@/app/services/chatService"
 import { getAllMember } from "@/app/services/userService"
 import { toast } from "sonner"
 import type { CreateGroupDTO } from "@/types/chatType"
+import {message} from "antd";
 
 interface User {
-  id: number
+  userId: number
   name: string
   avatar?: string
 }
@@ -37,25 +38,26 @@ export function CreateChatDialog({ open, onOpenChange, onChatCreated }: CreateCh
   }, [open])
 
   const loadUsers = async () => {
-    try {
-      setLoading(true)
-      const data = await getAllMember()
-      setUsers(data || [])
-    } catch (error) {
-      toast.error("Failed to load users")
-      console.log("[v0] Error loading users:", error)
-    } finally {
-      setLoading(false)
-    }
+      try {
+          const response = await getAllMember();
+          setUsers(response.data);
+      } catch (error) {
+          message.error("Failed to fetch team members");
+      }
   }
 
   const filteredUsers = users.filter((user) => user.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
-  const handleSelectUser = (userId: number) => {
-    setSelectedUsers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]))
-  }
+    const handleSelectUser = (userId: number, checked: boolean) => {
+        setSelectedUsers((prev) =>
+            checked
+                ? [...prev, userId]
+                : prev.filter((id) => id !== userId)
+        )
+    }
 
-  const handleCreateChat = async () => {
+
+    const handleCreateChat = async () => {
     if (selectedUsers.length === 0) {
       toast.error("Please select at least one user")
       return
@@ -65,8 +67,9 @@ export function CreateChatDialog({ open, onOpenChange, onChatCreated }: CreateCh
       setLoading(true)
 
       if (selectedUsers.length === 1) {
-        const roomId = await createDirectChat(1, selectedUsers[0])
-        toast.success("Direct chat created")
+          const userId = Number(window.localStorage.getItem("userId"));
+          const roomId = await createDirectChat(userId, selectedUsers[0]);
+          toast.success("Direct chat created")
       } else {
         const groupData: CreateGroupDTO = {
           name: selectedUsers.length > 1 ? "New Group Chat" : "",
@@ -107,15 +110,17 @@ export function CreateChatDialog({ open, onOpenChange, onChatCreated }: CreateCh
               ) : (
                 filteredUsers.map((user) => (
                   <div
-                    key={user.id}
+                    key={user.userId}
                     className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleSelectUser(user.id)}
                   >
-                    <Checkbox
-                      checked={selectedUsers.includes(user.id)}
-                      onCheckedChange={() => handleSelectUser(user.id)}
-                    />
-                    <Avatar className="h-8 w-8">
+                      <Checkbox
+                          checked={selectedUsers.includes(user.userId)}
+                          onCheckedChange={(checked) =>
+                              handleSelectUser(user.userId, checked as boolean)
+                          }
+                      />
+
+                      <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-blue-100 text-blue-700 text-xs">
                         {user.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
