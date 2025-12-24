@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import {useEffect, useState, Suspense, useRef} from "react"
 import { Plus, Send, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,8 +35,18 @@ function MessagesContent() {
     const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
     const [newMessage, setNewMessage] = useState("")
     const [createChatOpen, setCreateChatOpen] = useState(false)
-
+    const subscriptionRef = useRef<any>(null)
     const [messages, setMessages] = useState<Message[]>([])
+
+    useEffect(() => {
+        console.log("🔥 CALL connectSocket")
+        connectSocket()
+
+        return () => {
+            disconnectSocket()
+        }
+    }, [])
+
 
     useEffect(() => {
         const loadChats = async () => {
@@ -59,50 +69,79 @@ function MessagesContent() {
         ? conversations.find((c) => c.roomId === selectedConversation)
         : null
 
-    const conversationMessages = selectedConversation
-        ? messages.filter((m) => m.roomId === selectedConversation)
-        : []
+    const conversationMessages = messages.filter(
+        (m) => m.roomId === selectedConversation
+    )
 
     const handleSendMessage = () => {
-        if (!newMessage.trim() || !selectedConversation) return
+        console.log("CLICK SEND")
+
+        if (!newMessage.trim() || !selectedConversation) {
+            console.log("BLOCKED:", { newMessage, selectedConversation })
+            return
+        }
 
         const payload: ChatMessageDTO = {
-            chatId: selectedConversation,
+            roomId: selectedConversation,
             senderId: Number(localStorage.getItem("userId")),
             content: newMessage,
         }
 
-        sendMessage(payload) // ✅ KHÔNG await
+        console.log("PAYLOAD:", payload)
+
+        sendMessage(payload)
         setNewMessage("")
     }
+
+    const waitForSocket = (client: any, cb: () => void) => {
+        if (client.connected) {
+            cb()
+        } else {
+            setTimeout(() => waitForSocket(client, cb), 100)
+        }
+    }
+
 
     useEffect(() => {
         if (!selectedConversation) return
 
         const client = getStompClient()
-        if (!client || !client.connected) return
+        if (!client) return
 
-        const subscription = client.subscribe(
-            `/topic/chat/${selectedConversation}`,
-            (msg) => {
-                const data = JSON.parse(msg.body)
+        waitForSocket(client, () => {
+            // clear subscription cũ
+            subscriptionRef.current?.unsubscribe()
 
-                setMessages((prev) => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        roomId: selectedConversation,
-                        senderId: data.senderId,
-                        senderAvatar: data.senderName?.charAt(0) ?? "U",
-                        content: data.content,
-                        createdAt: new Date().toLocaleTimeString(),
-                    },
-                ])
-            }
-        )
+            console.log("SUBSCRIBE ROOM:", selectedConversation)
 
-        return () => subscription.unsubscribe()
+            subscriptionRef.current = client.subscribe(
+                `/topic/chat/${selectedConversation}`,
+                (msg) => {
+                    console.log("🔥 RECEIVED MESSAGE:", msg.body)
+
+                    const data = JSON.parse(msg.body)
+
+                    setMessages((prev) => [
+                        ...prev,
+                        {
+                            id: data.id ?? Date.now(),
+                            roomId: data.roomId,
+                            senderId: data.senderId,
+                            content: data.content,
+                            createdAt: data.createdAt ?? new Date().toISOString(),
+                        },
+                    ])
+                }
+            )
+        })
+
+        return () => {
+            subscriptionRef.current?.unsubscribe()
+            subscriptionRef.current = null
+        }
     }, [selectedConversation])
+
+
 
 
     return (

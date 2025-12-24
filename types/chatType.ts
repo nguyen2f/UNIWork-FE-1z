@@ -1,6 +1,6 @@
 export interface ChatMessageDTO {
   messageId?: number
-  chatId: number
+  roomId: number
   senderId: number
   content: string
   timestamp?: string

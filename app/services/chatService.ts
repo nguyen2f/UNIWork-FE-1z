@@ -3,18 +3,24 @@ import type { ChatMessageDTO, CreateGroupDTO } from "@/types/chatType"
 import {getStompClient} from "@/app/services/socket";
 
 export const sendMessage = (message: ChatMessageDTO) => {
+    console.log("SEND MESSAGE CALLED", message)
+
     const client = getStompClient()
+    console.log("STOMP CLIENT:", client)
 
     if (!client || !client.connected) {
         console.error("WebSocket not connected")
         return
     }
 
+    console.log("PUBLISHING TO /app/send")
+
     client.publish({
-        destination: "/app/send", // ✅ QUAN TRỌNG
+        destination: "/app/send",
         body: JSON.stringify(message),
     })
 }
+
 
 
 export const createDirectChat = async (user1: number, user2: number) => {
