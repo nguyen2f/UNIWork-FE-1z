@@ -57,10 +57,10 @@ export const getUserChats = async () => {
 }
 
 export const getDirectChat = async (userId: number) => {
-  return api<number>({
-    method: "GET",
-    url: `/chat/direct/${userId}`,
-  })
+    return api<number>({
+        method: "GET",
+        url: `/chat/direct/${userId}`,
+    })
 
 
-
+}
