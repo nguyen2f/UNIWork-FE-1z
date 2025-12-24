@@ -28,17 +28,17 @@ export const createGroupChat = async (dto: CreateGroupDTO) => {
   })
 }
 
-export const getChatMessages = async (chatId: number) => {
+export const getChatMessages = async (roomId: number) => {
   return api<ChatMessageDTO[]>({
     method: "GET",
-    url: `/chat/${chatId}/messages`,
+    url: `/chat/${roomId}/messages`,
   })
 }
 
 export const getUserChats = async () => {
   return api<any[]>({
     method: "GET",
-    url: "/chat/user/chats",
+    url: "/chat",
   })
 }
 
