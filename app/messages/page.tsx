@@ -30,6 +30,13 @@ interface Message {
     createdAt: string
 }
 
+interface ChatMessageResponse {
+    messageId: number
+    senderId: number
+    content: string
+    createdAt: string
+}
+
 function MessagesContent() {
     const [conversations, setConversations] = useState<Conversation[]>([])
     const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
@@ -37,6 +44,7 @@ function MessagesContent() {
     const [createChatOpen, setCreateChatOpen] = useState(false)
     const subscriptionRef = useRef<any>(null)
     const [messages, setMessages] = useState<Message[]>([])
+    // const [chatMessages, setChatMessages] = useState<ChatMessageResponse[]>([])
 
     useEffect(() => {
         console.log("🔥 CALL connectSocket")

@@ -61,4 +61,6 @@ export const getDirectChat = async (userId: number) => {
     method: "GET",
     url: `/chat/direct/${userId}`,
   })
-}
+
+
+
