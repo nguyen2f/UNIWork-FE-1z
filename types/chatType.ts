@@ -31,3 +31,35 @@ export interface GroupChat {
 }
 
 export type Chat = DirectChat | GroupChat
+
+export interface Conversation {
+  roomId: number
+  name: string | null
+  type: "DIRECT" | "GROUP"
+  createdAt: string
+  lastMessage?: {
+    content: string
+    senderId: number
+    createdAt: string
+  }
+}
+
+export interface ChatMessageResponseDTO {
+  id: number
+  roomId: number
+  senderId: number
+  senderName?: string
+  content: string
+  createdAt: string
+}
+
+export interface PageMetadata {
+  page: number
+  size: number
+  totalElements: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  metadata: PageMetadata
+}
