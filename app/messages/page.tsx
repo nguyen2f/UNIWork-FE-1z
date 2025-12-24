@@ -13,10 +13,12 @@ import { Header } from "../../components/header"
 import { sendMessage, getUserChats } from "@/app/services/chatService"
 import { toast } from "sonner"
 import type { ChatMessageDTO } from "@/types/chatType"
+import { CreateChatDialog } from "@/components/create-chat-dialog"
 
 function MessagesContent() {
   const [selectedConversation, setSelectedConversation] = useState(1)
   const [newMessage, setNewMessage] = useState("")
+  const [createChatOpen, setCreateChatOpen] = useState(false)
   const [conversations, setConversations] = useState([
     {
       id: 1,
@@ -136,6 +138,20 @@ function MessagesContent() {
     loadChats()
   }, [])
 
+  const handleChatCreated = () => {
+    const loadChats = async () => {
+      try {
+        const data = await getUserChats()
+        console.log("[v0] Chats refreshed:", data)
+        // Update conversations with newly created chat
+        setConversations(data)
+      } catch (error) {
+        console.log("[v0] Error refreshing chats:", error)
+      }
+    }
+    loadChats()
+  }
+
   const currentConversation = conversations.find((c) => c.id === selectedConversation)
   const conversationMessages = messages.filter((m) => m.conversationId === selectedConversation)
 
@@ -171,7 +187,7 @@ function MessagesContent() {
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Messages</h2>
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => setCreateChatOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
                     New
                   </Button>
@@ -184,45 +200,54 @@ function MessagesContent() {
 
               <ScrollArea className="flex-1">
                 <div className="p-2">
-                  {conversations.map((conversation) => (
-                    <div
-                      key={conversation.id}
-                      onClick={() => setSelectedConversation(conversation.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors mb-1 ${
-                        selectedConversation === conversation.id
-                          ? "bg-blue-50 border border-blue-200"
-                          : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
-                              {conversation.avatar}
-                            </AvatarFallback>
-                          </Avatar>
-                          {conversation.type === "group" && (
-                            <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white"></div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-medium text-sm truncate">{conversation.name}</h3>
-                            <span className="text-xs text-gray-500">{conversation.lastMessageTime}</span>
-                          </div>
-                          <p className="text-sm text-gray-600 truncate mb-1">{conversation.lastMessage}</p>
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline" className="text-xs">
-                              {conversation.project}
-                            </Badge>
-                            {conversation.unreadCount > 0 && (
-                              <Badge className="bg-blue-500 text-white text-xs">{conversation.unreadCount}</Badge>
+                  {conversations.length === 0 ? (
+                    <div className="p-4 text-center">
+                      <p className="text-gray-600 text-sm mb-4">No conversations yet</p>
+                      <Button onClick={() => setCreateChatOpen(true)} className="w-full">
+                        Create New Chat
+                      </Button>
+                    </div>
+                  ) : (
+                    conversations.map((conversation) => (
+                      <div
+                        key={conversation.id}
+                        onClick={() => setSelectedConversation(conversation.id)}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors mb-1 ${
+                          selectedConversation === conversation.id
+                            ? "bg-blue-50 border border-blue-200"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="relative">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-blue-100 text-blue-700 text-sm">
+                                {conversation.avatar}
+                              </AvatarFallback>
+                            </Avatar>
+                            {conversation.type === "group" && (
+                              <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white"></div>
                             )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-medium text-sm truncate">{conversation.name}</h3>
+                              <span className="text-xs text-gray-500">{conversation.lastMessageTime}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 truncate mb-1">{conversation.lastMessage}</p>
+                            <div className="flex items-center justify-between">
+                              <Badge variant="outline" className="text-xs">
+                                {conversation.project}
+                              </Badge>
+                              {conversation.unreadCount > 0 && (
+                                <Badge className="bg-blue-500 text-white text-xs">{conversation.unreadCount}</Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </ScrollArea>
             </div>
@@ -316,14 +341,20 @@ function MessagesContent() {
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-                    <p className="text-gray-600">Choose a conversation from the sidebar to start messaging</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No conversation selected</h3>
+                    <p className="text-gray-600 mb-4">Select a conversation from the sidebar or create a new one</p>
+                    <Button onClick={() => setCreateChatOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create New Chat
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
           </div>
         </main>
+
+        <CreateChatDialog open={createChatOpen} onOpenChange={setCreateChatOpen} onChatCreated={handleChatCreated} />
       </div>
     </div>
   )
