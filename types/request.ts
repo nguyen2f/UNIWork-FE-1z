@@ -16,7 +16,7 @@ export interface AddComment {
     posterId: number;
     authorId: number;
     content: string;
-    createdDate: string;
+    createdDate?: string;
     updatedDate?: string;
 }
 

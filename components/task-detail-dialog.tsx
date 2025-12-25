@@ -76,33 +76,34 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         }
     }
 
-    const handleAddComment = async (values: any) => {
+    const handleAddComment = async () => {
         if (!task || !newComment.trim()) return;
+
         try {
             setSubmitting(true);
+
             const commentPayload = {
                 taskId: task.taskId,
-                authorId: window.localStorage.getItem("userId")
-                    ? Number(window.localStorage.getItem("userId"))
-                    : 0,
-                posterId: taskDetail.assignedTo,
+                authorId: Number(localStorage.getItem("userId")),
+                posterId: task.assigneeId,
                 content: newComment.trim(),
-                createdDate: new Date().toISOString()
             };
 
-            const response = await addComment(commentPayload);
+            console.log("SEND COMMENT:", commentPayload);
 
-            console.log(response)
+            await addComment(commentPayload);
+
             toast.success("Comment added successfully");
-            // setNewComment("");
-            // fetchComments();
-        } catch (error) {
-            console.error("Failed to add comment:", error);
+            setNewComment("");
+            fetchComments();
+        } catch (error: any) {
+            console.error("Add comment error:", error?.response?.data || error);
             toast.error("Failed to add comment");
         } finally {
             setSubmitting(false);
         }
     };
+
 
     const handleStatusChange = async (statusKey: string, statusCode: number) => {
         if (!task) return
