@@ -1,6 +1,6 @@
 "use client"
 
-import {useEffect, useState, Suspense, useRef} from "react"
+import { useEffect, useState, Suspense, useRef, useCallback } from "react"
 import { Plus, Send, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,265 +9,291 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
-import { getUserChats, sendMessage } from "@/app/services/chatService"
-import { toast } from "sonner"
-import type { ChatMessageDTO } from "@/types/chatType"
+import { getUserChats, sendMessage, getChatHistory } from "@/app/services/chatService"
+import type { ChatMessageDTO, ChatMessageResponseDTO } from "@/types/chatType"
 import { CreateChatDialog } from "@/components/create-chat-dialog"
-import {connectSocket, disconnectSocket, getStompClient} from "@/app/services/socket";
+import { ChatMessageBubble } from "@/components/chat-message-bubble"
+import { connectSocket, disconnectSocket, getStompClient } from "@/app/services/socket"
 
 interface Conversation {
-    roomId: number
-    name: string | null
-    type: "DIRECT" | "GROUP"
-    createdAt: string
-}
-
-interface Message {
-    id: number
-    roomId: number
-    senderId: string
+  roomId: number
+  name: string | null
+  type: "DIRECT" | "GROUP"
+  createdAt: string
+  lastMessage?: {
     content: string
-    createdAt: string
-}
-
-interface ChatMessageResponse {
-    messageId: number
     senderId: number
-    content: string
     createdAt: string
+  }
 }
 
 function MessagesContent() {
-    const [conversations, setConversations] = useState<Conversation[]>([])
-    const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
-    const [newMessage, setNewMessage] = useState("")
-    const [createChatOpen, setCreateChatOpen] = useState(false)
-    const subscriptionRef = useRef<any>(null)
-    const [messages, setMessages] = useState<Message[]>([])
-    // const [chatMessages, setChatMessages] = useState<ChatMessageResponse[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
+  const [newMessage, setNewMessage] = useState("")
+  const [createChatOpen, setCreateChatOpen] = useState(false)
+  const subscriptionRef = useRef<any>(null)
+  const [messages, setMessages] = useState<ChatMessageResponseDTO[]>([])
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [currentPage, setCurrentPage] = useState(0)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const userId = typeof window !== "undefined" ? Number(localStorage.getItem("userId")) : 0
 
-    useEffect(() => {
-        console.log("🔥 CALL connectSocket")
-        connectSocket()
+  useEffect(() => {
+    connectSocket()
+    return () => {
+      disconnectSocket()
+    }
+  }, [])
 
-        return () => {
-            disconnectSocket()
-        }
-    }, [])
-
-
-    useEffect(() => {
-        const loadChats = async () => {
-            try {
-                const res = await getUserChats()
-                setConversations(res.data) // 🔥 QUAN TRỌNG
-            } catch (err) {
-                console.log("Load chats error:", err)
-            }
-        }
-        loadChats()
-    }, [])
-
-    const handleChatCreated = async () => {
+  useEffect(() => {
+    const loadChats = async () => {
+      try {
         const res = await getUserChats()
         setConversations(res.data)
+      } catch (err) {
+        console.error("Load chats error:", err)
+      }
+    }
+    loadChats()
+  }, [])
+
+  const handleChatCreated = async () => {
+    const res = await getUserChats()
+    setConversations(res.data)
+  }
+
+  const currentConversation = selectedConversation ? conversations.find((c) => c.roomId === selectedConversation) : null
+
+  useEffect(() => {
+    if (!selectedConversation) return
+
+    const loadChatHistory = async () => {
+      setLoading(true)
+      setCurrentPage(0)
+      try {
+        const res = await getChatHistory(selectedConversation, 0, 20)
+        setMessages(res.data.reverse())
+        setHasMore(res.data.length === 20)
+      } catch (err) {
+        console.error("Load chat history error:", err)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const currentConversation = selectedConversation
-        ? conversations.find((c) => c.roomId === selectedConversation)
-        : null
+    loadChatHistory()
+  }, [selectedConversation])
 
-    const conversationMessages = messages.filter(
-        (m) => m.roomId === selectedConversation
-    )
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
 
-    const handleSendMessage = () => {
-        console.log("CLICK SEND")
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedConversation) return
 
-        if (!newMessage.trim() || !selectedConversation) {
-            console.log("BLOCKED:", { newMessage, selectedConversation })
-            return
-        }
-
-        const payload: ChatMessageDTO = {
-            roomId: selectedConversation,
-            senderId: Number(localStorage.getItem("userId")),
-            content: newMessage,
-        }
-
-        console.log("PAYLOAD:", payload)
-
-        sendMessage(payload)
-        setNewMessage("")
+    const payload: ChatMessageDTO = {
+      roomId: selectedConversation,
+      senderId: userId,
+      content: newMessage,
     }
 
-    const waitForSocket = (client: any, cb: () => void) => {
-        if (client.connected) {
-            cb()
-        } else {
-            setTimeout(() => waitForSocket(client, cb), 100)
-        }
+    sendMessage(payload)
+    setNewMessage("")
+  }
+
+  const waitForSocket = (client: any, cb: () => void) => {
+    if (client.connected) {
+      cb()
+    } else {
+      setTimeout(() => waitForSocket(client, cb), 100)
     }
+  }
 
+  useEffect(() => {
+    if (!selectedConversation) return
 
-    useEffect(() => {
-        if (!selectedConversation) return
+    const client = getStompClient()
+    if (!client) return
 
-        const client = getStompClient()
-        if (!client) return
+    waitForSocket(client, () => {
+      subscriptionRef.current?.unsubscribe()
 
-        waitForSocket(client, () => {
-            // clear subscription cũ
-            subscriptionRef.current?.unsubscribe()
+      subscriptionRef.current = client.subscribe(`/topic/chat/${selectedConversation}`, (msg) => {
+        const data = JSON.parse(msg.body)
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: data.id ?? Date.now(),
+            roomId: data.roomId,
+            senderId: data.senderId,
+            senderName: data.senderName,
+            content: data.content,
+            createdAt: data.createdAt ?? new Date().toISOString(),
+          },
+        ])
+      })
+    })
 
-            console.log("SUBSCRIBE ROOM:", selectedConversation)
+    return () => {
+      subscriptionRef.current?.unsubscribe()
+      subscriptionRef.current = null
+    }
+  }, [selectedConversation])
 
-            subscriptionRef.current = client.subscribe(
-                `/topic/chat/${selectedConversation}`,
-                (msg) => {
-                    console.log("🔥 RECEIVED MESSAGE:", msg.body)
+  const handleLoadMore = useCallback(async () => {
+    if (!selectedConversation || loading || !hasMore) return
 
-                    const data = JSON.parse(msg.body)
+    setLoading(true)
+    try {
+      const nextPage = currentPage + 1
+      const res = await getChatHistory(selectedConversation, nextPage, 20)
+      if (res.data.length === 0) {
+        setHasMore(false)
+      } else {
+        setMessages((prev) => [...res.data.reverse(), ...prev])
+        setCurrentPage(nextPage)
+      }
+    } catch (err) {
+      console.error("Load more error:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedConversation, currentPage, loading, hasMore])
 
-                    setMessages((prev) => [
-                        ...prev,
-                        {
-                            id: data.id ?? Date.now(),
-                            roomId: data.roomId,
-                            senderId: data.senderId,
-                            content: data.content,
-                            createdAt: data.createdAt ?? new Date().toISOString(),
-                        },
-                    ])
-                }
-            )
-        })
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
 
-        return () => {
-            subscriptionRef.current?.unsubscribe()
-            subscriptionRef.current = null
-        }
-    }, [selectedConversation])
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
 
+        <main className="flex-1 overflow-hidden bg-white">
+          <div className="h-full flex">
+            {/* ===== CONVERSATIONS SIDEBAR ===== */}
+            <div className="w-80 border-r flex flex-col">
+              <div className="p-4 border-b">
+                <div className="flex justify-between mb-4">
+                  <h2 className="font-semibold">Messages</h2>
+                  <Button size="sm" onClick={() => setCreateChatOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    New
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input className="pl-10" placeholder="Search..." />
+                </div>
+              </div>
 
-
-
-    return (
-        <div className="flex h-screen bg-gray-50">
-            <Sidebar />
-
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header />
-
-                <main className="flex-1 overflow-hidden bg-white">
-                    <div className="h-full flex">
-
-                        {/* ===== SIDEBAR ===== */}
-                        <div className="w-80 border-r flex flex-col">
-                            <div className="p-4 border-b">
-                                <div className="flex justify-between mb-4">
-                                    <h2 className="font-semibold">Messages</h2>
-                                    <Button size="sm" onClick={() => setCreateChatOpen(true)}>
-                                        <Plus className="h-4 w-4 mr-1" />
-                                        New
-                                    </Button>
-                                </div>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input className="pl-10" placeholder="Search..." />
-                                </div>
-                            </div>
-
-                            <ScrollArea className="flex-1">
-                                <div className="p-2">
-                                    {conversations.map((c) => (
-                                        <div
-                                            key={c.roomId}
-                                            onClick={() => setSelectedConversation(c.roomId)}
-                                            className={`p-3 rounded-lg cursor-pointer mb-1 ${
-                                                selectedConversation === c.roomId
-                                                    ? "bg-blue-50 border border-blue-200"
-                                                    : "hover:bg-gray-50"
-                                            }`}
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                <Avatar>
-                                                    <AvatarFallback>
-                                                        {c.name?.charAt(0) ?? "C"}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className="font-medium text-sm">
-                                                        {c.name ?? "Direct Chat"}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {c.type === "DIRECT" ? "Direct chat" : "Group chat"}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </ScrollArea>
+              <ScrollArea className="flex-1">
+                <div className="p-2">
+                  {conversations.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500">No conversations yet</div>
+                  ) : (
+                    conversations.map((c) => (
+                      <div
+                        key={c.roomId}
+                        onClick={() => setSelectedConversation(c.roomId)}
+                        className={`p-3 rounded-lg cursor-pointer mb-1 transition-colors ${
+                          selectedConversation === c.roomId ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Avatar>
+                            <AvatarFallback>{c.name?.charAt(0) ?? "C"}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm">{c.name ?? "Direct Chat"}</p>
+                            {c.lastMessage && <p className="text-xs text-gray-500 truncate">{c.lastMessage.content}</p>}
+                            <p className="text-xs text-gray-400">
+                              {c.type === "DIRECT" ? "Direct chat" : "Group chat"}
+                            </p>
+                          </div>
                         </div>
-
-                        {/* ===== CHAT AREA ===== */}
-                        <div className="flex-1 flex flex-col">
-                            {currentConversation ? (
-                                <>
-                                    <div className="p-4 border-b">
-                                        <h3 className="font-semibold">
-                                            {currentConversation.name ?? "Direct Chat"}
-                                        </h3>
-                                        <p className="text-sm text-gray-500">
-                                            {currentConversation.type}
-                                        </p>
-                                    </div>
-
-                                    <ScrollArea className="flex-1 p-4">
-                                        {conversationMessages.map((m) => (
-                                            <div key={m.id} className="mb-3">
-                                                <p className="text-sm font-medium">{m.senderId}</p>
-                                                <p className="text-sm">{m.content}</p>
-                                            </div>
-                                        ))}
-                                    </ScrollArea>
-
-                                    <div className="p-4 border-t flex gap-2">
-                                        <Textarea
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            placeholder="Type a message..."
-                                        />
-                                        <Button onClick={handleSendMessage}>
-                                            <Send className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex-1 flex items-center justify-center text-gray-500">
-                                    Select or create a conversation
-                                </div>
-                            )}
-                        </div>
-
-                    </div>
-                </main>
-
-                <CreateChatDialog
-                    open={createChatOpen}
-                    onOpenChange={setCreateChatOpen}
-                    onChatCreated={handleChatCreated}
-                />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
             </div>
-        </div>
-    )
+
+            {/* ===== CHAT AREA ===== */}
+            <div className="flex-1 flex flex-col">
+              {currentConversation ? (
+                <>
+                  <div className="p-4 border-b">
+                    <h3 className="font-semibold">{currentConversation.name ?? "Direct Chat"}</h3>
+                    <p className="text-sm text-gray-500">
+                      {currentConversation.type === "DIRECT" ? "Direct chat" : "Group chat"}
+                    </p>
+                  </div>
+
+                  <ScrollArea
+                    ref={scrollRef}
+                    className="flex-1 p-4"
+                    onScroll={(e) => {
+                      const scrollTop = e.currentTarget.scrollTop
+                      if (scrollTop === 0 && !loading && hasMore) {
+                        handleLoadMore()
+                      }
+                    }}
+                  >
+                    {messages.length === 0 ? (
+                      <div className="flex items-center justify-center h-full text-gray-500">No messages yet</div>
+                    ) : (
+                      <>
+                        {loading && (
+                          <div className="text-center text-sm text-gray-400 mb-4">Loading more messages...</div>
+                        )}
+                        {messages.map((m) => (
+                          <ChatMessageBubble key={m.id} message={m} isOwn={m.senderId === userId} userId={userId} />
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </>
+                    )}
+                  </ScrollArea>
+
+                  <div className="p-4 border-t flex gap-2">
+                    <Textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSendMessage()
+                        }
+                      }}
+                      placeholder="Type a message... (Shift+Enter for new line)"
+                      className="resize-none"
+                      rows={3}
+                    />
+                    <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="flex-shrink-0">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-500">
+                  Select or create a conversation
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+
+        <CreateChatDialog open={createChatOpen} onOpenChange={setCreateChatOpen} onChatCreated={handleChatCreated} />
+      </div>
+    </div>
+  )
 }
 
 export default function MessagesPage() {
-    return (
-        <Suspense fallback={null}>
-            <MessagesContent />
-        </Suspense>
-    )
+  return (
+    <Suspense fallback={null}>
+      <MessagesContent />
+    </Suspense>
+  )
 }
