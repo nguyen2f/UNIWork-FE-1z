@@ -1,27 +1,25 @@
 import { api } from "@/lib/api"
-import type { ChatMessageDTO, CreateGroupDTO } from "@/types/chatType"
-import {getStompClient} from "@/app/services/socket";
+import type { ChatMessageDTO, CreateGroupDTO, PaginatedResponse, ChatMessageResponseDTO } from "@/types/chatType"
+import { getStompClient } from "@/app/services/socket"
 
 export const sendMessage = (message: ChatMessageDTO) => {
-    console.log("SEND MESSAGE CALLED", message)
+  console.log("SEND MESSAGE CALLED", message)
 
-    const client = getStompClient()
-    console.log("STOMP CLIENT:", client)
+  const client = getStompClient()
+  console.log("STOMP CLIENT:", client)
 
-    if (!client || !client.connected) {
-        console.error("WebSocket not connected")
-        return
-    }
+  if (!client || !client.connected) {
+    console.error("WebSocket not connected")
+    return
+  }
 
-    console.log("PUBLISHING TO /app/send")
+  console.log("PUBLISHING TO /app/send")
 
-    client.publish({
-        destination: "/app/send",
-        body: JSON.stringify(message),
-    })
+  client.publish({
+    destination: "/app/send",
+    body: JSON.stringify(message),
+  })
 }
-
-
 
 export const createDirectChat = async (user1: number, user2: number) => {
   return api<number>({
@@ -63,4 +61,15 @@ export const getDirectChat = async (userId: number) => {
     })
 
 
+}
+
+export const getChatHistory = async (roomId: number, page = 0, size = 20) => {
+  return api<PaginatedResponse<ChatMessageResponseDTO>>({
+    method: "GET",
+    url: `/chat/${roomId}/messages`,
+    params: {
+      page,
+      size,
+    },
+  })
 }
