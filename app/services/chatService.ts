@@ -55,12 +55,10 @@ export const getUserChats = async () => {
 }
 
 export const getDirectChat = async (userId: number) => {
-    return api<number>({
-        method: "GET",
-        url: `/chat/direct/${userId}`,
-    })
-
-
+  return api<number>({
+    method: "GET",
+    url: `/chat/direct/${userId}`,
+  })
 }
 
 export const getChatHistory = async (roomId: number, page = 0, size = 20) => {
@@ -71,5 +69,13 @@ export const getChatHistory = async (roomId: number, page = 0, size = 20) => {
       page,
       size,
     },
+  })
+}
+
+export const renameGroupChat = async (roomId: number, newName: string) => {
+  return api<any>({
+    method: "PUT",
+    url: `/chat/${roomId}/rename`,
+    data: { newName },
   })
 }

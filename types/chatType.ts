@@ -63,3 +63,10 @@ export interface PaginatedResponse<T> {
   data: T[]
   metadata: PageMetadata
 }
+
+export interface ChatRoomRenameEvent {
+  roomId: number
+  newName: string
+  updatedBy: number
+  updatedAt: string
+}
