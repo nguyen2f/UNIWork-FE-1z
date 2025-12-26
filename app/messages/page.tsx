@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, Suspense, useRef, useCallback } from "react"
-import { Plus, Send, Search } from "lucide-react"
+import { Plus, Send, Search, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,7 +13,9 @@ import { getUserChats, sendMessage, getChatHistory } from "@/app/services/chatSe
 import type { ChatMessageDTO, ChatMessageResponseDTO } from "@/types/chatType"
 import { CreateChatDialog } from "@/components/create-chat-dialog"
 import { ChatMessageBubble } from "@/components/chat-message-bubble"
+import { RenameChatDialog } from "@/components/rename-chat-dialog"
 import { connectSocket, disconnectSocket, getStompClient } from "@/app/services/socket"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface Conversation {
   roomId: number
@@ -32,6 +34,8 @@ function MessagesContent() {
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [createChatOpen, setCreateChatOpen] = useState(false)
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false)
+  const [renamingRoomId, setRenamingRoomId] = useState<number | null>(null)
   const subscriptionRef = useRef<any>(null)
   const [messages, setMessages] = useState<ChatMessageResponseDTO[]>([])
   const [loading, setLoading] = useState(false)
@@ -163,6 +167,16 @@ function MessagesContent() {
     }
   }, [selectedConversation, currentPage, loading, hasMore])
 
+  const handleOpenRename = (roomId: number) => {
+    setRenamingRoomId(roomId)
+    setRenameDialogOpen(true)
+  }
+
+  const handleRenamed = (newName: string) => {
+    if (!renamingRoomId) return
+    setConversations((prev) => prev.map((c) => (c.roomId === renamingRoomId ? { ...c, name: newName } : c)))
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -172,7 +186,6 @@ function MessagesContent() {
 
         <main className="flex-1 overflow-hidden bg-white">
           <div className="h-full flex">
-            {/* ===== CONVERSATIONS SIDEBAR ===== */}
             <div className="w-80 border-r flex flex-col">
               <div className="p-4 border-b">
                 <div className="flex justify-between mb-4">
@@ -196,12 +209,12 @@ function MessagesContent() {
                     conversations.map((c) => (
                       <div
                         key={c.roomId}
-                        onClick={() => setSelectedConversation(c.roomId)}
-                        className={`p-3 rounded-lg cursor-pointer mb-1 transition-colors ${
+                        className={`p-3 rounded-lg cursor-pointer mb-1 transition-colors flex items-center justify-between group ${
                           selectedConversation === c.roomId ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
                         }`}
+                        onClick={() => setSelectedConversation(c.roomId)}
                       >
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 flex-1">
                           <Avatar>
                             <AvatarFallback>{c.name?.charAt(0) ?? "C"}</AvatarFallback>
                           </Avatar>
@@ -213,6 +226,20 @@ function MessagesContent() {
                             </p>
                           </div>
                         </div>
+                        {c.type === "GROUP" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleOpenRename(c.roomId)}>
+                                Rename Group
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     ))
                   )}
@@ -220,7 +247,6 @@ function MessagesContent() {
               </ScrollArea>
             </div>
 
-            {/* ===== CHAT AREA ===== */}
             <div className="flex-1 flex flex-col">
               {currentConversation ? (
                 <>
@@ -285,6 +311,15 @@ function MessagesContent() {
         </main>
 
         <CreateChatDialog open={createChatOpen} onOpenChange={setCreateChatOpen} onChatCreated={handleChatCreated} />
+        {renamingRoomId && currentConversation && (
+          <RenameChatDialog
+            open={renameDialogOpen}
+            onOpenChange={setRenameDialogOpen}
+            roomId={renamingRoomId}
+            currentName={currentConversation.name ?? ""}
+            onRenamed={handleRenamed}
+          />
+        )}
       </div>
     </div>
   )

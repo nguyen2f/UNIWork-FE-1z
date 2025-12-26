@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,8 @@ import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
 import { CreateEventDialog } from "../../components/create-event-dialog"
 import { EventDetailDialog } from "../../components/event-detail-dialog"
+import { getAllEvents } from "@/app/services/eventService"
+import type { Event } from "@/app/services/eventService"
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS = [
@@ -29,78 +31,37 @@ const MONTHS = [
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [showEventDetail, setShowEventDetail] = useState(false)
   const [view, setView] = useState<"month" | "week" | "day">("month")
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
 
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "CRM Migration Kickoff",
-      project: "Enterprise CRM Migration",
-      date: "2024-02-15",
-      time: "09:00 AM",
-      duration: "2 hours",
-      type: "meeting",
-      attendees: ["JD", "SM", "AL"],
-      location: "Conference Room A",
-      priority: "High",
-      description:
-        "Initial kickoff meeting for the CRM migration project. We'll discuss timeline, resources, and key milestones.",
-    },
-    {
-      id: 2,
-      title: "Security Audit Review",
-      project: "SOC 2 Compliance",
-      date: "2024-02-16",
-      time: "02:00 PM",
-      duration: "1 hour",
-      type: "review",
-      attendees: ["DK", "PL"],
-      location: "Virtual",
-      priority: "Critical",
-      description: "Review findings from the security audit and discuss remediation plans.",
-    },
-    {
-      id: 3,
-      title: "Digital Transformation Planning",
-      project: "Digital Transformation Initiative",
-      date: "2024-02-17",
-      time: "10:00 AM",
-      duration: "3 hours",
-      type: "workshop",
-      attendees: ["RW", "KL", "MJ", "TH"],
-      location: "Innovation Lab",
-      priority: "High",
-      description: "Strategic planning workshop for digital transformation roadmap.",
-    },
-    {
-      id: 4,
-      title: "Sprint Planning",
-      project: "Q1 Planning",
-      date: "2024-02-18",
-      time: "11:00 AM",
-      duration: "1.5 hours",
-      type: "meeting",
-      attendees: ["JD", "SM", "LS"],
-      location: "Executive Boardroom",
-      priority: "Medium",
-      description: "Plan sprint objectives and allocate resources for Q1.",
-    },
-    {
-      id: 5,
-      title: "ERP Phase 2 Milestone",
-      project: "Global ERP Rollout",
-      date: "2024-02-20",
-      time: "All Day",
-      duration: "All Day",
-      type: "milestone",
-      attendees: ["MR", "JB", "KW"],
-      location: "Multiple Locations",
-      priority: "High",
-      description: "Phase 2 completion milestone for ERP rollout.",
-    },
-  ])
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setLoading(true)
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+
+        const beginTimestamp = monthStart.getTime()
+        const endTimestamp = monthEnd.getTime()
+
+        const res = await getAllEvents(beginTimestamp, endTimestamp, 0, 100)
+        setEvents(res.data.content || res.data)
+        if (res.data.totalPages) {
+          setTotalPages(res.data.totalPages)
+        }
+      } catch (err) {
+        console.error("Load events error:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadEvents()
+  }, [currentDate])
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
@@ -137,30 +98,28 @@ export default function CalendarPage() {
     }
   }
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: Event) => {
     setSelectedEvent(event)
     setShowEventDetail(true)
   }
 
-  const handleEventCreated = (newEvent: any) => {
+  const handleEventCreated = (newEvent: Event) => {
     setEvents([...events, newEvent])
   }
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate)
   const calendarDays = []
 
-  // Empty cells for days before month starts
   for (let i = 0; i < startingDayOfWeek; i++) {
     calendarDays.push(null)
   }
 
-  // Days in the month
   for (let day = 1; day <= daysInMonth; day++) {
     calendarDays.push(day)
   }
 
   const getEventTypeColor = (type: string) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case "meeting":
         return "bg-blue-100 text-blue-800 border-blue-200"
       case "review":
@@ -178,13 +137,13 @@ export default function CalendarPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "Critical":
+      case "CRITICAL":
         return "bg-red-500"
-      case "High":
+      case "HIGH":
         return "bg-orange-500"
-      case "Medium":
+      case "MEDIUM":
         return "bg-yellow-500"
-      case "Low":
+      case "LOW":
         return "bg-green-500"
       default:
         return "bg-gray-500"
@@ -207,7 +166,6 @@ export default function CalendarPage() {
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Project Calendar</h1>
@@ -217,7 +175,6 @@ export default function CalendarPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Calendar */}
               <div className="lg:col-span-3">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
@@ -253,7 +210,7 @@ export default function CalendarPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Calendar Grid */}
+                    {loading && <div className="text-center text-sm text-gray-500 mb-4">Loading events...</div>}
                     <div className="grid grid-cols-7 gap-1 mb-2">
                       {DAYS.map((day) => (
                         <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
@@ -289,7 +246,7 @@ export default function CalendarPage() {
                               <div className="flex-1 mt-1 overflow-hidden">
                                 {dayEvents.slice(0, 2).map((event) => (
                                   <div
-                                    key={event.id}
+                                    key={event.eventId}
                                     className="text-xs truncate mb-1 px-1 py-0.5 rounded"
                                     style={{
                                       backgroundColor:
@@ -337,7 +294,6 @@ export default function CalendarPage() {
                 </Card>
               </div>
 
-              {/* Upcoming Events Sidebar */}
               <div>
                 <Card>
                   <CardHeader>
@@ -350,7 +306,7 @@ export default function CalendarPage() {
                         .slice(0, 5)
                         .map((event) => (
                           <div
-                            key={event.id}
+                            key={event.eventId}
                             className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer"
                             onClick={() => handleEventClick(event)}
                           >
@@ -358,12 +314,11 @@ export default function CalendarPage() {
                               <h4 className="font-medium text-sm line-clamp-1">{event.title}</h4>
                               <div className={`w-2.5 h-2.5 rounded-full ${getPriorityColor(event.priority)}`} />
                             </div>
-                            <p className="text-xs text-gray-600 mb-2 line-clamp-1">{event.project}</p>
+                            <p className="text-xs text-gray-600 mb-2 line-clamp-1">Project {event.projectId}</p>
                             <div className="space-y-1">
                               <div className="flex items-center text-xs text-gray-500">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} •{" "}
-                                {event.time}
+                                {new Date(event.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                               </div>
                               <div className="flex items-center text-xs text-gray-500">
                                 <MapPin className="h-3 w-3 mr-1" />
@@ -381,7 +336,6 @@ export default function CalendarPage() {
                   </CardContent>
                 </Card>
 
-                {/* Selected Day Events */}
                 {selectedDate && (
                   <Card className="mt-4">
                     <CardHeader>
@@ -400,7 +354,7 @@ export default function CalendarPage() {
                         ) : (
                           getEventsForDate(selectedDate).map((event) => (
                             <div
-                              key={event.id}
+                              key={event.eventId}
                               className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer"
                               onClick={() => handleEventClick(event)}
                             >
@@ -409,10 +363,6 @@ export default function CalendarPage() {
                                 <Badge variant="outline" className={`text-xs ${getEventTypeColor(event.type)}`}>
                                   {event.type}
                                 </Badge>
-                              </div>
-                              <div className="flex items-center text-xs text-gray-500 mt-1">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {event.time}
                               </div>
                             </div>
                           ))
