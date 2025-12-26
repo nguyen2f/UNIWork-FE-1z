@@ -5,6 +5,8 @@ export interface User {
   department?: string
   avatar?: string
   createdAt?: string
+    systemRole?: string
+    phone?: string
 }
 
 export interface Project {
@@ -48,6 +50,7 @@ export interface Task {
   createdBy: string
     createdDate: string
   updatedDate: string
+    assigneeName: string
   assignee: User
 }
 
@@ -70,6 +73,7 @@ export interface Comment {
     content: string
     createdDate: string
     updatedDate: string
+    authorName: string
 }
 
 export interface Notification {

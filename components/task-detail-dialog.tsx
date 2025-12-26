@@ -225,7 +225,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                         <div>
                                             <p className="text-xs text-gray-500 font-medium">ASSIGNED TO</p>
                                             <p className="text-sm font-medium">
-                                                {displayTask.assignedTo || "Team Member"}
+                                                {displayTask.assigneeName || "Team Member"}
                                             </p>
                                         </div>
                                     </div>
@@ -301,15 +301,15 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                         comments.map((comment) => (
                                             <div key={comment.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50">
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={comment.userAvatar} />
+                                                    <AvatarImage src={comment.authorName} />
                                                     <AvatarFallback>
-                                                        {comment.userName?.charAt(0) || "U"}
+                                                        {comment.authorName?.charAt(0) || "U"}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex-1 space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-semibold text-sm">
-                                                            {comment.userName || "User"}
+                                                            {comment.authorName || "User"}
                                                         </span>
                                                         <span className="text-xs text-gray-500">
                                                             {formatCommentDate(comment.createdDate)}
