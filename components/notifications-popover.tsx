@@ -70,37 +70,37 @@ export function NotificationsPopover() {
     }
   }
 
-  const handleMarkAsRead = async (id: string) => {
+  const handleMarkAsRead = async (notiId: number) => {
     try {
-      await markNotificationAsRead(id)
-      setNotifications(notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)))
+      await markNotificationAsRead(notiId)
+      setNotifications(notifications.map((n) => (n.notiId === notiId ? { ...n, isRead: true } : n)))
     } catch (error) {
       console.error("Failed to mark notification as read:", error)
     }
   }
 
-  const handleDeleteNotification = (id: string) => {
-    setNotifications(notifications.filter((n) => n.id !== id))
+  const handleDeleteNotification = (notiId: number) => {
+    setNotifications(notifications.filter((n) => n.notiId !== notiId))
   }
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markAllAsRead(notifications)
+      await markAllAsRead()
       setNotifications(notifications.map((n) => ({ ...n, isRead: true })))
     } catch (error) {
-      console.error("Failed to mark all as read:", error)
+      console.error("Failed to mark all notifications as read:", error)
     }
   }
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "task":
-        return <CheckSquare className="h-4 w-4 text-blue-600" />
-      case "project":
+  const getNotificationIcon = (entityType: string) => {
+    switch (entityType.toUpperCase()) {
+      case "PROJECT":
         return <AlertTriangle className="h-4 w-4 text-orange-600" />
-      case "message":
+      case "TASK":
+        return <CheckSquare className="h-4 w-4 text-blue-600" />
+      case "MESSAGE":
         return <MessageSquare className="h-4 w-4 text-green-600" />
-      case "system":
+      case "SYSTEM":
         return <Bell className="h-4 w-4 text-purple-600" />
       default:
         return <Bell className="h-4 w-4 text-gray-600" />
@@ -151,19 +151,19 @@ export function NotificationsPopover() {
                 <div className="space-y-1">
                   {notifications.map((notification) => (
                     <div
-                      key={notification.id}
+                      key={notification.notiId}
                       className={`group flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors ${
                         notification.isRead ? "opacity-60" : "bg-blue-50/50"
                       }`}
                     >
-                      <div className="flex-shrink-0 mt-0.5">{getNotificationIcon(notification.type)}</div>
+                      <div className="flex-shrink-0 mt-0.5">{getNotificationIcon(notification.entityType)}</div>
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium ${notification.isRead ? "text-gray-700" : "text-gray-900"}`}>
                           {notification.title}
                         </p>
                         <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{notification.message}</p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(notification.createdAt).toLocaleString("en-US", {
+                          {new Date(notification.createdDate).toLocaleString("en-US", {
                             month: "short",
                             day: "numeric",
                             hour: "2-digit",
@@ -177,7 +177,7 @@ export function NotificationsPopover() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
-                            onClick={() => handleMarkAsRead(notification.id)}
+                            onClick={() => handleMarkAsRead(notification.notiId)}
                           >
                             <Check className="h-3.5 w-3.5" />
                           </Button>
@@ -186,7 +186,7 @@ export function NotificationsPopover() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-red-600 hover:text-red-700"
-                          onClick={() => handleDeleteNotification(notification.id)}
+                          onClick={() => handleDeleteNotification(notification.notiId)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
