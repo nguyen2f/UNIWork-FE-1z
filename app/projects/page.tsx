@@ -13,25 +13,23 @@ import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { EditProjectDialog } from "@/components/edit-project-dialog"
 import { ViewLayoutToggle } from "@/components/view-layout-toggle"
 import {
-    Calendar,
-    DollarSign,
-    MoreVertical,
-    Plus,
-    Search,
-    Users,
-    FolderKanban,
-    Edit,
-    Trash2,
-    Eye,
-    ChevronLeft, ChevronRight
+  Calendar,
+  MoreVertical,
+  Plus,
+  Search,
+  Users,
+  FolderKanban,
+  Edit,
+  Trash2,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { getAllProjects } from "../services/projectService"
-import { Project } from "@/types"
-import { ProjectParams } from "@/types/projectType"
-import {fetchProjectReport} from "@/lib/api";
-import {ProjectReport} from "@/types/response";
+import type { ProjectParams } from "@/types/projectType"
+import { fetchProjectReport } from "@/lib/api"
+import type { ProjectReport } from "@/types/response"
 
 export default function ProjectsPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
@@ -40,84 +38,81 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [projects, setProjects] = useState<ProjectReport[]>([])
   const [params, setParams] = useState<ProjectParams>({})
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+
   useEffect(() => {
     fetchProjects(projectPage)
   }, [])
 
-    const [projectPage, setProjectPage] = useState(0); // Backend dùng 0-indexed
-    const [projectPagination, setProjectPagination] = useState({
-        currentPage: 0,
-        pageSize: 6,
-        totalElements: 0,
-        totalPages: 0,
-        hasNext: false,
-        hasPrevious: false
-    });
+  const [projectPage, setProjectPage] = useState(0)
+  const [projectPagination, setProjectPagination] = useState({
+    currentPage: 0,
+    pageSize: 6,
+    totalElements: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+  })
 
-    const handleProjectPageChange = (newPage: number) => {
-        if (newPage < 0 || newPage >= projectPagination.totalPages) return;
-        setProjectPage(newPage);
-        fetchProjects(newPage);
-    };
+  const handleProjectPageChange = (newPage: number) => {
+    if (newPage < 0 || newPage >= projectPagination.totalPages) return
+    setProjectPage(newPage)
+    fetchProjects(newPage)
+  }
 
+  const fetchProjects = async (page = 0) => {
+    try {
+      setLoading(true)
+      const result = await fetchProjectReport(page, 6)
 
-
-    const fetchProjects = async (page: number = 0) => {
-        try {
-            setLoading(true);
-            const result = await fetchProjectReport(page, 6);
-
-            if (result.data) {
-                setProjects(result.data);
-                if (result.pagination) {
-                    setProjectPagination(result.pagination);
-                }
-            }
-        } catch (err: any) {
-            setError(err.message);
-            console.error('Error fetching projects:', err);
-        } finally {
-            setLoading(false);
+      if (result.data) {
+        setProjects(result.data)
+        if (result.pagination) {
+          setProjectPagination(result.pagination)
         }
-    };
+      }
+    } catch (err: any) {
+      setError(err.message)
+      console.error("Error fetching projects:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-    const Pagination = ({ currentPage, totalPages, onPageChange, hasNext, hasPrevious }: {
-        currentPage: number;
-        totalPages: number;
-        onPageChange: (page: number) => void;
-        hasNext: boolean;
-        hasPrevious: boolean;
-    }) => {
-        return (
-            <div className="flex items-center justify-between pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                    Page {currentPage + 1} of {totalPages}
-                </p>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onPageChange(currentPage - 1)}  // ← Đúng rồi
-                        disabled={!hasPrevious}
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onPageChange(currentPage + 1)}  // ← Đúng rồi
-                        disabled={!hasNext}
-                    >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-        );
-    };
+  const Pagination = ({
+    currentPage,
+    totalPages,
+    onPageChange,
+    hasNext,
+    hasPrevious,
+  }: {
+    currentPage: number
+    totalPages: number
+    onPageChange: (page: number) => void
+    hasNext: boolean
+    hasPrevious: boolean
+  }) => {
+    return (
+      <div className="flex items-center justify-between pt-4 border-t">
+        <p className="text-sm text-muted-foreground">
+          Page {currentPage + 1} of {totalPages}
+        </p>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={!hasPrevious}>
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={!hasNext}>
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -160,6 +155,12 @@ export default function ProjectsPage() {
     })
   }
 
+  const filteredProjects = projects.filter((p) => {
+    if (statusFilter && p.project.status !== statusFilter) return false
+    if (priorityFilter && p.project.priority !== priorityFilter) return false
+    return true
+  })
+
   console.log(projects)
 
   return (
@@ -182,9 +183,41 @@ export default function ProjectsPage() {
 
           {/* Filters and View Toggle */}
           <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search projects..." className="pl-9" />
+            <div className="flex gap-4 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search projects..." className="pl-9" />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 bg-transparent">
+                    Status {statusFilter && `(${statusFilter})`}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setStatusFilter(null)}>Clear</DropdownMenuItem>
+                  {["PLANNING", "IN_PROGRESS", "ON_HOLD", "COMPLETED"].map((status) => (
+                    <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
+                      {status}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 bg-transparent">
+                    Priority {priorityFilter && `(${priorityFilter})`}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setPriorityFilter(null)}>Clear</DropdownMenuItem>
+                  {["LOW", "MEDIUM", "HIGH", "CRITICAL"].map((priority) => (
+                    <DropdownMenuItem key={priority} onClick={() => setPriorityFilter(priority)}>
+                      {priority}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <ViewLayoutToggle view={view} onViewChange={setView} />
           </div>
@@ -192,7 +225,7 @@ export default function ProjectsPage() {
           {/* Grid View */}
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {projects?.map((project) => (
+              {filteredProjects?.map((project) => (
                 <Card key={project.project.projectId} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -217,7 +250,10 @@ export default function ProjectsPage() {
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(project.project.projectId)} className="text-destructive">
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(project.project.projectId)}
+                            className="text-destructive"
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
@@ -229,12 +265,8 @@ export default function ProjectsPage() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{project.project.description}</p>
 
                     <div className="flex gap-2">
-                        <Badge variant={project.project.status}>
-                            {project.project.status}
-                        </Badge>
-                        <Badge variant={project.project.priority}>
-                            {project.project.priority}
-                        </Badge>
+                      <Badge variant={project.project.status}>{project.project.status}</Badge>
+                      <Badge variant={project.project.priority}>{project.project.priority}</Badge>
                     </div>
 
                     <div className="space-y-2">
@@ -266,7 +298,7 @@ export default function ProjectsPage() {
           {/* List View */}
           {view === "list" && (
             <div className="space-y-3">
-              {projects.map((project) => (
+              {filteredProjects.map((project) => (
                 <Card key={project.project.projectId} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-6">
@@ -299,7 +331,10 @@ export default function ProjectsPage() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDelete(project.project.projectId)} className="text-destructive">
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(project.project.projectId)}
+                                className="text-destructive"
+                              >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -309,23 +344,11 @@ export default function ProjectsPage() {
 
                         <div className="flex items-center gap-4 flex-wrap">
                           <div className="flex gap-2">
-                              <Badge variant={project.project.status}>
-                                  {project.project.status}
-                              </Badge>
-                              <Badge variant={project.project.priority}>
-                                  {project.project.priority}
-                              </Badge>
+                            <Badge variant={project.project.status}>{project.project.status}</Badge>
+                            <Badge variant={project.project.priority}>{project.project.priority}</Badge>
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            {/*<div className="flex items-center gap-1">*/}
-                            {/*  <Users className="h-4 w-4" />*/}
-                            {/*  <span>{5}</span>*/}
-                            {/*</div>*/}
-                            {/*<div className="flex items-center gap-1">*/}
-                            {/*  <DollarSign className="h-4 w-4" />*/}
-                            {/*  <span>${project.budget}</span>*/}
-                            {/*</div>*/}
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
                               <span>
@@ -333,13 +356,6 @@ export default function ProjectsPage() {
                               </span>
                             </div>
                           </div>
-
-                          {/*<div className="flex items-center gap-3 ml-auto">*/}
-                          {/*  <div className="w-32">*/}
-                          {/*    <Progress value={project.progress} />*/}
-                          {/*  </div>*/}
-                          {/*  <span className="text-sm font-medium w-12">{project.progress}%</span>*/}
-                          {/*</div>*/}
                         </div>
                       </div>
                     </div>
@@ -348,15 +364,15 @@ export default function ProjectsPage() {
               ))}
             </div>
           )}
-            {projectPagination.totalPages > 1 && (
-                <Pagination
-                    currentPage={projectPagination.currentPage}
-                    totalPages={projectPagination.totalPages}
-                    hasNext={projectPagination.hasNext}
-                    hasPrevious={projectPagination.hasPrevious}
-                    onPageChange={handleProjectPageChange}
-                />
-            )}
+          {projectPagination.totalPages > 1 && (
+            <Pagination
+              currentPage={projectPagination.currentPage}
+              totalPages={projectPagination.totalPages}
+              hasNext={projectPagination.hasNext}
+              hasPrevious={projectPagination.hasPrevious}
+              onPageChange={handleProjectPageChange}
+            />
+          )}
         </main>
       </div>
 

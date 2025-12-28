@@ -5,7 +5,7 @@ import { Plus, Send, Search, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sidebar } from "../../components/sidebar"
 import { Header } from "../../components/header"
@@ -215,7 +215,11 @@ function MessagesContent() {
                         onClick={() => setSelectedConversation(c.roomId)}
                       >
                         <div className="flex items-center space-x-3 flex-1">
-                          <Avatar>
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage
+                              src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(c.name ?? "C")}`}
+                              alt={c.name ?? "Chat"}
+                            />
                             <AvatarFallback>{c.name?.charAt(0) ?? "C"}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -250,10 +254,17 @@ function MessagesContent() {
             <div className="flex-1 flex flex-col">
               {currentConversation ? (
                 <>
-                  <div className="p-4 border-b">
+                  <div
+                    className="p-4 border-b cursor-pointer hover:bg-gray-50"
+                    onClick={() => {
+                      if (currentConversation.type === "GROUP") {
+                        handleOpenRename(currentConversation.roomId)
+                      }
+                    }}
+                  >
                     <h3 className="font-semibold">{currentConversation.name ?? "Direct Chat"}</h3>
                     <p className="text-sm text-gray-500">
-                      {currentConversation.type === "DIRECT" ? "Direct chat" : "Group chat"}
+                      {currentConversation.type === "DIRECT" ? "Direct chat" : "Group chat (click to rename)"}
                     </p>
                   </div>
 
