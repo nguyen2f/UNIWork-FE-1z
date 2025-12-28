@@ -4,25 +4,13 @@ import type { PaginatedResponse } from "@/types/chatType"
 export interface Event {
   eventId: number
   title: string
-  projectId: number
+  projectId?: number
   date: string
   duration: string
   type: string
   location: string
   priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
   createdBy: number
-}
-
-export const getAllEvents = async (begin?: number, end?: number, page = 0, size = 20) => {
-  const params: any = { page, size }
-  if (begin) params.begin = begin
-  if (end) params.end = end
-
-  return api<PaginatedResponse<Event>>({
-    method: "GET",
-    url: "/event/all",
-    params,
-  })
 }
 
 export const getEventById = async (eventId: number) => {
@@ -32,10 +20,10 @@ export const getEventById = async (eventId: number) => {
   })
 }
 
-export const createEvent = async (event: Omit<Event, "eventId">) => {
+export const createEvent = async (event: any) => {
   return api<Event>({
     method: "POST",
-    url: "/event",
+    url: "/event/create",
     data: event,
   })
 }
@@ -54,3 +42,17 @@ export const deleteEvent = async (eventId: number) => {
     url: `/event/${eventId}`,
   })
 }
+
+    export const getAllEvents = (page?: number, size?: number) => {
+        return api(
+            {
+                method: "GET",
+                url: "/event/all",
+                params: {
+                    page,
+                    size
+                }
+            },
+            true,
+        )
+    }

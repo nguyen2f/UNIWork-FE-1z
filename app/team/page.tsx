@@ -77,11 +77,17 @@ export default function TeamPage() {
               <Card key={member.userId} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={member.avatar || "/placeholder.svg"} />
-                      <AvatarFallback className="text-lg">{member.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <DropdownMenu>
+                      <Avatar className="h-16 w-16">
+                          <AvatarImage
+                              src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}`}
+                              alt={member.name}
+                          />
+                          <AvatarFallback className="text-lg">
+                              {member.name?.[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                      </Avatar>
+
+                      <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreVertical className="h-4 w-4" />

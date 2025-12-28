@@ -72,7 +72,7 @@ export const getChatHistory = async (roomId: number, page = 0, size = 20) => {
   })
 }
 
-export const renameGroupChat = async (roomId: number, newName: string) => {
+export const renameGroupChat = async (userId: number, roomId: number, newName: string) => {
   return api<any>({
     method: "PUT",
     url: `/chat/${roomId}/rename`,

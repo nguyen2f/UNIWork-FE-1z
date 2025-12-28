@@ -121,11 +121,15 @@ export const fetchTaskReport = () => {
   )
 }
 
-export const fetchPendingTasks = () => {
+export const fetchPendingTasks = (page?: number, size?: number) => {
   return api(
     {
       method: "GET",
       url: "/report/task-report/pending-tasks",
+        params: {
+            page,
+            size
+        }
     },
     true,
   )
