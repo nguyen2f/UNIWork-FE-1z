@@ -24,7 +24,7 @@ import {
 import { useEffect, useState } from "react"
 import { CreateProjectDialog } from "@/components/create-project-dialog"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
-import { InviteTeamMemberDialog } from "@/components/invite-team-member-dialog"
+import { InviteMemberToProjectDialog } from "@/components/invite-team-member-dialog"
 
 import {
   fetchProjectReport,
@@ -558,7 +558,7 @@ export default function DashboardPage() {
 
       <CreateProjectDialog open={createProjectOpen} onOpenChange={setCreateProjectOpen} />
       <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} />
-      <InviteTeamMemberDialog open={inviteTeamOpen} onOpenChange={setInviteTeamOpen} />
+      <InviteMemberToProjectDialog open={inviteTeamOpen} onOpenChange={setInviteTeamOpen} />
     </div>
   )
 }

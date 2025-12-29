@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
@@ -118,6 +118,9 @@ export default function SettingsPage() {
     }
   }
 
+    const displayName = profile?.name
+    const avatarLetter = displayName.charAt(0).toUpperCase()
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -156,9 +159,15 @@ export default function SettingsPage() {
 
                     {/* Profile Picture */}
                     <div className="flex items-center space-x-4">
-                      <Avatar className="h-20 w-20">
-                        <AvatarFallback className="bg-blue-100 text-blue-700 text-xl">JD</AvatarFallback>
-                      </Avatar>
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage
+                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(avatarLetter)}`}
+                                alt={avatarLetter}
+                            />
+                            <AvatarFallback className="text-lg">
+                                {avatarLetter?.[0]?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                        </Avatar>
                       <div>
                         <Button variant="outline" size="sm">
                           <Upload className="h-4 w-4 mr-2" />

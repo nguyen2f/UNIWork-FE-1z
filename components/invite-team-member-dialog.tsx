@@ -1,153 +1,204 @@
 "use client"
 
-import type React from "react"
-import { useEffect, useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { UserPlus } from "lucide-react"
-import { toast } from "sonner"
-import { getAllUsers } from "@/app/services/userService"
-import { assignMemberToProject } from "@/app/services/projectService"
+import React, { useEffect, useState } from "react"
+import { Modal, Form, Select, Button, Space, message, Input } from "antd"
+import { getAllProjects, assignMemberToProject } from "@/app/services/projectService"
+import { getAllMember } from "@/app/services/userService"
+import { Project, User } from "@/types"
 
-interface InviteTeamMemberDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+interface InviteMemberDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
 }
 
-interface User {
-  userId: number
-  name: string
-  email: string
-  department?: string
+/** Role enum khớp backend */
+enum ProjectRole {
+    PROJECT_MANAGER = "PROJECT_MANAGER",
+    MOBILE_DEVELOPER = "MOBILE_DEVELOPER",
+    TESTER = "TESTER",
+    IOT_ENGINEER = "IOT_ENGINEER",
+    BA = "BA",
+    DATA_ENGINEER = "DATA_ENGINEER",
+    BACKEND_DEVELOPER = "BACKEND_DEVELOPER",
+    UIUX_DESIGNER = "UIUX_DESIGNER",
+    AI_ENGINEER = "AI_ENGINEER",
+    BI_ANALYST = "BI_ANALYST",
+    FULLSTACK_DEVELOPER = "FULLSTACK_DEVELOPER",
+    DEVOPS = "DEVOPS",
+    FRONTEND_DEVELOPER = "FRONTEND_DEVELOPER",
 }
 
-export function InviteTeamMemberDialog({ open, onOpenChange }: InviteTeamMemberDialogProps) {
-  const [formData, setFormData] = useState({
-    projectId: "",
-    userId: "",
-    role: "member",
-  })
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(false)
+export function InviteMemberToProjectDialog({
+                                                open,
+                                                onOpenChange,
+                                            }: InviteMemberDialogProps) {
+    const [form] = Form.useForm()
+    const [allProjects, setAllProjects] = useState<Project[]>([])
+    const [allUsers, setAllUsers] = useState<User[]>([])
+    const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (open) {
-      loadUsers()
-    }
-  }, [open])
+    useEffect(() => {
+        if (open) {
+            fetchAllProjects()
+            fetchAllUsers()
+        }
+    }, [open])
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true)
-      const response = await getAllUsers()
-      if (response) {
-        setUsers(response)
-      }
-    } catch (error) {
-      toast.error("Failed to load users")
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.projectId || !formData.userId) {
-      toast.error("Please select a project and user")
-      return
+    const fetchAllProjects = async () => {
+        try {
+            const response = await getAllProjects()
+            setAllProjects(response.data)
+        } catch {
+            message.error("Failed to fetch projects")
+        }
     }
 
-    try {
-      setLoading(true)
-      await assignMemberToProject(Number(formData.projectId), Number(formData.userId), formData.role)
-
-      const selectedUser = users.find((u) => u.userId === Number(formData.userId))
-      toast.success("Member assigned successfully!", {
-        description: `${selectedUser?.name} has been assigned to the project.`,
-      })
-
-      onOpenChange(false)
-      setFormData({
-        projectId: "",
-        userId: "",
-        role: "member",
-      })
-    } catch (error) {
-      toast.error("Failed to assign member to project")
-      console.error(error)
-    } finally {
-      setLoading(false)
+    const fetchAllUsers = async () => {
+        try {
+            const response = await getAllMember()
+            setAllUsers(response.data)
+        } catch {
+            message.error("Failed to fetch users")
+        }
     }
-  }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Assign Team Member to Project
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="projectId">Project *</Label>
-            <Input
-              id="projectId"
-              type="number"
-              value={formData.projectId}
-              onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-              placeholder="Enter project ID"
-              required
-            />
-          </div>
+    /** Khi chọn user → auto fill email */
+    const handleUserChange = (userId?: number) => {
+        const user = allUsers.find((u) => u.userId === userId)
+        if (user?.email) {
+            form.setFieldsValue({ email: user.email })
+        }
+    }
 
-          <div className="space-y-2">
-            <Label htmlFor="userId">User *</Label>
-            <Select value={formData.userId} onValueChange={(value) => setFormData({ ...formData, userId: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Loading users..." : "Select user"} />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.userId} value={String(user.userId)}>
-                    {user.name} ({user.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    const handleSubmit = async (values: any) => {
+        const { projectId, userId, role, email } = values
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        /** 👉 LẤY projectName TỪ projectId */
+        const project = allProjects.find(
+            (p) => p.projectId === projectId
+        )
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Assigning..." : "Assign Member"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
+        if (!project) {
+            message.error("Project not found")
+            return
+        }
+
+        try {
+            setLoading(true)
+
+            await assignMemberToProject(
+                projectId,
+                project.name, // ✅ projectName
+                userId,
+                role,
+                email
+            )
+
+            const user = allUsers.find((u) => u.userId === userId)
+
+            message.success(
+                `${user?.name ?? email} đã được mời vào dự án ${project.name}`,
+                3
+            )
+
+            form.resetFields()
+            onOpenChange(false)
+        } catch {
+            message.error("Failed to invite member to project")
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Modal
+            open={open}
+            onCancel={() => onOpenChange(false)}
+            title="Invite Member to Project"
+            footer={null}
+            width={600}
+        >
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+            >
+                {/* Project */}
+                <Form.Item
+                    label="Project"
+                    name="projectId"
+                    rules={[{ required: true, message: "Please select a project" }]}
+                >
+                    <Select
+                        placeholder="Select project"
+                        showSearch
+                        optionFilterProp="children"
+                    >
+                        {allProjects.map((project) => (
+                            <Select.Option
+                                key={project.projectId}
+                                value={project.projectId}
+                            >
+                                {project.name}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+
+                {/* User */}
+                <Form.Item label="User" name="userId">
+                    <Select
+                        placeholder="Select user (optional)"
+                        showSearch
+                        allowClear
+                        optionFilterProp="children"
+                        onChange={handleUserChange}
+                    >
+                        {allUsers.map((user) => (
+                            <Select.Option key={user.userId} value={user.userId}>
+                                {user.name} - {user.email}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+
+                {/* Email */}
+                <Form.Item
+                    label="Email"
+                    name="email"
+                    rules={[
+                        { required: true, message: "Please enter email" },
+                        { type: "email", message: "Invalid email format" },
+                    ]}
+                >
+                    <Input placeholder="Enter email address" />
+                </Form.Item>
+
+                {/* Role */}
+                <Form.Item
+                    label="Role"
+                    name="role"
+                    rules={[{ required: true, message: "Please select a role" }]}
+                >
+                    <Select placeholder="Select role">
+                        {Object.values(ProjectRole).map((role) => (
+                            <Select.Option key={role} value={role}>
+                                {role.replaceAll("_", " ")}
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+
+                {/* Footer */}
+                <Form.Item style={{ textAlign: "right", marginBottom: 0 }}>
+                    <Space>
+                        <Button onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button type="primary" htmlType="submit" loading={loading}>
+                            Invite
+                        </Button>
+                    </Space>
+                </Form.Item>
+            </Form>
+        </Modal>
+    )
 }

@@ -3,7 +3,7 @@
 import { Search, Settings, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,8 +59,12 @@ export function Header() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center space-x-3">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarFallback className="bg-blue-100 text-blue-700">
-                                        {avatarLetter}
+                                    <AvatarImage
+                                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(avatarLetter)}`}
+                                        alt={avatarLetter}
+                                    />
+                                    <AvatarFallback className="text-lg">
+                                        {avatarLetter?.[0]?.toUpperCase() || "U"}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="text-left">

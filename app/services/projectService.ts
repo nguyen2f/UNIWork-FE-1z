@@ -30,14 +30,16 @@ export const getProjectMembers = async (projectId: number) => {
   })
 }
 
-export const assignMemberToProject = async (projectId: number, userId: number, role: string) => {
+export const assignMemberToProject = async (projectId: number, projectName: string, userId: number, role: string, email: string) => {
   return api<any>({
     method: "POST",
-    url: "/member/assign",
+    url: "/project-member/assign",
     data: {
       projectId,
+        projectName,
       userId,
       role,
+        email,
     },
   })
 }
