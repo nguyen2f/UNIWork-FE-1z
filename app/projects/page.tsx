@@ -161,6 +161,14 @@ export default function ProjectsPage() {
     return true
   })
 
+  const tasksByProject = projects.reduce(
+    (acc, project) => {
+      acc[project.project.projectId] = project.tasks?.filter((task) => task.taskParentId == null) || []
+      return acc
+    },
+    {} as Record<number, any[]>,
+  )
+
   console.log(projects)
 
   return (
@@ -290,6 +298,26 @@ export default function ProjectsPage() {
                         {project.project.startDate} - {project.project.endDate}
                       </span>
                     </div>
+
+                    {/* Display parent tasks only */}
+                    {tasksByProject[project.project.projectId] &&
+                      tasksByProject[project.project.projectId].length > 0 && (
+                        <div className="pt-4 border-t">
+                          <h4 className="font-medium text-sm mb-2">
+                            Tasks ({tasksByProject[project.project.projectId].length})
+                          </h4>
+                          <div className="space-y-2 max-h-[150px] overflow-y-auto">
+                            {tasksByProject[project.project.projectId].map((task) => (
+                              <div key={task.taskId} className="text-xs p-2 rounded bg-gray-50 hover:bg-gray-100">
+                                <p className="font-medium line-clamp-1">{task.title}</p>
+                                <Badge className="mt-1 text-xs" variant="secondary">
+                                  {task.status}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </CardContent>
                 </Card>
               ))}
@@ -359,6 +387,26 @@ export default function ProjectsPage() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Display parent tasks only */}
+                        {tasksByProject[project.project.projectId] &&
+                          tasksByProject[project.project.projectId].length > 0 && (
+                            <div className="pt-4 border-t">
+                              <h4 className="font-medium text-sm mb-2">
+                                Tasks ({tasksByProject[project.project.projectId].length})
+                              </h4>
+                              <div className="space-y-2 max-h-[150px] overflow-y-auto">
+                                {tasksByProject[project.project.projectId].map((task) => (
+                                  <div key={task.taskId} className="text-xs p-2 rounded bg-gray-50 hover:bg-gray-100">
+                                    <p className="font-medium line-clamp-1">{task.title}</p>
+                                    <Badge className="mt-1 text-xs" variant="secondary">
+                                      {task.status}
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                       </div>
                     </div>
                   </CardContent>
