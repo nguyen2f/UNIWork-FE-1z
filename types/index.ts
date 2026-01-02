@@ -5,29 +5,29 @@ export interface User {
   department?: string
   avatar?: string
   createdAt?: string
-    systemRole?: string
-    phone?: string
+  systemRole?: string
+  phone?: string
 }
 
 export interface Project {
-    projectId: number
-    name: string
-    description: string
-    status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED"
-    priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
-    startDate: string
-    endDate: string
-    budget: number
-    progress: number
-    client: string            // Khách hàng (ví dụ: SFIN JSC)
-    department: string        // Phòng ban phụ trách (ví dụ: IT Department)
-    riskLevel: "Low" | "Medium" | "High" // Mức độ rủi ro
-    ownerId: number           // ID người sở hữu dự án
-    createdBy: string
-    members: ProjectMember[]
-    tasks: Task[]
-    createdAt: string
-    updatedAt: string | null  // Cho phép null nếu chưa cập nhật
+  projectId: number
+  name: string
+  description: string
+  status: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED" | "CANCELLED"
+  priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  startDate: string
+  endDate: string
+  budget: number
+  progress: number
+  client: string // Khách hàng (ví dụ: SFIN JSC)
+  department: string // Phòng ban phụ trách (ví dụ: IT Department)
+  riskLevel: "Low" | "Medium" | "High" // Mức độ rủi ro
+  ownerId: number // ID người sở hữu dự án
+  createdBy: string
+  members: ProjectMember[]
+  tasks: Task[]
+  createdAt: string
+  updatedAt: string | null // Cho phép null nếu chưa cập nhật
 }
 
 export interface ProjectMember {
@@ -44,14 +44,18 @@ export interface Task {
   description: string
   status: "PENDING" | "DOING" | "REVIEWING" | "COMPLETED" | "CANCELLED"
   priority: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
-  assigneeId: string
+  assignedTo?: number
+  assigneeId?: string
   projectId: number
   dueDate: string
   createdBy: string
-    createdDate: string
-  updatedDate: string
-    assigneeName: string
-  assignee: User
+  createdDate: string
+  updatedDate?: string
+  assigneeName?: string
+  assignee?: User
+  taskParentId?: number | null
+  completed?: boolean
+  tags?: string
 }
 
 export interface Message {
@@ -66,14 +70,14 @@ export interface Message {
 }
 
 export interface Comment {
-    commentId: number
-    taskId: number
-    posterId: number
-    authorId: number
-    content: string
-    createdDate: string
-    updatedDate: string
-    authorName: string
+  commentId: number
+  taskId: number
+  posterId: number
+  authorId: number
+  content: string
+  createdDate: string
+  updatedDate: string
+  authorName: string
 }
 
 export interface Notification {

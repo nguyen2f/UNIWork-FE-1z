@@ -25,13 +25,17 @@ export const getAllTasksByProjectId = async (projectId: number) => {
 }
 
 export const getTaskDetail = async (projectId: number, taskId: number) => {
-  return api<any>({
+  return api<{
+    task: any
+    childTasks: any[]
+    fileAttachments: any[]
+  }>({
     method: "GET",
     url: `/task/detail/${projectId}/${taskId}`,
   })
 }
 
-export const updateTask = async (projectId: number, taskId: number,  body: Pick<TaskRequest, "status">) => {
+export const updateTask = async (projectId: number, taskId: number, body: Pick<TaskRequest, "status">) => {
   return api({
     method: "POST",
     url: `/task/${projectId}/${taskId}/update`,
