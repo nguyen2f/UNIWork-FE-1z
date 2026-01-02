@@ -79,4 +79,3 @@ export const renameGroupChat = async (roomId: number, newName: string) => {
         params: { newName },
     })
 }
-

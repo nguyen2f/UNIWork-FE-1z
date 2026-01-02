@@ -265,8 +265,8 @@ export default function ProjectsPage() {
                     <p className="text-sm text-muted-foreground line-clamp-2">{project.project.description}</p>
 
                     <div className="flex gap-2">
-                      <Badge variant={project.project.status}>{project.project.status}</Badge>
-                      <Badge variant={project.project.priority}>{project.project.priority}</Badge>
+                      <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
+                      <Badge variant={getPriorityColor(project.project.priority)}>{project.project.priority}</Badge>
                     </div>
 
                     <div className="space-y-2">
@@ -344,8 +344,10 @@ export default function ProjectsPage() {
 
                         <div className="flex items-center gap-4 flex-wrap">
                           <div className="flex gap-2">
-                            <Badge variant={project.project.status}>{project.project.status}</Badge>
-                            <Badge variant={project.project.priority}>{project.project.priority}</Badge>
+                            <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
+                            <Badge variant={getPriorityColor(project.project.priority)}>
+                              {project.project.priority}
+                            </Badge>
                           </div>
 
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
