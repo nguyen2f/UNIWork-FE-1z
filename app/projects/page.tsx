@@ -30,6 +30,13 @@ import { toast } from "sonner"
 import type { ProjectParams } from "@/types/projectType"
 import { fetchProjectReport } from "@/lib/api"
 import type { ProjectReport } from "@/types/response"
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from "@/components/ui/select"
 
 export default function ProjectsPage() {
   const [view, setView] = useState<"grid" | "list">("grid")
@@ -190,45 +197,47 @@ export default function ProjectsPage() {
           </div>
 
           {/* Filters and View Toggle */}
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search projects..." className="pl-9" />
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 bg-transparent">
-                    Status {statusFilter && `(${statusFilter})`}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setStatusFilter(null)}>Clear</DropdownMenuItem>
-                  {["PLANNING", "IN_PROGRESS", "ON_HOLD", "COMPLETED"].map((status) => (
-                    <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
-                      {status}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 bg-transparent">
-                    Priority {priorityFilter && `(${priorityFilter})`}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setPriorityFilter(null)}>Clear</DropdownMenuItem>
-                  {["LOW", "MEDIUM", "HIGH", "CRITICAL"].map((priority) => (
-                    <DropdownMenuItem key={priority} onClick={() => setPriorityFilter(priority)}>
-                      {priority}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {/* Filters and View Toggle */}
+            <div className="mb-6 flex items-center justify-between gap-4">
+                <div className="flex gap-4 flex-1">
+                    {/* Search */}
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search projects..." className="pl-9" />
+                    </div>
+
+                    {/* Status Filter */}
+                    <Select onValueChange={(value) => setStatusFilter(value === "CLEAR" ? null : value)}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="CLEAR">Status</SelectItem>
+                            <SelectItem value="PLANNING">Planning</SelectItem>
+                            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                            <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Priority Filter */}
+                    <Select onValueChange={(value) => setPriorityFilter(value === "CLEAR" ? null : value)}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="CLEAR">Priority</SelectItem>
+                            <SelectItem value="LOW">Low</SelectItem>
+                            <SelectItem value="MEDIUM">Medium</SelectItem>
+                            <SelectItem value="HIGH">High</SelectItem>
+                            <SelectItem value="CRITICAL">Critical</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* View Toggle */}
+                <ViewLayoutToggle view={view} onViewChange={setView} />
             </div>
-            <ViewLayoutToggle view={view} onViewChange={setView} />
-          </div>
 
           {/* Grid View */}
           {view === "grid" && (

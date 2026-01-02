@@ -15,6 +15,7 @@ import { TaskDetailDialog } from "@/components/task-detail-dialog"
 import { Calendar, MoreVertical, Plus, Search, ListTodo, Edit, Trash2, Clock, Eye, Kanban } from "lucide-react"
 import { toast } from "sonner"
 import { getTask } from "@/app/services/taskService"
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 export default function TasksPage() {
   const [view, setView] = useState<"grid" | "list" | "kanban">("grid")
@@ -126,62 +127,72 @@ export default function TasksPage() {
             </Button>
           </div>
 
-          {/* Filters and View Toggle */}
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search tasks..." className="pl-9" />
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 bg-transparent">
-                    Status {statusFilter && `(${statusFilter})`}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setStatusFilter(null)}>Clear</DropdownMenuItem>
-                  {["PENDING", "DOING", "REVIEWING", "COMPLETED", "CANCELLED"].map((status) => (
-                    <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
-                      {status}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 bg-transparent">
-                    Priority {priorityFilter && `(${priorityFilter})`}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setPriorityFilter(null)}>Clear</DropdownMenuItem>
-                  {["LOW", "MEDIUM", "HIGH", "CRITICAL"].map((priority) => (
-                    <DropdownMenuItem key={priority} onClick={() => setPriorityFilter(priority)}>
-                      {priority}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            {/* Filters and View Toggle */}
+            <div className="mb-6 flex items-center justify-between gap-4">
+                <div className="flex gap-4 flex-1">
+                    {/* Search */}
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search tasks..." className="pl-9" />
+                    </div>
+
+                    {/* Status Filter */}
+                    <Select onValueChange={(value) => setStatusFilter(value === "CLEAR" ? null : value)}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="CLEAR">Status</SelectItem>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="DOING">Doing</SelectItem>
+                            <SelectItem value="REVIEWING">Reviewing</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    {/* Priority Filter */}
+                    <Select onValueChange={(value) => setPriorityFilter(value === "CLEAR" ? null : value)}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="CLEAR">Priority</SelectItem>
+                            <SelectItem value="LOW">Low</SelectItem>
+                            <SelectItem value="MEDIUM">Medium</SelectItem>
+                            <SelectItem value="HIGH">High</SelectItem>
+                            <SelectItem value="CRITICAL">Critical</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* View Toggle */}
+                <div className="flex gap-2">
+                    <Button
+                        variant={view === "grid" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("grid")}
+                    >
+                        Grid
+                    </Button>
+                    <Button
+                        variant={view === "list" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("list")}
+                    >
+                        List
+                    </Button>
+                    <Button
+                        variant={view === "kanban" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setView("kanban")}
+                        className="gap-2"
+                    >
+                        <Kanban className="h-4 w-4" />
+                        Kanban
+                    </Button>
+                </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant={view === "grid" ? "default" : "outline"} size="sm" onClick={() => setView("grid")}>
-                Grid
-              </Button>
-              <Button variant={view === "list" ? "default" : "outline"} size="sm" onClick={() => setView("list")}>
-                List
-              </Button>
-              <Button
-                variant={view === "kanban" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setView("kanban")}
-                className="gap-2"
-              >
-                <Kanban className="h-4 w-4" />
-                Kanban
-              </Button>
-            </div>
-          </div>
 
           {/* Grid View */}
           {view === "grid" && (
