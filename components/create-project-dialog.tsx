@@ -111,10 +111,10 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
               name="status"
             >
               <Select placeholder="Select Status">
-                <Select.Option value={1}>Planning</Select.Option>
-                <Select.Option value={2}>In Progress</Select.Option>
-                <Select.Option value={3}>On Hold</Select.Option>
-                <Select.Option value={4}>Completed</Select.Option>
+                <Select.Option value={0}>Planning</Select.Option>
+                <Select.Option value={1}>In Progress</Select.Option>
+                <Select.Option value={2}>On Hold</Select.Option>
+                <Select.Option value={3}>Completed</Select.Option>
               </Select>
             </Form.Item>
           </Col>

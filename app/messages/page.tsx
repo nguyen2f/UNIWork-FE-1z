@@ -16,6 +16,12 @@ import { ChatMessageBubble } from "@/components/chat-message-bubble"
 import { RenameChatDialog } from "@/components/rename-chat-dialog"
 import { connectSocket, disconnectSocket, getStompClient } from "@/app/services/socket"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Smile } from "lucide-react"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface Conversation {
   roomId: number
@@ -70,6 +76,11 @@ function MessagesContent() {
   }
 
   const currentConversation = selectedConversation ? conversations.find((c) => c.roomId === selectedConversation) : null
+    const EMOJIS = [
+        "😀", "😄", "😂", "🤣", "😍",
+        "😎", "😭", "😡", "👍", "👎",
+        "❤️", "🔥", "🎉", "💯", "🙏",
+    ]
 
   useEffect(() => {
     if (!selectedConversation) return
@@ -293,24 +304,48 @@ function MessagesContent() {
                     )}
                   </ScrollArea>
 
-                  <div className="p-4 border-t flex gap-2">
-                    <Textarea
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault()
-                          handleSendMessage()
-                        }
-                      }}
-                      placeholder="Type a message... (Shift+Enter for new line)"
-                      className="resize-none"
-                      rows={3}
-                    />
-                    <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="flex-shrink-0">
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    <div className="p-4 border-t flex gap-2 items-end">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button type="button" variant="ghost">
+                                    <Smile className="h-5 w-5" />
+                                </Button>
+                            </PopoverTrigger>
+
+                            <PopoverContent className="w-52">
+                                <div className="grid grid-cols-5 gap-2">
+                                    {EMOJIS.map((emoji) => (
+                                        <button
+                                            key={emoji}
+                                            className="text-xl hover:bg-gray-100 rounded"
+                                            onClick={() => setNewMessage((prev) => prev + emoji)}
+                                        >
+                                            {emoji}
+                                        </button>
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+
+                        <Textarea
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault()
+                                    handleSendMessage()
+                                }
+                            }}
+                            placeholder="Type a message... (Shift+Enter for new line)"
+                            className="resize-none"
+                            rows={3}
+                        />
+
+                        <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-500">
