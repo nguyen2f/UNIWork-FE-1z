@@ -158,6 +158,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     const currentStatus = StatusMap[displayTask.status] || StatusMap.PENDING
     const currentPriority = PriorityMap[displayTask.priority] || PriorityMap.LOW
 
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -322,9 +323,17 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                         comments.map((comment) => (
                                             <div key={comment.commentId || comment.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50">
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={comment.authorAvatar || "/placeholder.svg"} />
-                                                    <AvatarFallback>{comment.authorName?.charAt(0) || "U"}</AvatarFallback>
+                                                    <AvatarImage
+                                                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                                            comment.authorName
+                                                        )}&chars=1`}
+                                                    />
+
+                                                    <AvatarFallback className="text-sm font-semibold">
+                                                        {comment.authorName?.[0]?.toUpperCase() || "U"}
+                                                    </AvatarFallback>
                                                 </Avatar>
+
                                                 <div className="flex-1 space-y-1">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-semibold text-sm">{comment.authorName || "User"}</span>

@@ -163,15 +163,18 @@ export function CreateEventDialog({
                         </SelectTrigger>
 
                         <SelectContent>
-                            {allProjects.map((project) => (
-                                <SelectItem
-                                    key={project.id}
-                                    value={String(project.id)}   // 👈 GỬI ID
-                                >
-                                    {project.name}               {/* 👈 HIỂN THỊ TÊN */}
-                                </SelectItem>
-                            ))}
+                            {allProjects
+                                .filter((project) => project !== null)
+                                .map((project) => (
+                                    <SelectItem
+                                        key={project.id}
+                                        value={String(project.id)}
+                                    >
+                                        {project.name}
+                                    </SelectItem>
+                                ))}
                         </SelectContent>
+
                     </Select>
 
 

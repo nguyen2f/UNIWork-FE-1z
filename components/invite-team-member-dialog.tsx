@@ -134,16 +134,19 @@ export function InviteMemberToProjectDialog({
                         showSearch
                         optionFilterProp="children"
                     >
-                        {allProjects.map((project) => (
-                            <Select.Option
-                                key={project.projectId}
-                                value={project.projectId}
-                            >
-                                {project.name}
-                            </Select.Option>
-                        ))}
+                        {allProjects
+                            .filter((project) => project !== null)
+                            .map((project) => (
+                                <Select.Option
+                                    key={project.projectId}
+                                    value={project.projectId}
+                                >
+                                    {project.name}
+                                </Select.Option>
+                            ))}
                     </Select>
                 </Form.Item>
+
 
                 {/* User */}
                 <Form.Item label="User" name="userId">

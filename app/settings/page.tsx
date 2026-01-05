@@ -242,14 +242,22 @@ export default function SettingsPage() {
                         </Select>
                       </div>
                     </div>
-
+                      <div className="space-y-2">
+                          <Label htmlFor="bio">Address</Label>
+                          <Textarea
+                              id="bio"
+                              value={profile.address}
+                              onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                              rows={4}
+                          />
+                      </div>
                     <div className="space-y-2">
                       <Label htmlFor="bio">Bio</Label>
                       <Textarea
                         id="bio"
                         value={profile.bio}
                         onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                        rows={4}
+                        rows={5}
                       />
                     </div>
 

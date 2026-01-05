@@ -121,11 +121,13 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 //     (option?.children?.toLowerCase() ?? '').includes(input.toLowerCase())
                 // }
             >
-              {allProjects?.map((project) => (
-                  <Select.Option key={project.projectId} value={project.projectId}>
-                    {project.name}
-                  </Select.Option>
-              ))}
+                {allProjects
+                    ?.filter((project) => project && project.projectId)
+                    .map((project) => (
+                        <Select.Option key={project.projectId} value={project.projectId}>
+                            {project.name}
+                        </Select.Option>
+                    ))}
             </Select>
           </Form.Item>
 

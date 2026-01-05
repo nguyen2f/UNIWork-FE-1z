@@ -63,9 +63,9 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <DialogTitle className="text-2xl">{event.title}</DialogTitle>
-                            <DialogDescription className="mt-2 text-base">
-                                Project ID: {event.projectId}
-                            </DialogDescription>
+                            {/*<DialogDescription className="mt-2 text-base">*/}
+                            {/*    Project ID: {event.projectId}*/}
+                            {/*</DialogDescription>*/}
                         </div>
 
                         <div className="flex items-center space-x-2">

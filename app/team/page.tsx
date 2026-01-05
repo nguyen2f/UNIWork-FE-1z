@@ -79,8 +79,9 @@ export default function TeamPage() {
                   <div className="flex items-start justify-between mb-4">
                       <Avatar className="h-16 w-16">
                           <AvatarImage
-                              src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(member.name)}`}
-                              alt={member.name}
+                              src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                  member.name
+                              )}&chars=1`}
                           />
                           <AvatarFallback className="text-lg">
                               {member.name?.[0]?.toUpperCase() || "U"}
