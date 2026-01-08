@@ -56,8 +56,8 @@ export const api = <T = any>(options: any, notRequireToken?: boolean, auth = fal
     },
   }
   if (localStorage.getItem("Authorization")) {
-    config.headers.Authorization = `${localStorage.getItem("Authorization")}`
-    config.headers.userId = `${localStorage.getItem("userId")}`
+      config.headers.Authorization = `Bearer ${localStorage.getItem("Authorization")}`
+      config.headers.userId = `${localStorage.getItem("userId")}`
   }
   return request(config)
 }

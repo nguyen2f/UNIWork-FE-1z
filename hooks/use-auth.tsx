@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem("Authorization")
     const userId = localStorage.getItem("userId")
+      const role = localStorage.getItem("role")
 
     if (token && userId) {
       setIsAuthenticated(true)   // giữ trạng thái đăng nhập
@@ -38,8 +39,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (data: LoginRequest) => {
     const response = await api.login(data)
 
+      console.log(response)
     localStorage.setItem("userId", response.userId)
     localStorage.setItem("Authorization", response.token)
+      localStorage.setItem("role", response.role)
 
     setIsAuthenticated(true)
       const res = await getUserProfile(response.userId)
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("userId")
     localStorage.removeItem("Authorization")
       localStorage.removeItem("userName")
+      localStorage.removeItem("role")
     setIsAuthenticated(false)
     router.push("/auth/login")
   }

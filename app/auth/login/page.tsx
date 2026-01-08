@@ -25,8 +25,9 @@ export default function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem("Authorization")
     const userId = localStorage.getItem("userId")
+      const role = localStorage.getItem("role")
 
-    if (token && userId) {
+    if (token && userId && role) {
       router.push("/dashboard")
     }
   }, [])
