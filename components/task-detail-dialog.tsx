@@ -60,18 +60,24 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  useEffect(() => {
-    if (open && task) {
-      fetchTaskDetail()
-    }
-  }, [open, task])
+    useEffect(() => {
+        if (!open || !task) return
 
-  const fetchTaskDetail = async () => {
+        setTaskDetail(null)
+        setChildTasks([])
+        setComments([])
+        setFileAttachments([])
+
+        fetchTaskDetail()
+    }, [open, task?.taskId])
+
+
+    const fetchTaskDetail = async () => {
     if (!task) return
     try {
       setLoading(true)
       const response = await getTaskDetail(task.projectId, task.taskId)
-      const data = response.data.data || response.data
+      const data = response.data
 
       setTaskDetail(data.task)
       setChildTasks(data.childTasks || [])
@@ -208,7 +214,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
         ) : (
-          <ScrollArea className="flex-1 overflow-hidden">
+          <ScrollArea className="flex-1 ">
             <div className="space-y-6 pr-4">
               {/* Task Info */}
               <div className="space-y-4">
@@ -438,7 +444,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                 >
                   <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                   <p className="text-sm font-medium text-gray-700">Click to upload or drag file</p>
-                  <p className="text-xs text-gray-500 mt-1">PDF, DOC, XLS, ZIP (max 50MB)</p>
+                  <p className="text-xs text-gray-500 mt-1">PDF, DOC (max 50MB)</p>
                   <input
                     id="file-input"
                     type="file"
