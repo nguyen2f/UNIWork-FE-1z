@@ -1,38 +1,54 @@
 "use client"
 
-import {useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { UserProfileDialog } from "@/components/user-profile-dialog"
-import {Mail, MoreVertical, Search, UserPlus, Eye, Phone} from "lucide-react"
+import { Mail, MoreVertical, Search, UserPlus, Eye, Phone } from "lucide-react"
 import { toast } from "sonner"
-import {User} from "@/types";
-import {getAllMember} from "@/app/services/userService";
-import {message} from "antd";
+import { User } from "@/types";
+import { getAllMember } from "@/app/services/userService";
+import { message } from "antd";
 
 export default function TeamPage() {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
-    const [teamMembers, setMembers] = useState<User[]>([])
+  const [teamMembers, setMembers] = useState<User[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedDepartment, setSelectedDepartment] = useState("all")
 
-    useEffect(() => {
-        loadTeamMembers();
-    }, []);
+  const departments = [
+    "IT Department",
+    "BA-QC Department",
+    "Mobile Team",
+    "UI/UX Design Team",
+    "DevOps & Infrastructure",
+    "Business Intelligence",
+    "Customer Support",
+    "Project Management Office (PMO)",
+    "Data & Analytics",
+    "Operations & IoT",
+  ]
 
-    const loadTeamMembers = async () => {
-        try {
-            const response = await getAllMember();
-            setMembers(response.data);
-        } catch (error) {
-            message.error("Failed to fetch team members");
-        }
+  useEffect(() => {
+    loadTeamMembers();
+  }, []);
+
+  const loadTeamMembers = async () => {
+    try {
+      const response = await getAllMember();
+      setMembers(response.data);
+    } catch (error) {
+      message.error("Failed to fetch team members");
     }
+  }
 
   const handleViewProfile = (member: any) => {
     setSelectedUser(member)
@@ -44,6 +60,13 @@ export default function TeamPage() {
       description: "Your message has been sent successfully.",
     })
   }
+
+  const filteredMembers = teamMembers.filter((member) => {
+    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDepartment = selectedDepartment === "all" || member.department === selectedDepartment;
+    return matchesSearch && matchesDepartment;
+  });
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -63,32 +86,50 @@ export default function TeamPage() {
             </Button>
           </div>
 
-          {/* Search */}
-          <div className="mb-6">
-            <div className="relative max-w-md">
+          {/* Filters */}
+          <div className="mb-6 flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search team members..." className="pl-9" />
+              <Input
+                placeholder="Search by name or email..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
+            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <SelectTrigger className="w-full md:w-[250px]">
+                <SelectValue placeholder="Select Department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept} value={dept}>
+                    {dept}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Team Members Grid */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {teamMembers.map((member) => (
+            {filteredMembers.map((member) => (
               <Card key={member.userId} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                      <Avatar className="h-16 w-16">
-                          <AvatarImage
-                              src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                                  member.name
-                              )}&chars=1`}
-                          />
-                          <AvatarFallback className="text-lg">
-                              {member.name?.[0]?.toUpperCase() || "U"}
-                          </AvatarFallback>
-                      </Avatar>
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                          member.name
+                        )}&chars=1`}
+                      />
+                      <AvatarFallback className="text-lg">
+                        {member.name?.[0]?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
 
-                      <DropdownMenu>
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreVertical className="h-4 w-4" />
@@ -123,12 +164,12 @@ export default function TeamPage() {
                         <span className="truncate">{member.email}</span>
                       </div>
                     </div>
-                      <div className="space-y-1 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                              <Phone className="h-4 w-4" />
-                              <span className="truncate">{member.phone}</span>
-                          </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Phone className="h-4 w-4" />
+                        <span className="truncate">{member.phone}</span>
                       </div>
+                    </div>
 
                     <Button
                       variant="outline"

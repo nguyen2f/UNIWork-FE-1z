@@ -21,7 +21,9 @@ import {
   Send,
   MessageSquare,
   ChevronRight,
+  ChevronDown,
   Download,
+  Eye,
 } from "lucide-react"
 import { toast } from "sonner"
 import type { Task } from "@/types"
@@ -59,20 +61,24 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const [newComment, setNewComment] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false)
+  const [isFilesExpanded, setIsFilesExpanded] = useState(false)
+  const [previewFile, setPreviewFile] = useState<any>(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
-    useEffect(() => {
-        if (!open || !task) return
+  useEffect(() => {
+    if (!open || !task) return
 
-        setTaskDetail(null)
-        setChildTasks([])
-        setComments([])
-        setFileAttachments([])
+    setTaskDetail(null)
+    setChildTasks([])
+    setComments([])
+    setFileAttachments([])
 
-        fetchTaskDetail()
-    }, [open, task?.taskId])
+    fetchTaskDetail()
+  }, [open, task?.taskId])
 
 
-    const fetchTaskDetail = async () => {
+  const fetchTaskDetail = async () => {
     if (!task) return
     try {
       setLoading(true)
@@ -163,23 +169,26 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     })
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0]
     if (!file || !task) return
 
     try {
       setUploading(true)
-      await uploadFile(task.taskId, file)
-      toast.success("File uploaded successfully")
+      await uploadFile(task.projectId, task.taskId, file)
       fetchTaskDetail()
-      e.target.value = ""
+      toast.success("Upload file thành công")
     } catch (error) {
       console.error("Upload error:", error)
       toast.error("Failed to upload file")
     } finally {
       setUploading(false)
+      e.target.value = "" // reset input
     }
   }
+
 
   const handleDeleteFile = async (fileId: number) => {
     try {
@@ -205,7 +214,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0 border-b pb-4">
           <DialogTitle className="text-2xl">{displayTask.title}</DialogTitle>
         </DialogHeader>
 
@@ -214,7 +223,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           </div>
         ) : (
-          <ScrollArea className="flex-1 ">
+          <div className="flex-1 overflow-y-auto min-h-0 py-6">
             <div className="space-y-6 pr-4">
               {/* Task Info */}
               <div className="space-y-4">
@@ -324,135 +333,184 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
 
               {/* Comments Section */}
               <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-gray-600" />
-                  <h3 className="text-lg font-semibold">Comments ({comments.length})</h3>
-                </div>
-
-                {/* Add Comment */}
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Write a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="min-h-[80px] resize-none"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                        handleAddComment()
-                      }
-                    }}
-                  />
-                  <div className="flex justify-end">
-                    <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || submitting}>
-                      {submitting ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
-                      )}
-                      Post Comment
-                    </Button>
+                <button
+                  type="button"
+                  onClick={() => setIsCommentsExpanded(!isCommentsExpanded)}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold">Comments ({comments.length})</h3>
                   </div>
-                </div>
-
-                {/* Comments List */}
-                <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                  {comments.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm">No comments yet</p>
-                      <p className="text-xs">Be the first to comment!</p>
-                    </div>
+                  {isCommentsExpanded ? (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
                   ) : (
-                    comments.map((comment) => (
-                      <div key={comment.commentId || comment.id} className="flex gap-3 p-3 rounded-lg hover:bg-gray-50">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage
-                            src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                              comment.authorName,
-                            )}&chars=1`}
-                          />
-
-                          <AvatarFallback className="text-sm font-semibold">
-                            {comment.authorName?.[0]?.toUpperCase() || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">{comment.authorName || "User"}</span>
-                            <span className="text-xs text-gray-500">{formatCommentDate(comment.createdDate)}</span>
-                          </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content}</p>
-                        </div>
-                      </div>
-                    ))
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
                   )}
-                </div>
-              </div>
+                </button>
 
-              {/* File Attachments */}
-              {fileAttachments.length > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-lg font-semibold">Attachments ({fileAttachments.length})</h3>
-                  <div className="space-y-2">
-                    {fileAttachments.map((file) => (
-                      <div
-                        key={file.fileId}
-                        className="p-3 border rounded-lg flex items-center justify-between hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <Upload className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{file.originalFileName}</p>
-                            <div className="flex gap-2 text-xs text-gray-500">
-                              <span>{(file.fileSize / 1024).toFixed(2)} KB</span>
-                              <span>•</span>
-                              <span>{file.uploaderName}</span>
+                {isCommentsExpanded && (
+                  <>
+                    {/* Add Comment */}
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Write a comment..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="min-h-[80px] resize-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                            handleAddComment()
+                          }
+                        }}
+                      />
+                      <div className="flex justify-end">
+                        <Button size="sm" onClick={handleAddComment} disabled={!newComment.trim() || submitting}>
+                          {submitting ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4 mr-2" />
+                          )}
+                          Post Comment
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Comments List */}
+                    <div className="space-y-4">
+                      {comments.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                          <p className="text-sm">No comments yet</p>
+                          <p className="text-xs">Be the first to comment!</p>
+                        </div>
+                      ) : (
+                        comments.map((comment) => (
+                          <div
+                            key={comment.commentId || comment.id}
+                            className="flex gap-3 p-3 rounded-lg hover:bg-gray-50"
+                          >
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                                  comment.authorName,
+                                )}&chars=1`}
+                              />
+
+                              <AvatarFallback className="text-sm font-semibold">
+                                {comment.authorName?.[0]?.toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-sm">{comment.authorName || "User"}</span>
+                                <span className="text-xs text-gray-500">{formatCommentDate(comment.createdDate)}</span>
+                              </div>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment.content}</p>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDownloadFile(file)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteFile(file.fileId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
 
-              {/* File Upload */}
+              {/* Files Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-lg font-semibold">Upload File</h3>
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
-                  onClick={() => document.getElementById("file-input")?.click()}
+                <button
+                  type="button"
+                  onClick={() => setIsFilesExpanded(!isFilesExpanded)}
+                  className="flex items-center justify-between w-full text-left"
                 >
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm font-medium text-gray-700">Click to upload or drag file</p>
-                  <p className="text-xs text-gray-500 mt-1">PDF, DOC (max 50MB)</p>
-                  <input
-                    id="file-input"
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                  />
-                </div>
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold">Files & Attachments ({fileAttachments.length})</h3>
+                  </div>
+                  {isFilesExpanded ? (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+
+                {isFilesExpanded && (
+                  <div className="space-y-6">
+                    {/* File Attachments List */}
+                    {fileAttachments.length > 0 && (
+                      <div className="space-y-2">
+                        {fileAttachments.map((file) => (
+                          <div
+                            key={file.fileId}
+                            className="p-3 border rounded-lg flex items-center justify-between hover:bg-gray-50"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <Upload className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{file.originalFileName}</p>
+                                <div className="flex gap-2 text-xs text-gray-500">
+                                  <span>{(file.fileSize / 1024).toFixed(2)} KB</span>
+                                  <span>•</span>
+                                  <span>{file.uploaderName}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => {
+                                  setPreviewFile(file)
+                                  setIsPreviewOpen(true)
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleDownloadFile(file)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                                onClick={() => handleDeleteFile(file.fileId)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* File Upload Area */}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700">Upload New File</p>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                        onClick={() => document.getElementById("file-input")?.click()}
+                      >
+                        <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm font-medium text-gray-700">Click to upload or drag file</p>
+                        <p className="text-xs text-gray-500 mt-1">PDF, DOC (max 50MB)</p>
+                        <input
+                          id="file-input"
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                          disabled={uploading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -467,9 +525,39 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                 </Button>
               </div>
             </div>
-          </ScrollArea>
+          </div>
         )}
       </DialogContent>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b flex-shrink-0">
+            <DialogTitle className="flex justify-between items-center pr-8">
+              <span className="truncate">{previewFile?.originalFileName}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center p-4">
+            {previewFile?.contentType?.startsWith("image/") ? (
+              <img
+                src={previewFile.fileUrl}
+                alt={previewFile.originalFileName}
+                className="max-w-full max-h-full object-contain shadow-lg"
+              />
+            ) : previewFile?.contentType === "application/pdf" ? (
+              <iframe src={previewFile.fileUrl} className="w-full h-full border-none" title="PDF Preview" />
+            ) : (
+              <div className="text-center p-8">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-600 mb-4">No preview available for this file type.</p>
+                <Button onClick={() => handleDownloadFile(previewFile)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download to View
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

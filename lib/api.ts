@@ -56,8 +56,9 @@ export const api = <T = any>(options: any, notRequireToken?: boolean, auth = fal
     },
   }
   if (localStorage.getItem("Authorization")) {
-      config.headers.Authorization = `Bearer ${localStorage.getItem("Authorization")}`
-      config.headers.userId = `${localStorage.getItem("userId")}`
+    console.log("Authorization", localStorage.getItem("Authorization"))
+    config.headers.Authorization = `Bearer ${localStorage.getItem("Authorization")}`
+    config.headers.userId = `${localStorage.getItem("userId")}`
   }
   return request(config)
 }
@@ -97,17 +98,17 @@ export const logout = () => {
 }
 
 export const fetchProjectReport = (page?: number, size?: number) => {
-    return api(
-        {
-            method: "GET",
-            url: "/report/project-report",
-            params: {
-                page,
-                size
-            }
-        },
-        true,
-    )
+  return api(
+    {
+      method: "GET",
+      url: "/report/project-report",
+      params: {
+        page,
+        size
+      }
+    },
+    true,
+  )
 }
 
 
@@ -126,10 +127,10 @@ export const fetchPendingTasks = (page?: number, size?: number) => {
     {
       method: "GET",
       url: "/report/task-report/pending-tasks",
-        params: {
-            page,
-            size
-        }
+      params: {
+        page,
+        size
+      }
     },
     true,
   )
