@@ -19,7 +19,7 @@ export interface ProjectReport {
         status: string;
         createdDate: string;
         updatedDate: string | null;
-    };
+    } | null;
     totalTasks: number;
     completedTasks: number;
     pendingTasks: number;

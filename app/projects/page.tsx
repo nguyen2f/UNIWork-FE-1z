@@ -31,11 +31,11 @@ import type { ProjectParams } from "@/types/projectType"
 import { fetchProjectReport } from "@/lib/api"
 import type { ProjectReport } from "@/types/response"
 import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
 } from "@/components/ui/select"
 
 export default function ProjectsPage() {
@@ -163,6 +163,7 @@ export default function ProjectsPage() {
   }
 
   const filteredProjects = projects.filter((p) => {
+    if (!p.project) return false
     if (statusFilter && p.project.status !== statusFilter) return false
     if (priorityFilter && p.project.priority !== priorityFilter) return false
     return true
@@ -170,7 +171,9 @@ export default function ProjectsPage() {
 
   const tasksByProject = projects.reduce(
     (acc, project) => {
-      acc[project.project.projectId] = project.tasks?.filter((task) => task.taskParentId == null) || []
+      if (project.project?.projectId) {
+        acc[project.project.projectId] = project.tasks?.filter((task) => task.taskParentId == null) || []
+      }
       return acc
     },
     {} as Record<number, any[]>,
@@ -197,58 +200,58 @@ export default function ProjectsPage() {
           </div>
 
           {/* Filters and View Toggle */}
-            {/* Filters and View Toggle */}
-            <div className="mb-6 flex items-center justify-between gap-4">
-                <div className="flex gap-4 flex-1">
-                    {/* Search */}
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Search projects..." className="pl-9" />
-                    </div>
+          {/* Filters and View Toggle */}
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div className="flex gap-4 flex-1">
+              {/* Search */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search projects..." className="pl-9" />
+              </div>
 
-                    {/* Status Filter */}
-                    <Select onValueChange={(value) => setStatusFilter(value === "CLEAR" ? null : value)}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="CLEAR">Status</SelectItem>
-                            <SelectItem value="PLANNING">Planning</SelectItem>
-                            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                            <SelectItem value="ON_HOLD">On Hold</SelectItem>
-                            <SelectItem value="COMPLETED">Completed</SelectItem>
-                        </SelectContent>
-                    </Select>
+              {/* Status Filter */}
+              <Select onValueChange={(value) => setStatusFilter(value === "CLEAR" ? null : value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CLEAR">Status</SelectItem>
+                  <SelectItem value="PLANNING">Planning</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="ON_HOLD">On Hold</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                </SelectContent>
+              </Select>
 
-                    {/* Priority Filter */}
-                    <Select onValueChange={(value) => setPriorityFilter(value === "CLEAR" ? null : value)}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="CLEAR">Priority</SelectItem>
-                            <SelectItem value="LOW">Low</SelectItem>
-                            <SelectItem value="MEDIUM">Medium</SelectItem>
-                            <SelectItem value="HIGH">High</SelectItem>
-                            <SelectItem value="CRITICAL">Critical</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* View Toggle */}
-                <ViewLayoutToggle view={view} onViewChange={setView} />
+              {/* Priority Filter */}
+              <Select onValueChange={(value) => setPriorityFilter(value === "CLEAR" ? null : value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CLEAR">Priority</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* View Toggle */}
+            <ViewLayoutToggle view={view} onViewChange={setView} />
+          </div>
 
           {/* Grid View */}
           {view === "grid" && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredProjects?.map((project) => (
-                <Card key={project.project.projectId} className="hover:shadow-lg transition-shadow">
+                <Card key={project.project?.projectId} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <FolderKanban className="h-5 w-5 text-blue-600" />
-                        <CardTitle className="text-lg">{project.project.name}</CardTitle>
+                        <CardTitle className="text-lg">{project.project?.name}</CardTitle>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -258,7 +261,7 @@ export default function ProjectsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/projects/${project.project.projectId}`} className="cursor-pointer">
+                            <Link href={`/projects/${project.project?.projectId}`} className="cursor-pointer">
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </Link>
@@ -268,7 +271,7 @@ export default function ProjectsPage() {
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDelete(project.project.projectId)}
+                            onClick={() => project.project?.projectId && handleDelete(project.project.projectId)}
                             className="text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
@@ -279,11 +282,11 @@ export default function ProjectsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground line-clamp-2">{project.project.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{project.project?.description}</p>
 
                     <div className="flex gap-2">
-                      <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
-                      <Badge variant={getPriorityColor(project.project.priority)}>{project.project.priority}</Badge>
+                      <Badge variant={getStatusColor(project.project?.status || "")}>{project.project?.status}</Badge>
+                      <Badge variant={getPriorityColor(project.project?.priority || "")}>{project.project?.priority}</Badge>
                     </div>
 
                     <div className="space-y-2">
@@ -304,12 +307,12 @@ export default function ProjectsPage() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        {project.project.startDate} - {project.project.endDate}
+                        {project.project?.startDate} - {project.project?.endDate}
                       </span>
                     </div>
 
                     {/* Display parent tasks only */}
-                    {tasksByProject[project.project.projectId] &&
+                    {project.project?.projectId && tasksByProject[project.project.projectId] &&
                       tasksByProject[project.project.projectId].length > 0 && (
                         <div className="pt-4 border-t">
                           <h4 className="font-medium text-sm mb-2">
@@ -336,7 +339,7 @@ export default function ProjectsPage() {
           {view === "list" && (
             <div className="space-y-3">
               {filteredProjects.map((project) => (
-                <Card key={project.project.projectId} className="hover:shadow-md transition-shadow">
+                <Card key={project.project?.projectId} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-6">
                       <div className="flex-shrink-0">
@@ -348,8 +351,8 @@ export default function ProjectsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="font-semibold text-lg">{project.project.name}</h3>
-                            <p className="text-sm text-muted-foreground">{project.project.description}</p>
+                            <h3 className="font-semibold text-lg">{project.project?.name}</h3>
+                            <p className="text-sm text-muted-foreground">{project.project?.description}</p>
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -359,7 +362,7 @@ export default function ProjectsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/projects/${project.project.projectId}`} className="cursor-pointer">
+                                <Link href={`/projects/${project.project?.projectId}`} className="cursor-pointer">
                                   <Eye className="h-4 w-4 mr-2" />
                                   View Details
                                 </Link>
@@ -369,7 +372,7 @@ export default function ProjectsPage() {
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => handleDelete(project.project.projectId)}
+                                onClick={() => project.project?.projectId && handleDelete(project.project?.projectId)}
                                 className="text-destructive"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
@@ -381,9 +384,9 @@ export default function ProjectsPage() {
 
                         <div className="flex items-center gap-4 flex-wrap">
                           <div className="flex gap-2">
-                            <Badge variant={getStatusColor(project.project.status)}>{project.project.status}</Badge>
-                            <Badge variant={getPriorityColor(project.project.priority)}>
-                              {project.project.priority}
+                            <Badge variant={getStatusColor(project.project?.status || "")}>{project.project?.status}</Badge>
+                            <Badge variant={getPriorityColor(project.project?.priority || "")}>
+                              {project.project?.priority}
                             </Badge>
                           </div>
 
@@ -391,14 +394,14 @@ export default function ProjectsPage() {
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
                               <span>
-                                {project.project.startDate} - {project.project.endDate}
+                                {project.project?.startDate} - {project.project?.endDate}
                               </span>
                             </div>
                           </div>
                         </div>
 
                         {/* Display parent tasks only */}
-                        {tasksByProject[project.project.projectId] &&
+                        {project.project?.projectId && tasksByProject[project.project.projectId] &&
                           tasksByProject[project.project.projectId].length > 0 && (
                             <div className="pt-4 border-t">
                               <h4 className="font-medium text-sm mb-2">

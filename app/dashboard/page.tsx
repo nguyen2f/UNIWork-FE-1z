@@ -47,15 +47,15 @@ export default function DashboardPage() {
     hasPrevious: false
   });
 
-    const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
-    const [taskPagination, setTaskPagination] = useState({
-        currentPage: 0,
-        pageSize: 6,
-        totalElements: 0,
-        totalPages: 0,
-        hasNext: false,
-        hasPrevious: false,
-    });
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
+  const [taskPagination, setTaskPagination] = useState({
+    currentPage: 0,
+    pageSize: 6,
+    totalElements: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+  });
 
   const [tasksPerformance, setTasksPerformance] = useState<TaskPerformance>();
   const [projectReport, setProjectReport] = useState<ProjectReport[]>();
@@ -217,24 +217,24 @@ export default function DashboardPage() {
   };
 
 
-    const fetchUpcomingTasks = async (page: number = 0) => {
-        try {
-            setLoading(true);
-            const result = await fetchPendingTasks(page, 6); // API trả về { data, pagination }
+  const fetchUpcomingTasks = async (page: number = 0) => {
+    try {
+      setLoading(true);
+      const result = await fetchPendingTasks(page, 6); // API trả về { data, pagination }
 
-            if (result.data) {
-                setPendingTasks(result.data); // đây là mảng tasks
-            }
-            if (result.pagination) {
-                setTaskPagination(result.pagination); // đây là object pagination
-            }
-        } catch (err: any) {
-            setError(err.message);
-            console.error('Error fetching tasks:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (result.data) {
+        setPendingTasks(result.data); // đây là mảng tasks
+      }
+      if (result.pagination) {
+        setTaskPagination(result.pagination); // đây là object pagination
+      }
+    } catch (err: any) {
+      setError(err.message);
+      console.error('Error fetching tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchPerformance = async () => {
     try {
@@ -274,9 +274,9 @@ export default function DashboardPage() {
     fetchProjects(newPage);
   };
 
-    const handleTaskPageChange = (page: number) => {
-        fetchUpcomingTasks(page);
-    };
+  const handleTaskPageChange = (page: number) => {
+    fetchUpcomingTasks(page);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -347,25 +347,25 @@ export default function DashboardPage() {
                 {/* Pie Chart */}
                 <div className="w-full h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                          <Pie
-                              data={[
-                                  { name: "Completed", value: tasksPerformance?.doneTasks || 0 },
-                                  { name: "Remaining", value: tasksPerformance?.remainingTasks || 0 }
-                              ]}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              label
-                          >
-                              <Cell fill="#cf0837" /> {/* green for completed */}
-                              <Cell fill="#1616f9" /> {/* orange for remaining */}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                      </PieChart>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "Completed", value: tasksPerformance?.doneTasks || 0 },
+                          { name: "Remaining", value: tasksPerformance?.remainingTasks || 0 }
+                        ]}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        label
+                      >
+                        <Cell fill="#cf0837" /> {/* green for completed */}
+                        <Cell fill="#1616f9" /> {/* orange for remaining */}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
 
@@ -410,19 +410,19 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-4">
                   {projectReport?.map((project) => (
-                    <div key={project.project.projectId} className="space-y-2">
+                    <div key={project.project?.projectId} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">{project.project.name}</p>
+                          <p className="font-medium">{project.project?.name}</p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Users className="h-3 w-3" />
                             <span>{project.countMember} members</span>
                             <Calendar className="h-3 w-3 ml-2" />
-                            <span>Due {project.project.endDate}</span>
+                            <span>Due {project.project?.endDate}</span>
                           </div>
                         </div>
-                        <Badge variant={getStatusColor(project.project.status)}>
-                          {project.project.status}
+                        <Badge variant={getStatusColor(project.project?.status || "")}>
+                          {project.project?.status}
                         </Badge>
                       </div>
                       <div className="space-y-1">
@@ -449,43 +449,43 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-              {/* Upcoming Tasks */}
-              <Card>
-                  <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                          <ListTodo className="h-5 w-5" />
-                          Upcoming Tasks
-                          {/* ✅ Badge hiển thị tổng số */}
-                          <Badge variant="secondary" className="ml-auto">
-                              {taskPagination.totalElements} total
-                          </Badge>
-                      </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                      {pendingTasks.map((task) => (
-                          <div key={task.taskId} className="flex items-start justify-between p-3 rounded-lg border">
-                              <div className="space-y-1">
-                                  <p className="font-medium">{task.title}</p>
-                                  <p className="text-sm text-muted-foreground">{task.projectId}</p>
-                              </div>
-                              <div className="flex flex-col items-end gap-1">
-                                  <Badge variant={getStatusColor(task.status)}>{task.status}</Badge>
-                                  <span className="text-xs text-muted-foreground">{task.dueDate}</span>
-                              </div>
-                          </div>
-                      ))}
+            {/* Upcoming Tasks */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ListTodo className="h-5 w-5" />
+                  Upcoming Tasks
+                  {/* ✅ Badge hiển thị tổng số */}
+                  <Badge variant="secondary" className="ml-auto">
+                    {taskPagination.totalElements} total
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {pendingTasks.map((task) => (
+                  <div key={task.taskId} className="flex items-start justify-between p-3 rounded-lg border">
+                    <div className="space-y-1">
+                      <p className="font-medium">{task.title}</p>
+                      <p className="text-sm text-muted-foreground">{task.projectId}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={getStatusColor(task.status)}>{task.status}</Badge>
+                      <span className="text-xs text-muted-foreground">{task.dueDate}</span>
+                    </div>
+                  </div>
+                ))}
 
-                      {taskPagination.totalPages > 1 && (
-                          <Pagination
-                              currentPage={taskPagination.currentPage}
-                              totalPages={taskPagination.totalPages}
-                              hasNext={taskPagination.hasNext}
-                              hasPrevious={taskPagination.hasPrevious}
-                              onPageChange={handleTaskPageChange}
-                          />
-                      )}
-                  </CardContent>
-              </Card>
+                {taskPagination.totalPages > 1 && (
+                  <Pagination
+                    currentPage={taskPagination.currentPage}
+                    totalPages={taskPagination.totalPages}
+                    hasNext={taskPagination.hasNext}
+                    hasPrevious={taskPagination.hasPrevious}
+                    onPageChange={handleTaskPageChange}
+                  />
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Team Activity & Performance */}
