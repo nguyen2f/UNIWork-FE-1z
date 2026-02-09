@@ -25,18 +25,32 @@ export const navigation = [
   { name: "Settings", href: "/settings", icon: Settings },
 ]
 
+export const adminNavigation = [
+  { name: "Admin Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { name: "Employees", href: "/admin/employees", icon: Users },
+]
+
 export function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   const pathname = usePathname()
+  const isAdminPath = pathname.startsWith("/admin")
+  const navItems = isAdminPath ? adminNavigation : navigation
 
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="flex items-center flex-shrink-0 px-4 py-5 border-b">
         <FolderKanban className="h-8 w-8 text-blue-600" />
         <span className="ml-2 text-xl font-bold text-gray-900">UNIWORK</span>
+        {isAdminPath && (
+          <span className="ml-auto px-2 py-1 text-xs font-bold bg-blue-100 text-blue-700 rounded">
+            ADMIN
+          </span>
+        )}
       </div>
       <div className="mt-4 flex-grow flex flex-col">
         <nav className="flex-1 px-2 space-y-1">
-          {navigation.map((item) => {
+          {navItems.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link

@@ -37,28 +37,28 @@
 ### Các bước thực hiện
 
 1. **Clone repository:**
-   ```bash
+   \`\`\`bash
    git clone <repository_url>
    cd UNIWork-FE-1z
-   ```
+   \`\`\`
 
 2. **Cài đặt dependencies:**
-   ```bash
+   \`\`\`bash
    npm install
    # hoặc nếu dùng pnpm
    pnpm install
-   ```
+   \`\`\`
 
 3. **Cấu hình biến môi trường:**
    Tạo file `.env.local` ở thư mục gốc và cấu hình các biến sau:
-   ```env
+   \`\`\`env
    NEXT_PUBLIC_API_BASE_URL=http://your-api-url:port
-   ```
+   \`\`\`
 
 4. **Chạy môi trường phát triển:**
-   ```bash
+   \`\`\`bash
    npm run dev
-   ```
+   \`\`\`
    Ứng dụng sẽ chạy tại: [http://localhost:3000](http://localhost:3000)
 
 ## 📁 Cấu Trúc Thư Mục
