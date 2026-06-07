@@ -1,0 +1,28 @@
+﻿app/dashboard/page.tsx(35,10): error TS2305: Module '"@/types/project.types"' has no exported member 'ProjectReport'.
+app/dashboard/page.tsx(36,10): error TS2305: Module '"@/types/task.types"' has no exported member 'TaskPerformance'.
+app/dashboard/page.tsx(37,10): error TS2305: Module '"@/types/task.types"' has no exported member 'Task'.
+app/projects/[id]/page.tsx(367,51): error TS2339: Property 'getDetail' does not exist on type '{ getAll: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<ProjectDTO[]>; getById: (projectId: number) => Promise<ProjectDetailDTO>; ... 6 more ...; removeMember: (projectId: number, userId: number) => Promise<...>; }'.
+app/projects/page.tsx(32,15): error TS2305: Module '"@/types/project.types"' has no exported member 'ProjectReport'.
+app/projects/page.tsx(322,77): error TS7006: Parameter 'task' implicitly has an 'any' type.
+app/projects/page.tsx(411,81): error TS7006: Parameter 'task' implicitly has an 'any' type.
+app/tasks/page.tsx(36,37): error TS2339: Property 'getAll' does not exist on type '{ getByStage: (stageId: number) => Promise<TaskDTO[]>; getMyTasks: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<TaskDTO[]>; ... 4 more ...; uploadFile: (taskId: number, file: File) => Promise<...>; }'.
+components/event/create-event-dialog.tsx(125,37): error TS2339: Property 'data' does not exist on type 'ProjectDTO[]'.
+components/project/project-detail-tasks.tsx(11,15): error TS2305: Module '"@/types"' has no exported member 'Task'.
+components/project/project-detail-tasks.tsx(44,42): error TS2339: Property 'getByProject' does not exist on type '{ getByStage: (stageId: number) => Promise<TaskDTO[]>; getMyTasks: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<TaskDTO[]>; ... 4 more ...; uploadFile: (taskId: number, file: File) => Promise<...>; }'.
+components/project/project-members.tsx(10,9): error TS2724: '"@/types"' has no exported member named 'ProjectMember'. Did you mean 'ProjectMemberDTO'?
+components/project/project-members.tsx(29,30): error TS2339: Property 'data' does not exist on type 'ProjectMemberDTO[]'.
+components/stage/create-stage-dialog.tsx(55,26): error TS2554: Expected 2 arguments, but got 1.
+components/task/create-task-dialog.tsx(21,9): error TS2305: Module '"@/types/project.types"' has no exported member 'Project'.
+components/task/create-task-dialog.tsx(92,31): error TS2339: Property 'data' does not exist on type 'ProjectDTO[]'.
+components/task/project-task-detail-dialog.tsx(12,15): error TS2305: Module '"@/types/task.types"' has no exported member 'Task'.
+components/task/project-task-detail-dialog.tsx(57,68): error TS2554: Expected 1 arguments, but got 2.
+components/task/project-task-detail-dialog.tsx(113,31): error TS2339: Property 'updateStatus' does not exist on type '{ getByStage: (stageId: number) => Promise<TaskDTO[]>; getMyTasks: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<TaskDTO[]>; ... 4 more ...; uploadFile: (taskId: number, file: File) => Promise<...>; }'.
+components/task/task-detail-dialog.tsx(29,15): error TS2305: Module '"@/types/task.types"' has no exported member 'Task'.
+components/task/task-detail-dialog.tsx(85,62): error TS2554: Expected 1 arguments, but got 2.
+components/task/task-detail-dialog.tsx(130,42): error TS2339: Property 'updateStatus' does not exist on type '{ getByStage: (stageId: number) => Promise<TaskDTO[]>; getMyTasks: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<TaskDTO[]>; ... 4 more ...; uploadFile: (taskId: number, file: File) => Promise<...>; }'.
+components/task/task-list.tsx(10,15): error TS2305: Module '"@/types"' has no exported member 'Task'.
+components/user/invite-team-member-dialog.tsx(5,26): error TS2305: Module '"@/services/project.service"' has no exported member 'assignMemberToProject'.
+components/user/invite-team-member-dialog.tsx(7,10): error TS2305: Module '"@/types/project.types"' has no exported member 'Project'.
+components/user/invite-team-member-dialog.tsx(51,37): error TS2339: Property 'data' does not exist on type 'ProjectDTO[]'.
+hooks/useTasks.ts(17,38): error TS2339: Property 'getByProject' does not exist on type '{ getByStage: (stageId: number) => Promise<TaskDTO[]>; getMyTasks: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<TaskDTO[]>; ... 4 more ...; uploadFile: (taskId: number, file: File) => Promise<...>; }'.
+hooks/useTasks.ts(54,45): error TS2339: Property 'updateStatus' does not exist on type '{ getByStage: (stageId: number) => Promise<TaskDTO[]>; getMyTasks: (params?: { priority?: number | undefined; status?: number | undefined; } | undefined) => Promise<TaskDTO[]>; ... 4 more ...; uploadFile: (taskId: number, file: File) => Promise<...>; }'.

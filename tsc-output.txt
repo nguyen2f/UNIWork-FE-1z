@@ -1,0 +1,58 @@
+app/api/auth/register/route.ts(35,15): error TS7006: Parameter 'n' implicitly has an 'any' type.
+app/api/projects/route.ts(3,29): error TS2307: Cannot find module '@/lib/auth' or its corresponding type declarations.
+app/messages/page.tsx(65,30): error TS2339: Property 'data' does not exist on type 'any[]'.
+app/messages/page.tsx(75,26): error TS2339: Property 'data' does not exist on type 'any[]'.
+app/projects/[id]/page.tsx(306,43): error TS7006: Parameter 'props' implicitly has an 'any' type.
+app/projects/[id]/page.tsx(545,17): error TS2322: Type '{ open: boolean; onOpenChange: Dispatch<SetStateAction<boolean>>; projectId: number; }' is not assignable to type 'IntrinsicAttributes & CreateTaskDialogProps'.
+  Property 'projectId' does not exist on type 'IntrinsicAttributes & CreateTaskDialogProps'.
+app/projects/page.tsx(175,50): error TS2339: Property 'tasks' does not exist on type 'ProjectReport'.
+app/projects/page.tsx(175,65): error TS7006: Parameter 'task' implicitly has an 'any' type.
+app/tasks/page.tsx(387,84): error TS2322: Type '{ open: boolean; onOpenChange: Dispatch<SetStateAction<boolean>>; onTaskCreated: () => Promise<void>; }' is not assignable to type 'IntrinsicAttributes & CreateTaskDialogProps'.
+  Property 'onTaskCreated' does not exist on type 'IntrinsicAttributes & CreateTaskDialogProps'.
+components/notification/notifications-popover.tsx(98,21): error TS2739: Type 'NotificationDTO' is missing the following properties from type 'Notification': notificationId, userId, isRead, createdAt
+components/project/create-project-dialog.tsx(52,30): error TS2304: Cannot find name 'createProject'.
+components/project/project-detail-tasks.tsx(12,41): error TS2307: Cannot find module './project-task-detail-dialog' or its corresponding type declarations.
+components/project/project-detail-tasks.tsx(44,30): error TS2304: Cannot find name 'getAllTasksByProjectId'.
+components/project/project-members.tsx(99,48): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+components/project/project-members.tsx(99,81): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+components/project/project-messages.tsx(10,30): error TS2307: Cannot find module '@/lib/data' or its corresponding type declarations.
+components/project/project-messages.tsx(17,65): error TS7006: Parameter 'm' implicitly has an 'any' type.
+components/project/project-messages.tsx(49,28): error TS7006: Parameter 'message' implicitly has an 'any' type.
+components/task/project-task-detail-dialog.tsx(56,36): error TS2552: Cannot find name 'getTaskDetail'. Did you mean 'setTaskDetail'?
+components/task/project-task-detail-dialog.tsx(96,36): error TS2552: Cannot find name 'addComment'. Did you mean 'comments'?
+components/task/project-task-detail-dialog.tsx(113,19): error TS2304: Cannot find name 'updateTask'.
+components/task/project-task-detail-dialog.tsx(155,27): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ PENDING: { code: number; label: string; color: string; }; DOING: { code: number; label: string; color: string; }; REVIEWING: { code: number; label: string; color: string; }; COMPLETED: { code: number; label: string; color: string; }; CANCELLED: { ...; }; }'.
+components/task/project-task-detail-dialog.tsx(156,29): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ LOW: { code: number; label: string; color: string; }; MEDIUM: { code: number; label: string; color: string; }; HIGH: { code: number; label: string; color: string; }; }'.
+components/task/task-list.tsx(122,60): error TS18048: 'task.assignee' is possibly 'undefined'.
+components/task/task-list.tsx(124,45): error TS18048: 'task.assignee' is possibly 'undefined'.
+components/theme-provider.tsx(9,33): error TS2339: Property 'children' does not exist on type 'ThemeProviderProps'.
+components/ui/DateRangePicker.tsx(26,84): error TS2345: Argument of type 'RangeValueType<Dayjs>' is not assignable to parameter of type '[Dayjs, Dayjs] | (() => [Dayjs, Dayjs])'.
+  Type '[start: Dayjs | null | undefined, end: Dayjs | null | undefined]' is not assignable to type '[Dayjs, Dayjs]'.
+    Type at position 0 in source is not compatible with type at position 0 in target.
+      Type 'Dayjs | null | undefined' is not assignable to type 'Dayjs'.
+        Type 'undefined' is not assignable to type 'Dayjs'.
+components/ui/DateRangePicker.tsx(67,24): error TS2345: Argument of type 'Dayjs[]' is not assignable to parameter of type '[Dayjs, Dayjs]'.
+  Target requires 2 element(s) but source may have fewer.
+components/ui/DateRangePicker.tsx(84,42): error TS2345: Argument of type 'Dayjs[]' is not assignable to parameter of type 'SetStateAction<[Dayjs, Dayjs]>'.
+  Type 'Dayjs[]' is not assignable to type '(prevState: [Dayjs, Dayjs]) => [Dayjs, Dayjs]'.
+    Type 'Dayjs[]' provides no match for the signature '(prevState: [Dayjs, Dayjs]): [Dayjs, Dayjs]'.
+components/ui/DateRangePicker.tsx(201,49): error TS2345: Argument of type 'KeyboardEvent<HTMLElement>' is not assignable to parameter of type 'KeyboardEvent<HTMLDivElement | HTMLInputElement>'.
+  Type 'HTMLElement' is not assignable to type 'HTMLDivElement | HTMLInputElement'.
+    Type 'HTMLElement' is missing the following properties from type 'HTMLInputElement': accept, align, alt, autocomplete, and 55 more.
+components/ui/DateRangePicker.tsx(239,49): error TS2345: Argument of type 'KeyboardEvent<HTMLElement>' is not assignable to parameter of type 'KeyboardEvent<HTMLDivElement | HTMLInputElement>'.
+  Type 'HTMLElement' is not assignable to type 'HTMLDivElement | HTMLInputElement'.
+    Type 'HTMLElement' is missing the following properties from type 'HTMLInputElement': accept, align, alt, autocomplete, and 55 more.
+components/ui/sidebar.tsx(447,7): error TS2322: Type 'string | ((instance: HTMLDivElement | null) => void) | RefObject<HTMLDivElement> | null' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLDivElement | null) => void) | RefObject<...>)) | null | undefined'.
+  Type 'string' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLDivElement | null) => void) | RefObject<...>)) | null | undefined'.
+components/ui/sidebar.tsx(468,7): error TS2322: Type 'string | ((instance: HTMLButtonElement | null) => void) | RefObject<HTMLButtonElement> | null' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLButtonElement | null) => void) | RefObject<...>)) | null | undefined'.
+  Type 'string' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLButtonElement | null) => void) | RefObject<...>)) | null | undefined'.
+components/ui/sidebar.tsx(569,9): error TS2322: Type 'string | ((instance: HTMLButtonElement | null) => void) | RefObject<HTMLButtonElement> | null' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLButtonElement | null) => void) | RefObject<...>)) | null | undefined'.
+  Type 'string' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLButtonElement | null) => void) | RefObject<...>)) | null | undefined'.
+components/ui/sidebar.tsx(614,7): error TS2322: Type 'string | ((instance: HTMLButtonElement | null) => void) | RefObject<HTMLButtonElement> | null' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLButtonElement | null) => void) | RefObject<...>)) | null | undefined'.
+  Type 'string' is not assignable to type '((((instance: HTMLElement | null) => void) | RefObject<HTMLElement>) & (string | ((instance: HTMLButtonElement | null) => void) | RefObject<...>)) | null | undefined'.
+components/ui/sidebar.tsx(728,7): error TS2322: Type 'string | ((instance: HTMLAnchorElement | null) => void) | RefObject<HTMLAnchorElement> | null' is not assignable to type '((string | ((instance: HTMLAnchorElement | null) => void) | RefObject<HTMLAnchorElement>) & (((instance: HTMLElement | null) => void) | RefObject<...>)) | null | undefined'.
+  Type 'string' is not assignable to type '((string | ((instance: HTMLAnchorElement | null) => void) | RefObject<HTMLAnchorElement>) & (((instance: HTMLElement | null) => void) | RefObject<...>)) | null | undefined'.
+services/http-client.ts(2,16): error TS7016: Could not find a declaration file for module 'qs'. 'D:/nguyen2f/UNIWork-FE-1z/node_modules/.pnpm/qs@6.14.0/node_modules/qs/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qs` if it exists or add a new declaration (.d.ts) file containing `declare module 'qs';`

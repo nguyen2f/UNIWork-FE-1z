@@ -23,7 +23,7 @@ export const DateRangePicker = ({
                                     ...rest
                                 }: BaseDateRangePickerProps) => {
     // Nếu không truyền `value`, dùng internalValue với mặc định là "Hôm nay"
-    const [internalValue, setInternalValue] = useState<[dayjs.Dayjs, dayjs.Dayjs]>(defaultValue);
+    const [internalValue, setInternalValue] = useState<[dayjs.Dayjs, dayjs.Dayjs]>(defaultValue as [dayjs.Dayjs, dayjs.Dayjs]);
     const controlledValue = value === undefined ? internalValue : value;
 
     const [selectedLabel, setSelectedLabel] = useState("Today");
@@ -64,7 +64,7 @@ export const DateRangePicker = ({
     // Nếu không có value từ ngoài, trigger onChange mặc định hôm nay
     useEffect(() => {
         if (!value) {
-            onChange?.(rangePresets[0].value);
+            onChange?.(rangePresets[0].value as [dayjs.Dayjs, dayjs.Dayjs]);
         }
     }, []);
 
@@ -81,7 +81,7 @@ export const DateRangePicker = ({
         const preset = rangePresets.find((p) => p.key === key);
         if (preset) {
             setSelectedLabel(preset.label);
-            if (!value) setInternalValue(preset.value); // Nếu uncontrolled
+            if (!value) setInternalValue(preset.value as [dayjs.Dayjs, dayjs.Dayjs]); // Nếu uncontrolled
             onChange?.(preset.value as [dayjs.Dayjs, dayjs.Dayjs]);
         }
     };
@@ -145,7 +145,7 @@ export const DateRangePicker = ({
     // }, [value, format, onChange]);
 
     const handleKeyDown = (
-        e: React.KeyboardEvent<HTMLInputElement | HTMLDivElement>,
+        e: any,
         value?: [dayjs.Dayjs, dayjs.Dayjs],
         onChange?: (val: [dayjs.Dayjs, dayjs.Dayjs]) => void,
         setInternalValue?: React.Dispatch<React.SetStateAction<[dayjs.Dayjs, dayjs.Dayjs]>>
@@ -198,7 +198,7 @@ export const DateRangePicker = ({
                     if (!value) setInternalValue(v as [dayjs.Dayjs, dayjs.Dayjs]);
                     onChange?.(v as [dayjs.Dayjs, dayjs.Dayjs]);
                 }}
-                onKeyDown={(e) => handleKeyDown(e, value, onChange, setInternalValue)}
+                onKeyDown={(e: any) => handleKeyDown(e, value, onChange, setInternalValue)}
                 {...rest}
             />
             <Dropdown disabled={Boolean(rest?.disabled)} menu={dropdownMenu}>
@@ -236,7 +236,7 @@ export const DateRangePicker = ({
                     if (!value) setInternalValue(v as [dayjs.Dayjs, dayjs.Dayjs]);
                     onChange?.(v as [dayjs.Dayjs, dayjs.Dayjs]);
                 }}
-                onKeyDown={(e) => handleKeyDown(e, value, onChange, setInternalValue)}
+                onKeyDown={(e: any) => handleKeyDown(e, value, onChange, setInternalValue)}
                 {...rest}
             />
         </div>

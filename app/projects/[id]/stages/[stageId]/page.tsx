@@ -1,0 +1,619 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/sidebar"
+import { CreateTaskDialog } from "@/components/task/create-task-dialog"
+import {
+  ChevronRight,
+  Calendar,
+  Clock,
+  Target,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  AlertCircle,
+  Plus,
+  Minus,
+  MoreHorizontal,
+  Play,
+  Flag,
+  Timer,
+  TrendingUp,
+  ListTodo,
+  Zap,
+  Edit,
+  Trash2,
+  ArrowLeft,
+} from "lucide-react"
+import { toast } from "sonner"
+import { stageService } from "@/services/stage.service"
+import { projectService } from "@/services/project.service"
+import { taskService } from "@/services/task.service"
+import { issueService } from "@/services/issue.service"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { EditStageDialog } from "@/components/stage/edit-stage-dialog"
+import { EditTaskDialog } from "@/components/task/edit-task-dialog"
+import { IssueDialog } from "@/components/issue/issue-dialog"
+import { Modal } from "antd"
+
+const StageStatusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+  PLANNED: { label: "Planned", color: "text-slate-600", bg: "bg-slate-100 text-slate-700 border-slate-200", icon: Circle },
+  ACTIVE: { label: "Active", color: "text-emerald-600", bg: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Play },
+  COMPLETED: { label: "Completed", color: "text-blue-600", bg: "bg-blue-50 text-blue-700 border-blue-200", icon: CheckCircle2 },
+  CANCELLED: { label: "Cancelled", color: "text-red-600", bg: "bg-red-50 text-red-700 border-red-200", icon: AlertCircle },
+}
+
+const TaskStatusConfig: Record<string, { label: string; dot: string }> = {
+  PENDING: { label: "Pending", dot: "bg-slate-400" },
+  DOING: { label: "In Progress", dot: "bg-amber-500" },
+  REVIEWING: { label: "Reviewing", dot: "bg-blue-500" },
+  COMPLETED: { label: "Completed", dot: "bg-emerald-500" },
+  CANCELLED: { label: "Cancelled", dot: "bg-red-500" },
+}
+
+const PriorityConfig: Record<string, { label: string; color: string }> = {
+  LOW: { label: "Low", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  MEDIUM: { label: "Medium", color: "text-amber-600 bg-amber-50 border-amber-200" },
+  HIGH: { label: "High", color: "text-orange-600 bg-orange-50 border-orange-200" },
+  CRITICAL: { label: "Critical", color: "text-red-600 bg-red-50 border-red-200" },
+}
+
+export default function StageDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const projectId = Number(params.id)
+  const stageId = Number(params.stageId)
+
+  const [stage, setStage] = useState<any>(null)
+  const [project, setProject] = useState<any>(null)
+  const [tasks, setTasks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [createTaskOpen, setCreateTaskOpen] = useState(false)
+  const [editStageOpen, setEditStageOpen] = useState(false)
+  const [expandedTasks, setExpandedTasks] = useState<number[]>([])
+  const [taskIssues, setTaskIssues] = useState<Record<number, any[]>>({})
+  const [editTaskOpen, setEditTaskOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<any>(null)
+  const [editIssueOpen, setEditIssueOpen] = useState(false)
+  const [editingIssue, setEditingIssue] = useState<any>(null)
+  const [editingIssueTaskId, setEditingIssueTaskId] = useState<number>(0)
+
+  const toggleTask = (taskId: number) => {
+    setExpandedTasks(prev => prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId])
+  }
+
+  useEffect(() => {
+    if (projectId && stageId) {
+      fetchData()
+    }
+  }, [projectId, stageId])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [stageRes, projectRes, taskRes] = await Promise.all([
+        stageService.getById(projectId, stageId),
+        projectService.getById(projectId),
+        taskService.getByStage(stageId),
+      ])
+
+      const stageData = (stageRes as any)?.data || stageRes
+      setStage(stageData)
+
+      const projectData = (projectRes as any)?.project || (projectRes as any)?.data?.project || projectRes
+      setProject(projectData)
+
+      let taskData = (taskRes as any)?.data || taskRes
+      let taskList = Array.isArray(taskData) ? taskData : []
+      setTasks(taskList)
+
+      const issuesByTask: Record<number, any[]> = {}
+      await Promise.all(taskList.map(async (t) => {
+        try {
+          const res: any = await issueService.getByTask(t.taskId)
+          let issues = []
+          if (Array.isArray(res)) issues = res
+          else if (res?.data && Array.isArray(res.data)) issues = res.data
+          issuesByTask[t.taskId] = issues
+        } catch (e) {
+          console.error("Failed to fetch issues for task", t.taskId, e)
+          issuesByTask[t.taskId] = []
+        }
+      }))
+      setTaskIssues(issuesByTask)
+    } catch (error) {
+      console.error("Failed to fetch stage data:", error)
+      toast.error("Failed to load stage details")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleActivate = async () => {
+    try {
+      await stageService.activate(projectId, stageId)
+      toast.success("Stage activated")
+      fetchData()
+    } catch (error) {
+      toast.error("Failed to activate stage")
+    }
+  }
+
+  const handleComplete = async () => {
+    try {
+      await stageService.complete(projectId, stageId)
+      toast.success("Stage completed")
+      fetchData()
+    } catch (error) {
+      toast.error("Failed to complete stage")
+    }
+  }
+
+  const handleDeleteStage = () => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this stage?',
+      content: 'This action cannot be undone. All tasks within this stage will also be deleted.',
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await stageService.delete(projectId, stageId)
+          toast.success("Stage deleted successfully")
+          router.push(`/projects/${projectId}`)
+        } catch (error) {
+          toast.error("Failed to delete stage")
+        }
+      }
+    })
+  }
+
+  const handleEditTask = (task: any) => {
+    setEditingTask(task)
+    setEditTaskOpen(true)
+  }
+
+  const handleDeleteTask = (taskId: number) => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this task?',
+      content: 'This action cannot be undone.',
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await taskService.delete(taskId)
+          toast.success("Task deleted successfully")
+          fetchData()
+        } catch (error) {
+          toast.error("Failed to delete task")
+        }
+      }
+    })
+  }
+
+  const handleEditIssue = (issue: any, taskId: number) => {
+    setEditingIssue(issue)
+    setEditingIssueTaskId(taskId)
+    setEditIssueOpen(true)
+  }
+
+  const handleDeleteIssue = (issueId: number) => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this issue?',
+      content: 'This action cannot be undone.',
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await issueService.delete(issueId)
+          toast.success("Issue deleted successfully")
+          fetchData()
+        } catch (error) {
+          toast.error("Failed to delete issue")
+        }
+      }
+    })
+  }
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A"
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric", month: "short", day: "numeric",
+    })
+  }
+
+  const getDaysRemaining = () => {
+    if (!stage?.endDate) return null
+    const end = new Date(stage.endDate)
+    const now = new Date()
+    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    return diff
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <p className="text-sm text-slate-500">Loading stage details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!stage) {
+    return (
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+            <AlertCircle className="h-12 w-12 text-slate-300 mb-4" />
+            <h2 className="text-xl font-semibold text-slate-700">Stage Not Found</h2>
+            <p className="text-slate-500 mt-2 mb-6">The stage you are looking for does not exist.</p>
+            <Button onClick={() => router.back()} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const statusConfig = StageStatusConfig[stage.status] || StageStatusConfig.PLANNED
+  const StatusIcon = statusConfig.icon
+  const daysRemaining = getDaysRemaining()
+  const completedTasks = tasks.filter(t => t.status === "COMPLETED").length
+  const totalTasks = tasks.length
+  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 via-white to-slate-50">
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-1.5 text-sm mb-6">
+              <Link href="/projects" className="text-slate-500 hover:text-blue-600 transition-colors font-medium">
+                Projects
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              <Link href={`/projects/${projectId}`} className="text-slate-500 hover:text-blue-600 transition-colors font-medium max-w-[200px] truncate">
+                {project?.name || `Project #${projectId}`}
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-slate-900 font-semibold">{stage.name}</span>
+            </nav>
+
+            {/* Stage Hero */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-8 py-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs">
+                        {stage.type || "STAGE"}
+                      </Badge>
+                      <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs">
+                        <StatusIcon className="h-3 w-3 mr-1" />
+                        {statusConfig.label}
+                      </Badge>
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-1">{stage.name}</h1>
+                    {stage.description && (
+                      <p className="text-blue-100 text-sm mb-1">{stage.description}</p>
+                    )}
+                    {stage.goal && (
+                      <p className="text-blue-50/80 text-xs flex items-center gap-1">
+                        <Target className="h-3 w-3" /> Mục tiêu: {stage.goal}
+                      </p>
+                    )}
+                    <p className="text-blue-100 text-sm mt-1">
+                      {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {stage.status === "PLANNED" && (
+                      <Button size="sm" onClick={handleActivate} className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm">
+                        <Play className="h-3.5 w-3.5 mr-1.5" /> Activate
+                      </Button>
+                    )}
+                    {stage.status === "ACTIVE" && (
+                      <Button size="sm" onClick={handleComplete} className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm">
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Complete
+                      </Button>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditStageOpen(true)}>Edit Stage</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={handleDeleteStage}>Delete Stage</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100">
+                <div className="px-6 py-5">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">
+                    <TrendingUp className="h-3.5 w-3.5" /> Progress
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-slate-900">{progressPercent}%</span>
+                    <Progress value={progressPercent} className="flex-1 h-2" />
+                  </div>
+                </div>
+                <div className="px-6 py-5">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">
+                    <ListTodo className="h-3.5 w-3.5" /> Tasks
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900">{completedTasks}<span className="text-slate-400 text-lg font-normal">/{totalTasks}</span></p>
+                </div>
+                <div className="px-6 py-5">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">
+                    <Zap className="h-3.5 w-3.5" /> Issues
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {stage.resolvedIssues ?? 0}<span className="text-slate-400 text-lg font-normal">/{stage.totalIssues ?? 0}</span>
+                  </p>
+                </div>
+                <div className="px-6 py-5">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">
+                    <Timer className="h-3.5 w-3.5" /> Remaining
+                  </div>
+                  <p className={`text-2xl font-bold ${daysRemaining !== null && daysRemaining < 0 ? 'text-red-600' : daysRemaining !== null && daysRemaining <= 3 ? 'text-amber-600' : 'text-slate-900'}`}>
+                    {daysRemaining !== null ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : `${daysRemaining}d`) : "N/A"}
+                  </p>
+                </div>
+                <div className="px-6 py-5">
+                  <div className="flex items-center gap-2 text-xs text-slate-500 font-medium uppercase tracking-wider mb-1.5">
+                    <Calendar className="h-3.5 w-3.5" /> Duration
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {stage.startDate && stage.endDate
+                      ? `${Math.ceil((new Date(stage.endDate).getTime() - new Date(stage.startDate).getTime()) / (1000 * 60 * 60 * 24))}d`
+                      : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tasks Section */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Tasks</h2>
+                <p className="text-sm text-slate-500">{totalTasks} task{totalTasks !== 1 ? 's' : ''} in this stage</p>
+              </div>
+              <Button onClick={() => setCreateTaskOpen(true)} size="sm" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Add Task
+              </Button>
+            </div>
+
+            {totalTasks === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="rounded-full bg-slate-100 p-4 mb-4">
+                    <ListTodo className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-600 font-medium mb-1">No tasks yet</p>
+                  <p className="text-sm text-slate-400 mb-4">Create your first task to get started</p>
+                  <Button onClick={() => setCreateTaskOpen(true)} variant="outline" size="sm" className="gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> Create Task
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {tasks.map(task => {
+                  const statusCfg = TaskStatusConfig[task.status] || TaskStatusConfig.PENDING
+                  const priorityCfg = PriorityConfig[task.priority] || PriorityConfig.LOW
+                  return (
+                    <Card
+                      key={task.taskId}
+                      className="group transition-all duration-200 mb-3"
+                    >
+                      <CardContent className="p-0">
+                        <div 
+                          className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                          onClick={() => router.push(`/tasks/${task.taskId}`)}
+                        >
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-xs text-slate-400 font-mono">TASK-{task.taskId}</span>
+                              <h3 className="font-medium text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+                                {task.title}
+                              </h3>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge variant="outline" className={`text-xs border ${priorityCfg.color}`}>
+                                <Flag className="h-2.5 w-2.5 mr-1" />
+                                {priorityCfg.label}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {statusCfg.label}
+                              </Badge>
+                              {task.createdDate && task.dueDate && (
+                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatDate(task.createdDate)} — {formatDate(task.dueDate)}
+                                </span>
+                              )}
+                              <span className="text-xs text-slate-500 ml-2">
+                                {(taskIssues[task.taskId] || []).filter((i:any) => i.status === 'COMPLETED' || i.status === 'DONE').length}/{(taskIssues[task.taskId] || []).length} issues completed
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 flex-shrink-0">
+                            <div className="w-24 hidden sm:block">
+                              {(() => {
+                                const issues = taskIssues[task.taskId] || []
+                                const done = issues.filter((i:any) => i.status === 'COMPLETED' || i.status === 'DONE').length
+                                const pct = issues.length > 0 ? Math.round((done / issues.length) * 100) : 0
+                                return (
+                                  <>
+                                    <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                      <span>{pct}%</span>
+                                    </div>
+                                    <Progress value={pct} className="h-1.5" />
+                                  </>
+                                )
+                              })()}
+                            </div>
+                            {task.assigneeName && (
+                              <div className="flex items-center gap-2 hidden md:flex">
+                                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
+                                  {task.assigneeName?.[0]?.toUpperCase() || "?"}
+                                </div>
+                              </div>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 z-10 relative hover:bg-slate-100 ml-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditTask(task) }}>
+                                  <Edit className="h-4 w-4 mr-2" /> Edit Task
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.taskId) }}>
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete Task
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="ml-2 z-10 relative bg-white h-8 w-8 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleTask(task.taskId);
+                              }}
+                            >
+                              {expandedTasks.includes(task.taskId) ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {expandedTasks.includes(task.taskId) && (
+                          <div className="border-t border-slate-100 bg-slate-50/80 p-3 pl-8 space-y-2">
+                            {(!taskIssues[task.taskId] && <p className="text-xs text-slate-500 py-1">Loading issues...</p>)}
+                            {taskIssues[task.taskId] && taskIssues[task.taskId].length === 0 && (
+                              <p className="text-xs text-slate-500 py-1">No issues for this task.</p>
+                            )}
+                            {taskIssues[task.taskId]?.map((issue: any) => (
+                              <div 
+                                key={issue.issueId} 
+                                className="flex items-center justify-between bg-white border border-slate-200 rounded p-3 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                                onClick={() => router.push(`/issues/${issue.issueId}`)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <AlertCircle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                                  <span className="text-sm font-medium text-slate-700 line-clamp-1 group-hover:text-blue-600 transition-colors">{issue.title}</span>
+                                  <Badge variant="outline" className="text-[10px] py-0 h-4.5 flex-shrink-0 bg-slate-50">{issue.status}</Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-6 w-6 z-10 relative hover:bg-slate-100"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <MoreHorizontal className="h-3 w-3 text-slate-400" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditIssue(issue, task.taskId) }}>
+                                        <Edit className="h-4 w-4 mr-2" /> Edit Issue
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteIssue(issue.issueId) }}>
+                                        <Trash2 className="h-4 w-4 mr-2" /> Delete Issue
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  <ChevronRight className="h-4 w-4 text-slate-300" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      <CreateTaskDialog
+        open={createTaskOpen}
+        onOpenChange={setCreateTaskOpen}
+        projectId={projectId}
+        stageId={stageId}
+        onTaskCreated={fetchData}
+      />
+      
+      {stage && (
+        <EditStageDialog
+          open={editStageOpen}
+          onOpenChange={setEditStageOpen}
+          projectId={projectId}
+          stageId={stageId}
+          initialData={stage}
+          onSuccess={fetchData}
+        />
+      )}
+      <EditTaskDialog
+        open={editTaskOpen}
+        onOpenChange={setEditTaskOpen}
+        task={editingTask}
+        onSuccess={fetchData}
+      />
+      <IssueDialog
+        open={editIssueOpen}
+        onOpenChange={setEditIssueOpen}
+        taskId={editingIssueTaskId}
+        issue={editingIssue}
+        onSuccess={fetchData}
+      />
+    </div>
+  )
+}

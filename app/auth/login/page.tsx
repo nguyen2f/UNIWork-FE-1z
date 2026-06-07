@@ -1,50 +1,60 @@
-"use client"
+"use client";
 
-import React, {useEffect} from "react"
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { useState } from "react"
-import { useAuth } from "@/hooks/use-auth"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
-import { Building2, Loader2 } from "lucide-react"
-import {LoginRequest} from "@/types/request";
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import Link from "next/link";
+import { Building2, Loader2 } from "lucide-react";
+import { LoginRequest } from "@/types/auth.types";
 
 export default function LoginPage() {
-  const { login } = useAuth()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("Authorization")
-    const userId = localStorage.getItem("userId")
-      const role = localStorage.getItem("role")
+    const token = localStorage.getItem("Authorization");
+    const userId = localStorage.getItem("userId");
+    const role = localStorage.getItem("role");
 
     if (token && userId && role) {
-      router.push("/dashboard")
+      if (role === "SUPER_ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [])
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      await login({email, password} as LoginRequest)
+      await login({ email, password } as LoginRequest);
     } catch (err: any) {
-      setError(err.message || "Login failed")
+      setError(err.message || "Login failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
@@ -55,7 +65,9 @@ export default function LoginPage() {
           </div>
           <div>
             <CardTitle className="text-3xl font-bold">UNIWORK</CardTitle>
-            <CardDescription className="text-base mt-2">Sign in to access your workspace</CardDescription>
+            <CardDescription className="text-base mt-2">
+              Sign in to access your workspace
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -105,14 +117,16 @@ export default function LoginPage() {
 
             <div className="text-center text-sm">
               <span className="text-gray-600">Don't have an account? </span>
-              <Link href="/auth/signup" className="text-blue-600 hover:underline font-medium">
+              <Link
+                href="/auth/signup"
+                className="text-blue-600 hover:underline font-medium"
+              >
                 Sign up
               </Link>
             </div>
-
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

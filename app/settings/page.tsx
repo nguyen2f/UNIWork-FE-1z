@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sidebar } from "@/components/sidebar"
-import { Header } from "@/components/header"
-import { getUserProfile, updateUserProfile } from "@/app/services/userService"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Header } from "@/components/layout/header"
+import { getUserProfile, updateUserProfile } from "@/services/user.service"
 import { message } from "antd"
 
 export default function SettingsPage() {

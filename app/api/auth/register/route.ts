@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       role: role || "member",
       avatar: name
         .split(" ")
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join("")
         .toUpperCase(),
       createdAt: new Date().toISOString(),

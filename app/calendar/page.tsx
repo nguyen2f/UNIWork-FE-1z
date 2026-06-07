@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
-import { Sidebar } from "../../components/sidebar"
-import { Header } from "../../components/header"
-import { CreateEventDialog } from "../../components/create-event-dialog"
-import { EventDetailDialog } from "../../components/event-detail-dialog"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Header } from "@/components/layout/header"
+import { CreateEventDialog } from "@/components/event/create-event-dialog"
+import { EventDetailDialog } from "@/components/event/event-detail-dialog"
 
-import { getAllEvents } from "@/app/services/eventService"
-import type { Event } from "@/app/services/eventService"
+import { getAllEvents } from "@/services/event.service"
+import type { Event } from "@/types/event.types"
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS = [

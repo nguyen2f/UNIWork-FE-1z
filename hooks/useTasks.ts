@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { tasksApi } from "@/lib/api"
+import { taskService } from "@/services/task.service"
 import { toast } from "sonner"
 
 export function useTasks(projectId?: string) {
@@ -14,7 +14,7 @@ export function useTasks(projectId?: string) {
 
     try {
       setLoading(true)
-      const data = await tasksApi.getByProject(projectId)
+      const data = await taskService.getByProject(projectId as any)
       setTasks(data)
       setError(null)
     } catch (err: any) {
@@ -27,7 +27,7 @@ export function useTasks(projectId?: string) {
 
   const createTask = async (taskData: any) => {
     try {
-      const newTask = await tasksApi.create(taskData)
+      const newTask = await taskService.create(taskData)
       setTasks((prev) => [...prev, newTask])
       toast.success("Tạo công việc thành công")
       return newTask
@@ -39,7 +39,7 @@ export function useTasks(projectId?: string) {
 
   const updateTask = async (id: string, taskData: any) => {
     try {
-      const updatedTask = await tasksApi.update(id, taskData)
+      const updatedTask = await taskService.update(id as any, taskData)
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)))
       toast.success("Cập nhật công việc thành công")
       return updatedTask
@@ -51,7 +51,7 @@ export function useTasks(projectId?: string) {
 
   const updateTaskStatus = async (id: string, status: string) => {
     try {
-      const updatedTask = await tasksApi.updateStatus(id, status)
+      const updatedTask = await taskService.updateStatus(id as any, id as any, { status: status as any })
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)))
       toast.success("Cập nhật trạng thái thành công")
       return updatedTask
@@ -63,7 +63,7 @@ export function useTasks(projectId?: string) {
 
   const deleteTask = async (id: string) => {
     try {
-      await tasksApi.delete(id)
+      await taskService.delete(id as any)
       setTasks((prev) => prev.filter((t) => t.id !== id))
       toast.success("Xóa công việc thành công")
     } catch (err: any) {

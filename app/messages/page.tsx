@@ -7,14 +7,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sidebar } from "../../components/sidebar"
-import { Header } from "../../components/header"
-import { getUserChats, sendMessage, getChatHistory } from "@/app/services/chatService"
-import type { ChatMessageDTO, ChatMessageResponseDTO } from "@/types/chatType"
-import { CreateChatDialog } from "@/components/create-chat-dialog"
-import { ChatMessageBubble } from "@/components/chat-message-bubble"
-import { RenameChatDialog } from "@/components/rename-chat-dialog"
-import { connectSocket, disconnectSocket, getStompClient } from "@/app/services/socket"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Header } from "@/components/layout/header"
+import { getUserChats, sendMessage, getChatHistory } from "@/services/chat.service"
+import type { ChatMessageDTO, ChatMessageResponseDTO } from "@/types/chat.types"
+import { CreateChatDialog } from "@/components/chat/create-chat-dialog"
+import { ChatMessageBubble } from "@/components/chat/chat-message-bubble"
+import { RenameChatDialog } from "@/components/chat/rename-chat-dialog"
+import { connectSocket, disconnectSocket, getStompClient } from "@/services/socket"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Smile } from "lucide-react"
 import {
@@ -61,18 +61,25 @@ function MessagesContent() {
   useEffect(() => {
     const loadChats = async () => {
       try {
-        const res = await getUserChats()
-        setConversations(res.data)
+        const res: any = await getUserChats()
+        const data = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : [])
+        setConversations(data)
       } catch (err) {
         console.error("Load chats error:", err)
+        setConversations([])
       }
     }
     loadChats()
   }, [])
 
   const handleChatCreated = async () => {
-    const res = await getUserChats()
-    setConversations(res.data)
+    try {
+      const res: any = await getUserChats()
+      const data = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : [])
+      setConversations(data)
+    } catch (err) {
+      console.error("Reload chats error:", err)
+    }
   }
 
   const currentConversation = selectedConversation ? conversations.find((c) => c.roomId === selectedConversation) : null
@@ -214,7 +221,7 @@ function MessagesContent() {
 
               <ScrollArea className="flex-1">
                 <div className="p-2">
-                  {conversations.length === 0 ? (
+                  {!Array.isArray(conversations) || conversations.length === 0 ? (
                     <div className="p-4 text-center text-gray-500">No conversations yet</div>
                   ) : (
                     conversations.map((c) => (

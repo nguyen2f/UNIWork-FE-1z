@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/hooks/use-auth"
 import { Toaster } from "sonner"
+import { FloatingChatWrapper } from "@/components/chat/floating-chat-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           {children}
+          <FloatingChatWrapper />
           <Toaster position="top-right" />
         </AuthProvider>
       </body>

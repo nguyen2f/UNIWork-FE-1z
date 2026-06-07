@@ -8,13 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
-import { UserProfileDialog } from "@/components/user-profile-dialog"
+import { Header } from "@/components/layout/header"
+import { Sidebar } from "@/components/layout/sidebar"
+import { UserProfileDialog } from "@/components/user/user-profile-dialog"
 import { Mail, MoreVertical, Search, UserPlus, Eye, Phone } from "lucide-react"
 import { toast } from "sonner"
-import { User } from "@/types";
-import { getAllMember } from "@/app/services/userService";
+import { User } from "@/types/user.types";
+import { getAllMember } from "@/services/user.service";
 import { message } from "antd";
 
 export default function TeamPage() {

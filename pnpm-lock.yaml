@@ -53,6 +53,9 @@ importers:
       '@radix-ui/react-tabs':
         specifier: latest
         version: 1.1.13(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      '@radix-ui/react-tooltip':
+        specifier: ^1.2.8
+        version: 1.2.8(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
       '@simplewebauthn/browser':
         specifier: latest
         version: 13.2.2
@@ -126,6 +129,9 @@ importers:
       '@types/node':
         specifier: ^22
         version: 22.8.1
+      '@types/qs':
+        specifier: ^6.15.0
+        version: 6.15.0
       '@types/react':
         specifier: ^18
         version: 18.0.0
@@ -783,6 +789,19 @@ packages:
       '@types/react-dom':
         optional: true
 
+  '@radix-ui/react-tooltip@1.2.8':
+    resolution: {integrity: sha512-tY7sVt1yL9ozIxvmbtN5qtmH2krXcBCfjEiCgKGLqunJHvgvZG2Pcl2oQ3kbcZARb1BGEHdkLzcYGO8ynVlieg==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+
   '@radix-ui/react-use-callback-ref@1.1.1':
     resolution: {integrity: sha512-FkBMwD+qbGQeMu1cOHnuGB6x4yzPjho8ap5WtbEJ26umhgqVXbhekKUQO+hZEL1vU92a3wHwdp0HAcqAUF5iDg==}
     peerDependencies:
@@ -1250,6 +1269,9 @@ packages:
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
+  '@types/qs@6.15.0':
+    resolution: {integrity: sha512-JawvT8iBVWpzTrz3EGw9BTQFg3BQNmwERdKE22vlTxawwtbyUSlMppvZYKLZzB5zgACXdXxbD3m1bXaMqP/9ow==}
+
   '@types/react-dom@18.0.0':
     resolution: {integrity: sha512-49897Y0UiCGmxZqpC8Blrf6meL8QUla6eb+BBhn69dTXlmuOlzkfr7HHY/O8J25e1lTUMs+YYxSlVDAaGHCOLg==}
 
@@ -1526,8 +1548,9 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
-  baseline-browser-mapping@2.8.13:
-    resolution: {integrity: sha512-7s16KR8io8nIBWQyCYhmFhd+ebIzb9VKTzki+wOJXHTxTnV6+mFGH3+Jwn1zoKaY9/H9T/0BcKCZnzXljPnpSQ==}
+  baseline-browser-mapping@2.10.15:
+    resolution: {integrity: sha512-1nfKCq9wuAZFTkA2ey/3OXXx7GzFjLdkTiFVNwlJ9WqdI706CZRIhEqjuwanjMIja+84jDLa9rcyZDPDiVkASQ==}
+    engines: {node: '>=6.0.0'}
     hasBin: true
 
   bcryptjs@3.0.3:
@@ -1577,8 +1600,8 @@ packages:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
     engines: {node: '>= 6'}
 
-  caniuse-lite@1.0.30001749:
-    resolution: {integrity: sha512-0rw2fJOmLfnzCRbkm8EyHL8SvI2Apu5UbnQuTsJ0ClgrH8hcwFooJ1s5R0EP8o8aVrFu8++ae29Kt9/gZAZp/Q==}
+  caniuse-lite@1.0.30001785:
+    resolution: {integrity: sha512-blhOL/WNR+Km1RI/LCVAvA73xplXA7ZbjzI4YkMK9pa6T/P3F2GxjNpEkyw5repTw9IvkyrjyHpwjnhZ5FOvYQ==}
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -3907,6 +3930,26 @@ snapshots:
       '@types/react': 18.0.0
       '@types/react-dom': 18.0.0
 
+  '@radix-ui/react-tooltip@1.2.8(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)':
+    dependencies:
+      '@radix-ui/primitive': 1.1.3
+      '@radix-ui/react-compose-refs': 1.1.2(@types/react@18.0.0)(react@18.0.0)
+      '@radix-ui/react-context': 1.1.2(@types/react@18.0.0)(react@18.0.0)
+      '@radix-ui/react-dismissable-layer': 1.1.11(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      '@radix-ui/react-id': 1.1.1(@types/react@18.0.0)(react@18.0.0)
+      '@radix-ui/react-popper': 1.2.8(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      '@radix-ui/react-portal': 1.1.9(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      '@radix-ui/react-presence': 1.1.5(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      '@radix-ui/react-primitive': 2.1.3(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      '@radix-ui/react-slot': 1.2.3(@types/react@18.0.0)(react@18.0.0)
+      '@radix-ui/react-use-controllable-state': 1.2.2(@types/react@18.0.0)(react@18.0.0)
+      '@radix-ui/react-visually-hidden': 1.2.3(@types/react-dom@18.0.0)(@types/react@18.0.0)(react-dom@18.0.0(react@18.0.0))(react@18.0.0)
+      react: 18.0.0
+      react-dom: 18.0.0(react@18.0.0)
+    optionalDependencies:
+      '@types/react': 18.0.0
+      '@types/react-dom': 18.0.0
+
   '@radix-ui/react-use-callback-ref@1.1.1(@types/react@18.0.0)(react@18.0.0)':
     dependencies:
       react: 18.0.0
@@ -4414,6 +4457,8 @@ snapshots:
 
   '@types/prop-types@15.7.15': {}
 
+  '@types/qs@6.15.0': {}
+
   '@types/react-dom@18.0.0':
     dependencies:
       '@types/react': 18.0.0
@@ -4712,7 +4757,7 @@ snapshots:
   autoprefixer@10.4.20(postcss@8.5.0):
     dependencies:
       browserslist: 4.26.3
-      caniuse-lite: 1.0.30001749
+      caniuse-lite: 1.0.30001785
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.1.1
@@ -4737,7 +4782,7 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  baseline-browser-mapping@2.8.13: {}
+  baseline-browser-mapping@2.10.15: {}
 
   bcryptjs@3.0.3: {}
 
@@ -4758,8 +4803,8 @@ snapshots:
 
   browserslist@4.26.3:
     dependencies:
-      baseline-browser-mapping: 2.8.13
-      caniuse-lite: 1.0.30001749
+      baseline-browser-mapping: 2.10.15
+      caniuse-lite: 1.0.30001785
       electron-to-chromium: 1.5.233
       node-releases: 2.0.23
       update-browserslist-db: 1.1.3(browserslist@4.26.3)
@@ -4789,7 +4834,7 @@ snapshots:
 
   camelcase-css@2.0.1: {}
 
-  caniuse-lite@1.0.30001749: {}
+  caniuse-lite@1.0.30001785: {}
 
   chalk@4.1.2:
     dependencies:
@@ -5086,7 +5131,7 @@ snapshots:
       eslint: 8.0.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@8.0.0))(eslint@8.0.0)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.0.0)(typescript@5.6.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.0.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.0.0)(typescript@5.6.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.0.0))(eslint@8.0.0))(eslint@8.0.0)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.0.0)
       eslint-plugin-react: 7.37.5(eslint@8.0.0)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.0.0)
@@ -5116,7 +5161,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.0.0)(typescript@5.6.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.0.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.0.0)(typescript@5.6.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.0.0))(eslint@8.0.0))(eslint@8.0.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -5131,7 +5176,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.0.0)(typescript@5.6.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.0.0):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@6.21.0(eslint@8.0.0)(typescript@5.6.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@8.0.0))(eslint@8.0.0))(eslint@8.0.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -5793,7 +5838,7 @@ snapshots:
       '@next/env': 14.2.16
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001749
+      caniuse-lite: 1.0.30001785
       graceful-fs: 4.2.11
       postcss: 8.4.31
       react: 18.0.0

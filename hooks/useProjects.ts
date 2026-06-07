@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { projectsApi } from "@/lib/api"
+import { projectService } from "@/services/project.service"
 import { toast } from "sonner"
 
 export function useProjects() {
@@ -12,7 +12,7 @@ export function useProjects() {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const data = await projectsApi.getAll()
+      const data = await projectService.getAll()
       setProjects(data)
       setError(null)
     } catch (err: any) {
@@ -25,7 +25,7 @@ export function useProjects() {
 
   const createProject = async (projectData: any) => {
     try {
-      const newProject = await projectsApi.create(projectData)
+      const newProject = await projectService.create(projectData)
       setProjects((prev) => [...prev, newProject])
       toast.success("Tạo dự án thành công")
       return newProject
@@ -37,7 +37,7 @@ export function useProjects() {
 
   const updateProject = async (id: string, projectData: any) => {
     try {
-      const updatedProject = await projectsApi.update(id, projectData)
+      const updatedProject = await projectService.update(id as any, projectData)
       setProjects((prev) => prev.map((p) => (p.id === id ? updatedProject : p)))
       toast.success("Cập nhật dự án thành công")
       return updatedProject
@@ -49,7 +49,7 @@ export function useProjects() {
 
   const deleteProject = async (id: string) => {
     try {
-      await projectsApi.delete(id)
+      await projectService.delete(id as any)
       setProjects((prev) => prev.filter((p) => p.id !== id))
       toast.success("Xóa dự án thành công")
     } catch (err: any) {
@@ -81,7 +81,7 @@ export function useProject(id: string) {
   const fetchProject = async () => {
     try {
       setLoading(true)
-      const data = await projectsApi.getById(id)
+      const data = await projectService.getById(id as any)
       setProject(data)
       setError(null)
     } catch (err: any) {

@@ -2,16 +2,16 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import * as api from "@/lib/api"
-import { LoginRequest, RegisterRequest } from "@/types/request"
-import {getUserProfile} from "@/app/services/userService";
-import {User} from "@/types";
+import { authService } from "@/services/auth.service"
+import { userService } from "@/services/user.service"
+import type { LoginRequest, RegisterRequest } from "@/types/auth.types"
+import type { User } from "@/types/user.types"
 
 interface AuthContextType {
   loading: boolean
   isAuthenticated: boolean
-    user: User | null   // ✅ THÊM DÒNG NÀY
-    login: (data: LoginRequest) => Promise<void>
+  user: User | null
+  login: (data: LoginRequest) => Promise<void>
   register: (data: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
 }
@@ -21,55 +21,78 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-    const [user, setUser] = useState<User | null>(null)
-    const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("Authorization")
     const userId = localStorage.getItem("userId")
-      const role = localStorage.getItem("role")
 
     if (token && userId) {
-      setIsAuthenticated(true)   // giữ trạng thái đăng nhập
+      setIsAuthenticated(true)
     }
 
     setLoading(false)
   }, [])
 
   const login = async (data: LoginRequest) => {
-    const response = await api.login(data)
+    const response: any = await authService.login(data)
+    const loginData = response.data || response;
 
-      console.log(response)
-    localStorage.setItem("userId", response.userId)
-    localStorage.setItem("Authorization", response.token)
-      localStorage.setItem("role", response.role)
+    const userId = loginData.userId || loginData.id;
+    const token = loginData.token || loginData.accessToken;
+    const role = loginData.role || loginData.systemRole;
+
+    if (userId) localStorage.setItem("userId", userId);
+    if (token) localStorage.setItem("Authorization", token);
+    if (role) localStorage.setItem("role", role);
 
     setIsAuthenticated(true)
-      const res = await getUserProfile(response.userId)
-      console.log(res.data)
-      localStorage.setItem("userName", res.data.name)
-      localStorage.setItem("role", res.data.systemRole)
-      router.push("/dashboard")
+
+    try {
+      const res: any = await userService.getProfile(userId)
+      const profileData = res?.data || res || {};
+      
+      if (profileData.name) localStorage.setItem("userName", profileData.name);
+      if (profileData.systemRole || profileData.role) {
+        localStorage.setItem("role", profileData.systemRole || profileData.role);
+      }
+
+      const finalRole = profileData.systemRole || profileData.role || role;
+      if (finalRole === "ADMIN" || finalRole === "SUPER_ADMIN") {
+        router.push("/admin")
+      } else {
+        router.push("/dashboard")
+      }
+    } catch (error) {
+      console.error("Could not fetch user profile:", error);
+      // Fallback routing if getProfile fails (e.g. admin lacks permission for user endpoint)
+      if (role === "ADMIN" || role === "SUPER_ADMIN") {
+        router.push("/admin")
+      } else {
+        router.push("/dashboard")
+      }
+    }
   }
 
   const register = async (data: RegisterRequest) => {
-    const response = await api.register(data)
+    await authService.register(data)
     router.push("/auth/login")
   }
 
   const logout = async () => {
     localStorage.removeItem("userId")
     localStorage.removeItem("Authorization")
-      localStorage.removeItem("userName")
-      localStorage.removeItem("role")
+    localStorage.removeItem("userName")
+    localStorage.removeItem("role")
     setIsAuthenticated(false)
     router.push("/auth/login")
   }
 
   return (
-      <AuthContext.Provider value={{ loading, isAuthenticated, user, login, register, logout }}>
-        {children}
-      </AuthContext.Provider>
+    <AuthContext.Provider value={{ loading, isAuthenticated, user, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
   )
 }
 

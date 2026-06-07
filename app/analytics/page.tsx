@@ -8,8 +8,8 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sidebar } from "../../components/sidebar"
-import { Header } from "../../components/header"
+import { SidebarContent as Sidebar } from "@/components/layout/sidebar"
+import { Header } from "@/components/layout/header"
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("month")
