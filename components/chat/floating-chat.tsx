@@ -13,7 +13,7 @@ import type { ChatMessageDTO, ChatMessageResponseDTO, Conversation } from "@/typ
 import { CreateChatDialog } from "./create-chat-dialog"
 import { ChatMessageBubble } from "./chat-message-bubble"
 import { RenameChatDialog } from "./rename-chat-dialog"
-import { connectSocket, disconnectSocket, getStompClient } from "@/services/socket"
+import { connectSocket, disconnectSocket, onSocketConnected } from "@/services/socket"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { formatDistanceToNow } from "date-fns"
@@ -29,6 +29,8 @@ export function FloatingChat() {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingRoomId, setRenamingRoomId] = useState<number | null>(null)
   const subscriptionRef = useRef<any>(null)
+  const chatUpdateSubRef = useRef<any>(null)
+  const unsubscribeConnectRef = useRef<(() => void) | null>(null)
   const [messages, setMessages] = useState<ChatMessageResponseDTO[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -47,17 +49,62 @@ export function FloatingChat() {
 
   useEffect(() => {
     if (isOpen) {
-      connectSocket()
       loadChats()
-    }
-    return () => {
-      // Don't disconnect when closing, only on unmount
     }
   }, [isOpen])
 
+  // Connect socket once on mount + subscribe to chat-update for realtime sidebar
   useEffect(() => {
     connectSocket()
-    return () => { disconnectSocket() }
+
+    if (!userId) return
+
+    unsubscribeConnectRef.current = onSocketConnected((client) => {
+      // Cleanup previous subscription
+      chatUpdateSubRef.current?.unsubscribe()
+
+      // Subscribe to personal chat-update topic for realtime sidebar updates
+      chatUpdateSubRef.current = client.subscribe(
+        `/topic/user/${userId}/chat-update`,
+        (msg) => {
+          const event = JSON.parse(msg.body)
+          // Update the conversation's lastMessage in realtime
+          setConversations((prev) => {
+            const updated = prev.map((c) =>
+              c.roomId === event.roomId
+                ? {
+                    ...c,
+                    lastMessage: event.lastMessage,
+                    lastMessageTime: event.lastMessageTime,
+                    lastMessageSenderId: event.lastMessageSenderId,
+                    lastMessageSenderName: event.lastMessageSenderName,
+                  }
+                : c
+            )
+            // Move the updated conversation to the top
+            const idx = updated.findIndex((c) => c.roomId === event.roomId)
+            if (idx > 0) {
+              const [item] = updated.splice(idx, 1)
+              updated.unshift(item)
+            }
+            return updated
+          })
+
+          // Increment unread count if the message is from another room
+          if (event.roomId !== selectedConversation) {
+            setUnreadCount((prev) => prev + 1)
+          }
+        }
+      )
+    })
+
+    return () => {
+      chatUpdateSubRef.current?.unsubscribe()
+      chatUpdateSubRef.current = null
+      unsubscribeConnectRef.current?.()
+      unsubscribeConnectRef.current = null
+      disconnectSocket()
+    }
   }, [])
 
   const loadChats = async () => {
@@ -118,22 +165,11 @@ export function FloatingChat() {
     setNewMessage("")
   }
 
-  const waitForSocket = (client: any, cb: () => void) => {
-    if (client.connected) {
-      cb()
-    } else {
-      setTimeout(() => waitForSocket(client, cb), 100)
-    }
-  }
-
-  // WebSocket subscription for messages
+  // WebSocket subscription for messages in selected room
   useEffect(() => {
     if (!selectedConversation) return
 
-    const client = getStompClient()
-    if (!client) return
-
-    waitForSocket(client, () => {
+    const unsubscribeConnect = onSocketConnected((client) => {
       subscriptionRef.current?.unsubscribe()
 
       subscriptionRef.current = client.subscribe(`/topic/chat/${selectedConversation}`, (msg) => {
@@ -141,7 +177,7 @@ export function FloatingChat() {
         setMessages((prev) => [
           ...prev,
           {
-            id: data.id ?? Date.now(),
+            id: data.id ?? data.messageId ?? Date.now(),
             roomId: data.roomId,
             senderId: data.senderId,
             senderName: data.senderName,
@@ -155,6 +191,7 @@ export function FloatingChat() {
     return () => {
       subscriptionRef.current?.unsubscribe()
       subscriptionRef.current = null
+      unsubscribeConnect()
     }
   }, [selectedConversation])
 

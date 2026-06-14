@@ -22,6 +22,7 @@ import {
   MapPin, ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { CreateProjectDialog } from "@/components/project/create-project-dialog"
 import { CreateTaskDialog } from "@/components/task/create-task-dialog"
 import { InviteMemberToProjectDialog } from "@/components/user/invite-team-member-dialog"
@@ -51,6 +52,7 @@ interface OverallReport {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [projectPage, setProjectPage] = useState(0); // Backend dùng 0-indexed
   const [projectPagination, setProjectPagination] = useState({
     currentPage: 0,
@@ -374,7 +376,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-blue-600" />
-                    <h3 className="font-semibold">User Stories / Tasks</h3>
+                    <h3 className="font-semibold">User Tasks</h3>
                   </div>
                   <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                     <div>
@@ -477,7 +479,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {projectReport?.map((project) => (
-                  <div key={project.project?.projectId} className="p-4 rounded-xl border bg-card hover:shadow-md transition-shadow space-y-3">
+                  <div key={project.project?.projectId} className="p-4 rounded-xl border bg-card hover:shadow-md transition-shadow space-y-3 cursor-pointer" onClick={() => project.project?.projectId && router.push(`/projects/${project.project.projectId}`)}>
                     <div className="flex items-center justify-between">
                       <p className="font-semibold text-blue-900">{project.project?.name}</p>
                       <Badge variant={getStatusColor(project.project?.status || "")}>
@@ -517,12 +519,12 @@ export default function DashboardPage() {
           </Card>
 
           <div className="grid gap-6 lg:grid-cols-2 mb-6">
-            {/* Pending User Stories */}
+            {/* Pending User Tasks */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-blue-700">
                   <ListTodo className="h-5 w-5" />
-                  Pending User Stories
+                  Pending Tasks
                   <Badge variant="secondary" className="ml-auto">
                     {taskPagination.totalElements} total
                   </Badge>
@@ -530,10 +532,10 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {pendingTasks.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground text-sm">No pending user stories</div>
+                  <div className="text-center py-8 text-muted-foreground text-sm">No pending user tasks</div>
                 ) : (
                   pendingTasks.map((task) => (
-                    <div key={task.taskId} className="flex items-start justify-between p-3 rounded-lg border bg-white hover:border-blue-200 transition-colors">
+                    <div key={task.taskId} className="flex items-start justify-between p-3 rounded-lg border bg-white hover:border-blue-200 transition-colors cursor-pointer" onClick={() => router.push(`/tasks/${task.taskId}`)}>
                       <div className="space-y-1">
                         <p className="font-medium text-sm">{task.title}</p>
                         <p className="text-xs text-muted-foreground">Stage: {task.stageName || 'Unassigned'}</p>
@@ -574,7 +576,7 @@ export default function DashboardPage() {
                   <div className="text-center py-8 text-muted-foreground text-sm">No pending bugs or issues</div>
                 ) : (
                   pendingIssues.map((issue) => (
-                    <div key={issue.issueId} className="flex items-start justify-between p-3 rounded-lg border bg-white hover:border-orange-200 transition-colors">
+                    <div key={issue.issueId} className="flex items-start justify-between p-3 rounded-lg border bg-white hover:border-orange-200 transition-colors cursor-pointer" onClick={() => router.push(`/issues/${issue.issueId}`)}>
                       <div className="space-y-1">
                         <p className="font-medium text-sm">{issue.title}</p>
                         <p className="text-xs text-muted-foreground">Type: {issue.type}</p>

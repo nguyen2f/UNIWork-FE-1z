@@ -14,8 +14,7 @@ import {
     getUnreadCount,
 } from "@/services/notification.service"
 import type { NotificationDTO } from "@/types/notification.types"
-import { getStompClient } from "@/services/socket"
-import { useAuth } from "@/hooks/use-auth"
+import { connectSocket, onSocketConnected } from "@/services/socket"
 import { NotificationToast } from "./notification-toast"
 
 export function NotificationsPopover() {
@@ -24,7 +23,7 @@ export function NotificationsPopover() {
     const [newNotification, setNewNotification] = useState<NotificationDTO | null>(null)
     const [unreadBadgeCount, setUnreadBadgeCount] = useState(0)
     const wsSubscriptionRef = useRef<any>(null)
-    const { user } = useAuth()
+    const unsubscribeSocketRef = useRef<(() => void) | null>(null)
 
     const loadNotifications = async () => {
         try {
@@ -46,32 +45,47 @@ export function NotificationsPopover() {
         }
     }
 
+    // Initial load from REST (one-time)
     useEffect(() => {
         loadNotifications()
         loadUnreadCount()
     }, [])
 
-    // WebSocket realtime
+    // WebSocket realtime — subscribe using userId from localStorage
     useEffect(() => {
-        if (!user?.userId) return
+        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
+        if (!userId) return
 
-        const client = getStompClient()
-        if (!client || !client.connected) return
+        // Ensure socket is connected
+        connectSocket()
 
-        wsSubscriptionRef.current = client.subscribe(
-            `/topic/notifications/${user.userId}`,
-            (message) => {
-                const noti: NotificationDTO = JSON.parse(message.body)
-                setNewNotification(noti)
-                loadNotifications()
-                loadUnreadCount()
-            }
-        )
+        // Subscribe when connected (or immediately if already connected)
+        unsubscribeSocketRef.current = onSocketConnected((client) => {
+            // Cleanup previous subscription if any
+            wsSubscriptionRef.current?.unsubscribe()
+
+            wsSubscriptionRef.current = client.subscribe(
+                `/topic/notifications/${userId}`,
+                (message) => {
+                    const noti: NotificationDTO = JSON.parse(message.body)
+
+                    // ✅ Use WS data directly — prepend to list, increment badge
+                    setNewNotification(noti)
+                    setNotifications((prev) => [noti, ...prev])
+                    setUnreadBadgeCount((prev) => prev + 1)
+
+                    // NO MORE: loadNotifications() + loadUnreadCount()
+                }
+            )
+        })
 
         return () => {
             wsSubscriptionRef.current?.unsubscribe()
+            wsSubscriptionRef.current = null
+            unsubscribeSocketRef.current?.()
+            unsubscribeSocketRef.current = null
         }
-    }, [user])
+    }, [])
 
     const handleMarkAsRead = async (notiId: number) => {
         await markNotificationAsRead(notiId)

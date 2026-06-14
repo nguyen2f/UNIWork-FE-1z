@@ -14,7 +14,7 @@ import type { ChatMessageDTO, ChatMessageResponseDTO } from "@/types/chat.types"
 import { CreateChatDialog } from "@/components/chat/create-chat-dialog"
 import { ChatMessageBubble } from "@/components/chat/chat-message-bubble"
 import { RenameChatDialog } from "@/components/chat/rename-chat-dialog"
-import { connectSocket, disconnectSocket, getStompClient } from "@/services/socket"
+import { connectSocket, disconnectSocket, onSocketConnected } from "@/services/socket"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Smile } from "lucide-react"
 import {
@@ -28,11 +28,10 @@ interface Conversation {
   name: string | null
   type: "DIRECT" | "GROUP"
   createdAt: string
-  lastMessage?: {
-    content: string
-    senderId: number
-    createdAt: string
-  }
+  lastMessage?: string | null
+  lastMessageTime?: string | null
+  lastMessageSenderId?: number | null
+  lastMessageSenderName?: string | null
 }
 
 function MessagesContent() {
@@ -43,6 +42,8 @@ function MessagesContent() {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingRoomId, setRenamingRoomId] = useState<number | null>(null)
   const subscriptionRef = useRef<any>(null)
+  const chatUpdateSubRef = useRef<any>(null)
+  const unsubscribeConnectRef = useRef<(() => void) | null>(null)
   const [messages, setMessages] = useState<ChatMessageResponseDTO[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -51,9 +52,48 @@ function MessagesContent() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const userId = typeof window !== "undefined" ? Number(localStorage.getItem("userId")) : 0
 
+  // Connect socket + subscribe to chat-update for realtime sidebar
   useEffect(() => {
     connectSocket()
+
+    if (!userId) return
+
+    unsubscribeConnectRef.current = onSocketConnected((client) => {
+      chatUpdateSubRef.current?.unsubscribe()
+
+      chatUpdateSubRef.current = client.subscribe(
+        `/topic/user/${userId}/chat-update`,
+        (msg) => {
+          const event = JSON.parse(msg.body)
+          setConversations((prev) => {
+            const updated = prev.map((c) =>
+              c.roomId === event.roomId
+                ? {
+                    ...c,
+                    lastMessage: event.lastMessage,
+                    lastMessageTime: event.lastMessageTime,
+                    lastMessageSenderId: event.lastMessageSenderId,
+                    lastMessageSenderName: event.lastMessageSenderName,
+                  }
+                : c
+            )
+            // Move updated conversation to top
+            const idx = updated.findIndex((c) => c.roomId === event.roomId)
+            if (idx > 0) {
+              const [item] = updated.splice(idx, 1)
+              updated.unshift(item)
+            }
+            return updated
+          })
+        }
+      )
+    })
+
     return () => {
+      chatUpdateSubRef.current?.unsubscribe()
+      chatUpdateSubRef.current = null
+      unsubscribeConnectRef.current?.()
+      unsubscribeConnectRef.current = null
       disconnectSocket()
     }
   }, [])
@@ -126,21 +166,11 @@ function MessagesContent() {
     setNewMessage("")
   }
 
-  const waitForSocket = (client: any, cb: () => void) => {
-    if (client.connected) {
-      cb()
-    } else {
-      setTimeout(() => waitForSocket(client, cb), 100)
-    }
-  }
-
+  // WebSocket subscription for messages in selected room
   useEffect(() => {
     if (!selectedConversation) return
 
-    const client = getStompClient()
-    if (!client) return
-
-    waitForSocket(client, () => {
+    const unsubscribeConnect = onSocketConnected((client) => {
       subscriptionRef.current?.unsubscribe()
 
       subscriptionRef.current = client.subscribe(`/topic/chat/${selectedConversation}`, (msg) => {
@@ -148,7 +178,7 @@ function MessagesContent() {
         setMessages((prev) => [
           ...prev,
           {
-            id: data.id ?? Date.now(),
+            id: data.id ?? data.messageId ?? Date.now(),
             roomId: data.roomId,
             senderId: data.senderId,
             senderName: data.senderName,
@@ -162,6 +192,7 @@ function MessagesContent() {
     return () => {
       subscriptionRef.current?.unsubscribe()
       subscriptionRef.current = null
+      unsubscribeConnect()
     }
   }, [selectedConversation])
 
@@ -242,7 +273,7 @@ function MessagesContent() {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm">{c.name ?? "Direct Chat"}</p>
-                            {c.lastMessage && <p className="text-xs text-gray-500 truncate">{c.lastMessage.content}</p>}
+                            {c.lastMessage && <p className="text-xs text-gray-500 truncate">{c.lastMessageSenderName ? `${c.lastMessageSenderName}: ` : ""}{c.lastMessage}</p>}
                             <p className="text-xs text-gray-400">
                               {c.type === "DIRECT" ? "Direct chat" : "Group chat"}
                             </p>

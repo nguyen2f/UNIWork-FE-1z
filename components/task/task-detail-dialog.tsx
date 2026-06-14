@@ -650,6 +650,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
       
       <IssueDialog
         taskId={task.taskId}
+        projectId={displayTask?.projectId}
         issue={selectedIssue}
         open={issueDialogOpen}
         onOpenChange={setIssueDialogOpen}

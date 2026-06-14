@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,9 @@ import {
   Zap,
   Edit,
   Trash2,
+  Bug,
+  User,
+  Search,
   ArrowLeft,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -70,6 +73,15 @@ const PriorityConfig: Record<string, { label: string; color: string }> = {
   CRITICAL: { label: "Critical", color: "text-red-600 bg-red-50 border-red-200" },
 }
 
+const IssueStatusCfg: Record<string, { label: string; color: string }> = {
+  OPEN: { label: "Open", color: "text-orange-600 bg-orange-50 border-orange-200" },
+  IN_PROGRESS: { label: "In Progress", color: "text-blue-600 bg-blue-50 border-blue-200" },
+  RESOLVED: { label: "Resolved", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  CLOSED: { label: "Closed", color: "text-slate-600 bg-slate-50 border-slate-200" },
+  COMPLETED: { label: "Completed", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  DONE: { label: "Done", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+}
+
 export default function StageDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -89,6 +101,8 @@ export default function StageDetailPage() {
   const [editIssueOpen, setEditIssueOpen] = useState(false)
   const [editingIssue, setEditingIssue] = useState<any>(null)
   const [editingIssueTaskId, setEditingIssueTaskId] = useState<number>(0)
+  const [activeListTab, setActiveListTab] = useState<"tasks" | "issues">("tasks")
+  const [listSearchQuery, setListSearchQuery] = useState("")
 
   const toggleTask = (taskId: number) => {
     setExpandedTasks(prev => prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId])
@@ -99,6 +113,42 @@ export default function StageDetailPage() {
       fetchData()
     }
   }, [projectId, stageId])
+
+  // Collect all issues from all tasks into a flat list
+  const allIssues = useMemo(() => {
+    const issues: any[] = []
+    Object.entries(taskIssues).forEach(([taskId, taskIssueList]) => {
+      taskIssueList.forEach((issue: any) => {
+        const task = tasks.find(t => t.taskId === Number(taskId))
+        issues.push({ ...issue, _taskTitle: task?.title || `Task #${taskId}` })
+      })
+    })
+    return issues
+  }, [taskIssues, tasks])
+
+  // Filtered tasks based on search query
+  const filteredTasks = useMemo(() => {
+    if (!listSearchQuery.trim()) return tasks
+    const q = listSearchQuery.toLowerCase()
+    return tasks.filter(t =>
+      t.title?.toLowerCase().includes(q) ||
+      t.assigneeName?.toLowerCase().includes(q) ||
+      t.status?.toLowerCase().includes(q)
+    )
+  }, [tasks, listSearchQuery])
+
+  // Filtered issues based on search query
+  const filteredIssues = useMemo(() => {
+    if (!listSearchQuery.trim()) return allIssues
+    const q = listSearchQuery.toLowerCase()
+    return allIssues.filter((i: any) =>
+      i.title?.toLowerCase().includes(q) ||
+      i.reporterName?.toLowerCase().includes(q) ||
+      i.assigneeName?.toLowerCase().includes(q) ||
+      i.status?.toLowerCase().includes(q) ||
+      i._taskTitle?.toLowerCase().includes(q)
+    )
+  }, [allIssues, listSearchQuery])
 
   const fetchData = async () => {
     try {
@@ -579,6 +629,304 @@ export default function StageDetailPage() {
                 })}
               </div>
             )}
+
+            {/* ─── All Tasks & Issues List View ─── */}
+            <div className="mt-10">
+              {/* Section Header with Tabs */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">All Tasks & Issues</h2>
+                  <p className="text-sm text-slate-500">
+                    {tasks.length} task{tasks.length !== 1 ? "s" : ""} · {allIssues.length} issue{allIssues.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder={`Search ${activeListTab}...`}
+                      value={listSearchQuery}
+                      onChange={(e) => setListSearchQuery(e.target.value)}
+                      className="pl-9 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all w-48"
+                    />
+                  </div>
+                  {/* Tab Switcher */}
+                  <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                    <button
+                      onClick={() => { setActiveListTab("tasks"); setListSearchQuery("") }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        activeListTab === "tasks"
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <ListTodo className="h-3.5 w-3.5" />
+                      Tasks
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeListTab === "tasks" ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-500"}`}>
+                        {tasks.length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => { setActiveListTab("issues"); setListSearchQuery("") }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        activeListTab === "issues"
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <Bug className="h-3.5 w-3.5" />
+                      Issues
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeListTab === "issues" ? "bg-orange-100 text-orange-700" : "bg-slate-200 text-slate-500"}`}>
+                        {allIssues.length}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ─── Tasks List ─── */}
+              {activeListTab === "tasks" && (
+                <Card className="overflow-hidden border-slate-200/80">
+                  <CardContent className="p-0">
+                    {/* Table Header */}
+                    <div className="grid grid-cols-[1fr_100px_100px_120px_140px_80px] gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <span>Task</span>
+                      <span>Status</span>
+                      <span>Priority</span>
+                      <span>Assignee</span>
+                      <span>Due Date</span>
+                      <span className="text-right">Actions</span>
+                    </div>
+
+                    {filteredTasks.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <ListTodo className="h-10 w-10 text-slate-300 mb-3" />
+                        <p className="text-sm text-slate-500 font-medium">
+                          {listSearchQuery ? "No tasks match your search" : "No tasks in this stage"}
+                        </p>
+                        {listSearchQuery && (
+                          <button onClick={() => setListSearchQuery("")} className="text-xs text-blue-500 hover:text-blue-700 mt-1">
+                            Clear search
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {filteredTasks.map((task) => {
+                          const sCfg = TaskStatusConfig[task.status] || TaskStatusConfig.PENDING
+                          const pCfg = PriorityConfig[task.priority] || PriorityConfig.MEDIUM
+                          const issues = taskIssues[task.taskId] || []
+                          const openIssues = issues.filter((i: any) => i.status !== "COMPLETED" && i.status !== "DONE" && i.status !== "RESOLVED" && i.status !== "CLOSED").length
+                          return (
+                            <div
+                              key={task.taskId}
+                              className="grid grid-cols-[1fr_100px_100px_120px_140px_80px] gap-3 items-center px-5 py-3.5 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                              onClick={() => router.push(`/tasks/${task.taskId}`)}
+                            >
+                              {/* Task Info */}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sCfg.dot}`} />
+                                  <span className="text-xs text-slate-400 font-mono flex-shrink-0">TASK-{task.taskId}</span>
+                                  <span className="font-medium text-sm text-slate-900 truncate group-hover:text-blue-600 transition-colors">{task.title}</span>
+                                </div>
+                                {openIssues > 0 && (
+                                  <div className="flex items-center gap-2 ml-4 text-xs text-slate-400">
+                                    <span className="flex items-center gap-0.5 text-orange-500">
+                                      <Bug className="h-3 w-3" />{openIssues} open issue{openIssues !== 1 ? "s" : ""}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Status */}
+                              <div>
+                                <Badge variant="outline" className="text-[10px] py-0.5 whitespace-nowrap">{sCfg.label}</Badge>
+                              </div>
+
+                              {/* Priority */}
+                              <div>
+                                <Badge variant="outline" className={`text-[10px] py-0.5 border whitespace-nowrap ${pCfg.color}`}>
+                                  <Flag className="h-2.5 w-2.5 mr-0.5" />{pCfg.label}
+                                </Badge>
+                              </div>
+
+                              {/* Assignee */}
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {task.assigneeName ? (
+                                  <>
+                                    <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
+                                      {task.assigneeName[0]?.toUpperCase()}
+                                    </div>
+                                    <span className="text-xs text-slate-600 truncate">{task.assigneeName}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-slate-400 italic">Unassigned</span>
+                                )}
+                              </div>
+
+                              {/* Due Date */}
+                              <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <Calendar className="h-3 w-3 flex-shrink-0" />
+                                <span className="whitespace-nowrap">{formatDate(task.dueDate)}</span>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center justify-end gap-1">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditTask(task) }}>
+                                      <Edit className="h-4 w-4 mr-2" /> Edit Task
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.taskId) }}>
+                                      <Trash2 className="h-4 w-4 mr-2" /> Delete Task
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                <ChevronRight className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* ─── Issues List ─── */}
+              {activeListTab === "issues" && (
+                <Card className="overflow-hidden border-slate-200/80">
+                  <CardContent className="p-0">
+                    {/* Table Header */}
+                    <div className="grid grid-cols-[1fr_100px_100px_120px_140px_80px] gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <span>Issue</span>
+                      <span>Status</span>
+                      <span>Priority</span>
+                      <span>Reporter</span>
+                      <span>Due Date</span>
+                      <span className="text-right">Actions</span>
+                    </div>
+
+                    {filteredIssues.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <Bug className="h-10 w-10 text-slate-300 mb-3" />
+                        <p className="text-sm text-slate-500 font-medium">
+                          {listSearchQuery ? "No issues match your search" : "No issues in this stage"}
+                        </p>
+                        {listSearchQuery && (
+                          <button onClick={() => setListSearchQuery("")} className="text-xs text-blue-500 hover:text-blue-700 mt-1">
+                            Clear search
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {filteredIssues.map((issue: any) => {
+                          const isCfg = IssueStatusCfg[issue.status] || { label: issue.status, color: "text-slate-600 bg-slate-50 border-slate-200" }
+                          const pCfg = PriorityConfig[issue.priority] || PriorityConfig.MEDIUM
+                          return (
+                            <div
+                              key={issue.issueId}
+                              className="grid grid-cols-[1fr_100px_100px_120px_140px_80px] gap-3 items-center px-5 py-3.5 hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                              onClick={() => router.push(`/issues/${issue.issueId}`)}
+                            >
+                              {/* Issue Info */}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <AlertCircle className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                                  <span className="text-xs text-slate-400 font-mono flex-shrink-0">ISSUE-{issue.issueId}</span>
+                                  <span className="font-medium text-sm text-slate-900 truncate group-hover:text-blue-600 transition-colors">{issue.title}</span>
+                                </div>
+                                <div className="flex items-center gap-2 ml-5 text-xs text-slate-400">
+                                  {issue._taskTitle && (
+                                    <span className="flex items-center gap-0.5 truncate max-w-[200px]">
+                                      <ListTodo className="h-3 w-3" />{issue._taskTitle}
+                                    </span>
+                                  )}
+                                  {issue.type && (
+                                    <Badge variant="outline" className="text-[9px] py-0 h-4 border-slate-200">{issue.type}</Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Status */}
+                              <div>
+                                <Badge variant="outline" className={`text-[10px] py-0.5 border whitespace-nowrap ${isCfg.color}`}>{isCfg.label}</Badge>
+                              </div>
+
+                              {/* Priority */}
+                              <div>
+                                <Badge variant="outline" className={`text-[10px] py-0.5 border whitespace-nowrap ${pCfg.color}`}>
+                                  <Flag className="h-2.5 w-2.5 mr-0.5" />{pCfg.label}
+                                </Badge>
+                              </div>
+
+                              {/* Reporter */}
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {issue.reporterName ? (
+                                  <>
+                                    <div className="h-6 w-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
+                                      {issue.reporterName[0]?.toUpperCase()}
+                                    </div>
+                                    <span className="text-xs text-slate-600 truncate">{issue.reporterName}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-slate-400 italic">Unknown</span>
+                                )}
+                              </div>
+
+                              {/* Due Date */}
+                              <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <Calendar className="h-3 w-3 flex-shrink-0" />
+                                <span className="whitespace-nowrap">{issue.dueDate ? formatDate(issue.dueDate) : "No due date"}</span>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center justify-end gap-1">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditIssue(issue, issue.taskId) }}>
+                                      <Edit className="h-4 w-4 mr-2" /> Edit Issue
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDeleteIssue(issue.issueId) }}>
+                                      <Trash2 className="h-4 w-4 mr-2" /> Delete Issue
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                <ChevronRight className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </main>
       </div>

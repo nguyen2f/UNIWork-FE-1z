@@ -78,3 +78,11 @@ export interface ChatRoomRenameEvent {
   updatedBy: number
   updatedAt: string
 }
+
+export interface ChatListUpdateEvent {
+  roomId: number
+  lastMessage: string
+  lastMessageTime: string
+  lastMessageSenderId: number
+  lastMessageSenderName: string
+}

@@ -39,7 +39,7 @@ export const chatService = {
   getHistory: (roomId: number, page = 0, size = 20) =>
     api<ChatPaginatedResponse<ChatMessageResponseDTO>>({
       method: "GET",
-      url: `/chat/${roomId}/messages`,
+      url: `/chats/${roomId}/messages`,
       params: { page, size },
     }),
 

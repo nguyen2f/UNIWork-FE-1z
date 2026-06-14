@@ -1,25 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { default as dayjs } from "dayjs"
+import { Form, message, Select, Row, Col, DatePicker, Input, Space, Modal } from "antd"
+import { getAllProjects } from "@/services/project.service"
 import { issueService } from "@/services/issue.service"
-import { projectService } from "@/services/project.service"
+import { taskService } from "@/services/task.service"
+import { getAllMember } from "@/services/user.service"
+import { stageService } from "@/services/stage.service"
 import type { IssueDTO, IssueRequest } from "@/types/issue.types"
+import type { Project } from "@/types/project.types"
+import type { User } from "@/types/user.types"
+import type { Stage } from "@/types/stage.types"
+import type { TaskDTO } from "@/types/task.types"
 
 interface IssueDialogProps {
-  taskId: number
+  taskId?: number
   projectId?: number
   issue?: IssueDTO | null
   open: boolean
@@ -28,56 +26,107 @@ interface IssueDialogProps {
 }
 
 export function IssueDialog({ taskId, projectId, issue, open, onOpenChange, onSuccess }: IssueDialogProps) {
-  const [loading, setLoading] = useState(false)
-  const [members, setMembers] = useState<any[]>([])
-  const [formData, setFormData] = useState<Partial<IssueRequest>>({
-    title: "",
-    description: "",
-    status: "OPEN",
-    issueType: "BUG",
-    assignedTo: null,
-  })
+  const [form] = Form.useForm()
+  const [allMembers, setAllMembers] = useState<User[]>([])
+  const [allProjects, setAllProjects] = useState<Project[]>([])
+  const [stages, setStages] = useState<Stage[]>([])
+  const [tasks, setTasks] = useState<TaskDTO[]>([])
 
-  useEffect(() => {
-    if (open && projectId) {
-      fetchMembers()
-    }
-  }, [open, projectId])
-
-  const fetchMembers = async () => {
-    try {
-      if (!projectId) return;
-      const res: any = await projectService.getMembers(projectId)
-      setMembers(res.data || res || [])
-    } catch (error) {
-      console.error("Failed to fetch project members:", error)
-    }
-  }
+  const selectedProjectId = Form.useWatch('projectId', form) || projectId
+  const selectedStageId = Form.useWatch('stageId', form)
 
   useEffect(() => {
     if (open) {
+      fetchAllMember()
+      fetchAllProject()
+    }
+  }, [open])
+
+  // Load stages when project changes
+  useEffect(() => {
+    if (selectedProjectId) {
+      stageService.getByProject(selectedProjectId).then((res: any) => {
+        if (Array.isArray(res)) setStages(res)
+        else if (res?.data && Array.isArray(res.data)) setStages(res.data)
+      }).catch(() => setStages([]))
+    } else {
+      setStages([])
+      setTasks([])
+    }
+  }, [selectedProjectId])
+
+  // Load tasks when stage changes
+  useEffect(() => {
+    if (selectedStageId) {
+      taskService.getByStage(selectedStageId).then((res: any) => {
+        let taskList: TaskDTO[] = []
+        if (Array.isArray(res)) taskList = res
+        else if (res?.data && Array.isArray(res.data)) taskList = res.data
+        setTasks(taskList)
+      }).catch(() => setTasks([]))
+    } else if (selectedProjectId && !selectedStageId) {
+      // Also try to load all tasks for the project if no stage selected
+      loadAllProjectTasks(selectedProjectId)
+    } else {
+      setTasks([])
+    }
+  }, [selectedStageId, selectedProjectId])
+
+  const loadAllProjectTasks = async (pid: number) => {
+    try {
+      const stagesRes: any = await stageService.getByProject(pid)
+      let fetchedStages: Stage[] = []
+      if (Array.isArray(stagesRes)) fetchedStages = stagesRes
+      else if (stagesRes?.data && Array.isArray(stagesRes.data)) fetchedStages = stagesRes.data
+
+      let allTasks: TaskDTO[] = []
+      for (const stage of fetchedStages) {
+        try {
+          const taskRes: any = await taskService.getByStage(stage.stageId)
+          let st: TaskDTO[] = []
+          if (Array.isArray(taskRes)) st = taskRes
+          else if (taskRes?.data && Array.isArray(taskRes.data)) st = taskRes.data
+          allTasks = [...allTasks, ...st]
+        } catch (e) {
+          // skip
+        }
+      }
+      setTasks(allTasks)
+    } catch {
+      setTasks([])
+    }
+  }
+
+  // Populate form when editing an existing issue
+  useEffect(() => {
+    if (open) {
       if (issue) {
-        setFormData({
+        form.setFieldsValue({
           title: issue.title,
           description: issue.description,
-          status: issue.status,
-          issueType: issue.issueType || issue.type,
-          priority: issue.priority || "MEDIUM",
+          status: issueStatusToInt(issue.status),
+          type: issueTypeToInt(issue.type || issue.issueType),
+          priority: issuePriorityToInt(issue.priority),
           assignedTo: issue.assignedTo,
+          projectId: issue.projectId || projectId,
+          taskId: issue.taskId || taskId,
+          dueDate: issue.dueDate ? dayjs(issue.dueDate) : null,
         })
       } else {
-        setFormData({
-          title: "",
-          description: "",
-          status: "OPEN",
-          issueType: "BUG",
-          priority: "MEDIUM",
-          assignedTo: null,
+        form.resetFields()
+        // Set defaults
+        form.setFieldsValue({
+          status: 0,
+          priority: 1,
+          type: 0,
+          projectId: projectId || undefined,
+          taskId: taskId || undefined,
         })
       }
     }
   }, [open, issue])
 
+  // Maps for string -> int conversion
   const issueStatusMap: Record<string, number> = {
     OPEN: 0,
     IN_PROGRESS: 1,
@@ -101,189 +150,257 @@ export function IssueDialog({ taskId, projectId, issue, open, onOpenChange, onSu
     CRITICAL: 3,
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!formData.title?.trim()) {
-      toast.error("Title is required")
-      return
-    }
+  const issueStatusToInt = (val: any): number => {
+    if (typeof val === 'number') return val
+    return issueStatusMap[val] ?? 0
+  }
+  const issueTypeToInt = (val: any): number => {
+    if (typeof val === 'number') return val
+    return issueTypeMap[val] ?? 0
+  }
+  const issuePriorityToInt = (val: any): number => {
+    if (typeof val === 'number') return val
+    return issuePriorityMap[val] ?? 1
+  }
 
+  const fetchAllMember = async () => {
     try {
-      setLoading(true)
-      
-      const statusInt = typeof formData.status === 'string' && issueStatusMap[formData.status] !== undefined 
-        ? issueStatusMap[formData.status] 
-        : formData.status;
+      const response = await getAllMember()
+      setAllMembers((response as any).data || response || [])
+    } catch (error) {
+      message.error("Failed to fetch team members")
+    }
+  }
 
-      const typeInt = typeof formData.issueType === 'string' && issueTypeMap[formData.issueType] !== undefined 
-        ? issueTypeMap[formData.issueType] 
-        : formData.issueType;
+  const fetchAllProject = async () => {
+    try {
+      const response = await getAllProjects()
+      setAllProjects((response as any).data || response || [])
+    } catch (error) {
+      message.error("Failed to fetch projects")
+    }
+  }
 
-      const priorityInt = typeof formData.priority === 'string' && issuePriorityMap[formData.priority] !== undefined
-        ? issuePriorityMap[formData.priority]
-        : formData.priority;
-
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        assignedTo: formData.assignedTo,
-        status: statusInt,
-        type: typeInt,
-        priority: priorityInt,
-        taskId,
-        projectId: projectId || (issue?.projectId),
-      } as IssueRequest
+  const handleSubmit = async (values: any) => {
+    try {
+      const payload: IssueRequest = {
+        title: values.title,
+        description: values.description || "",
+        status: values.status,
+        type: values.type,
+        priority: values.priority,
+        assignedTo: values.assignedTo || null,
+        taskId: values.taskId || taskId,
+        projectId: values.projectId || projectId || 0,
+        dueDate: values.dueDate
+          ? dayjs(values.dueDate).format("YYYY-MM-DD HH:mm:ss")
+          : null,
+      }
 
       if (issue) {
         await issueService.update(issue.issueId, payload)
-        toast.success("Issue updated successfully")
+        message.success("Issue updated successfully!", 3)
       } else {
         await issueService.create(payload)
-        toast.success("Issue created successfully")
+        message.success("Issue created successfully!", 3)
       }
-      
-      onSuccess()
+
       onOpenChange(false)
+      form.resetFields()
+      onSuccess()
     } catch (error) {
-      console.error("Failed to save issue:", error)
-      toast.error(issue ? "Failed to update issue" : "Failed to create issue")
-    } finally {
-      setLoading(false)
+      message.error(issue ? "Failed to update issue" : "Failed to create issue")
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{issue ? "Edit Issue" : "Create New Issue"}</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Enter issue title"
-              required
-            />
-          </div>
+    <Modal
+      open={open}
+      onCancel={() => onOpenChange(false)}
+      width={800}
+      title={issue ? "Edit Issue" : "Create New Issue"}
+      footer={null}
+      destroyOnClose
+    >
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={{
+          status: 0,
+          priority: 1,
+          type: 0,
+        }}
+      >
+        <Form.Item
+          label="Issue Title"
+          name="title"
+          rules={[{ required: true, message: 'Please enter issue title!' }]}
+        >
+          <Input placeholder="Enter issue title" />
+        </Form.Item>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select
-                value={
-                  typeof formData.issueType === "number"
-                    ? Object.keys(issueTypeMap).find(key => issueTypeMap[key] === formData.issueType) || "BUG"
-                    : String(formData.issueType || "BUG")
-                }
-                onValueChange={(val) => setFormData({ ...formData, issueType: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BUG">Bug</SelectItem>
-                  <SelectItem value="IMPROVEMENT">Improvement</SelectItem>
-                  <SelectItem value="QUESTION">Question</SelectItem>
-                  <SelectItem value="DOCUMENTATION">Documentation</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <Form.Item
+          label="Description"
+          name="description"
+        >
+          <Input.TextArea
+            placeholder="Describe the issue in detail"
+            rows={4}
+          />
+        </Form.Item>
 
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={
-                  typeof formData.status === "number"
-                    ? Object.keys(issueStatusMap).find(key => issueStatusMap[key] === formData.status) || "OPEN"
-                    : String(formData.status || "OPEN")
-                }
-                onValueChange={(val) => setFormData({ ...formData, status: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="OPEN">Open</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="RESOLVED">Resolved</SelectItem>
-                  <SelectItem value="CLOSED">Closed</SelectItem>
-                  <SelectItem value="REOPENED">Reopened</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={
-                  typeof formData.priority === "number"
-                    ? Object.keys(issuePriorityMap).find(key => issuePriorityMap[key] === formData.priority) || "MEDIUM"
-                    : String(formData.priority || "MEDIUM")
-                }
-                onValueChange={(val) => setFormData({ ...formData, priority: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="CRITICAL">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Assignee</Label>
-            <Select
-              value={formData.assignedTo ? String(formData.assignedTo) : "unassigned"}
-              onValueChange={(val) => setFormData({ ...formData, assignedTo: val === "unassigned" ? null : Number(val) })}
+        <Form.Item
+          label="Project"
+          name="projectId"
+          rules={[{ required: true, message: 'Please select a project!' }]}
+        >
+          <Select
+            placeholder="Select a project"
+            showSearch
+            filterOption={(input, option) =>
+              (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
+            }
+          >
+            {allProjects
+              ?.filter((project) => project && project.projectId)
+              .map((project) => (
+                <Select.Option key={project.projectId} value={project.projectId}>
+                  {project.name}
+                </Select.Option>
+              ))}
+          </Select>
+        </Form.Item>
+
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              label="Stage"
+              name="stageId"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select assignee" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
-                {members.map(member => (
-                  <SelectItem key={member.userId || member.pmId} value={String(member.userId || member.pmId)}>
-                    {member.userName || member.name}
-                  </SelectItem>
+              <Select
+                placeholder="Select a stage (optional)"
+                disabled={!selectedProjectId}
+                allowClear
+                onChange={() => {
+                  // Reset task selection when stage changes
+                  form.setFieldValue('taskId', undefined)
+                }}
+              >
+                {stages.map((stage) => (
+                  <Select.Option key={stage.stageId} value={stage.stageId}>
+                    {stage.name}
+                  </Select.Option>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Related Task"
+              name="taskId"
+              rules={[{ required: true, message: 'Please select a task!' }]}
+            >
+              <Select
+                placeholder="Select a task"
+                disabled={!selectedProjectId}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
+                }
+              >
+                {tasks.map((task) => (
+                  <Select.Option key={task.taskId} value={task.taskId}>
+                    {task.title}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the issue"
-              className="min-h-[100px]"
-            />
-          </div>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              label="Type"
+              name="type"
+            >
+              <Select placeholder="Select type">
+                <Select.Option value={0}>Bug</Select.Option>
+                <Select.Option value={1}>Improvement</Select.Option>
+                <Select.Option value={2}>Question</Select.Option>
+                <Select.Option value={3}>Documentation</Select.Option>
+                <Select.Option value={4}>Other</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              label="Status"
+              name="status"
+            >
+              <Select placeholder="Select status">
+                <Select.Option value={0}>Open</Select.Option>
+                <Select.Option value={1}>In Progress</Select.Option>
+                <Select.Option value={2}>Resolved</Select.Option>
+                <Select.Option value={3}>Closed</Select.Option>
+                <Select.Option value={4}>Reopened</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              label="Priority"
+              name="priority"
+            >
+              <Select placeholder="Select priority">
+                <Select.Option value={0}>Low</Select.Option>
+                <Select.Option value={1}>Medium</Select.Option>
+                <Select.Option value={2}>High</Select.Option>
+                <Select.Option value={3}>Critical</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-          <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        <Form.Item
+          label="Due Date"
+          name="dueDate"
+        >
+          <DatePicker style={{ width: '100%' }} />
+        </Form.Item>
+
+        <Form.Item
+          label="Assign To"
+          name="assignedTo"
+        >
+          <Select
+            placeholder="Select a team member"
+            showSearch
+            allowClear
+            filterOption={(input, option) =>
+              (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
+            }
+          >
+            {allMembers.map((member) => (
+              <Select.Option key={member.userId} value={member.userId}>
+                {member.name} - {member.department}
+              </Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+          <Space>
+            <Button onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : (issue ? "Update Issue" : "Create Issue")}
+            <Button type="submit">
+              {issue ? "Update Issue" : "Create Issue"}
             </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </Space>
+        </Form.Item>
+      </Form>
+    </Modal>
   )
 }
-
