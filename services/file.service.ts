@@ -6,10 +6,19 @@ export const fileService = {
     formData.append("file", file)
     return api({
       method: "POST",
-      url: `/tasks/${projectId}/${taskId}/file/upload`,
+      url: `/tasks/${taskId}/files`,
       data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
     })
   },
+
+  getFiles: (taskId: number) =>
+    api({
+      method: "GET",
+      url: `/tasks/${taskId}/files`,
+    }),
 
   delete: (projectId: number, taskId: number, fileId: string) =>
     api({
@@ -25,7 +34,7 @@ export const fileService = {
   ) => {
     const response = await api({
       method: "GET",
-      url: `/tasks/${projectId}/${taskId}/file/${fileId}/download`,
+      url: `/tasks/files/${fileId}/download`,
       responseType: "blob",
     })
 

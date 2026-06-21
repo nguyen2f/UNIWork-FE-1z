@@ -109,8 +109,8 @@ export function CreateTaskDialog({ open, onOpenChange, projectId, stageId, onTas
             layout="vertical"
             onFinish={handleSubmit}
             initialValues={{
-              status: 1,
-              priority: 2,
+              status: 0,
+              priority: 1,
             }}
         >
           <Form.Item
@@ -174,10 +174,11 @@ export function CreateTaskDialog({ open, onOpenChange, projectId, stageId, onTas
                   name="status"
               >
                 <Select placeholder="Select Status">
-                  <Select.Option value={1}>To Do</Select.Option>
-                  <Select.Option value={2}>In Progress</Select.Option>
-                  <Select.Option value={3}>In Review</Select.Option>
-                  <Select.Option value={4}>Done</Select.Option>
+                  <Select.Option value={0}>To Do</Select.Option>
+                  <Select.Option value={1}>In Progress</Select.Option>
+                  <Select.Option value={2}>In Review</Select.Option>
+                  <Select.Option value={3}>Done</Select.Option>
+                  <Select.Option value={4}>Cancelled</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -187,10 +188,10 @@ export function CreateTaskDialog({ open, onOpenChange, projectId, stageId, onTas
                   name="priority"
               >
                 <Select>
-                  <Select.Option value={1}>Low</Select.Option>
-                  <Select.Option value={2}>Medium</Select.Option>
-                  <Select.Option value={3}>High</Select.Option>
-                  <Select.Option value={4}>Critical</Select.Option>
+                  <Select.Option value={0}>Low</Select.Option>
+                  <Select.Option value={1}>Medium</Select.Option>
+                  <Select.Option value={2}>High</Select.Option>
+                  <Select.Option value={3}>Critical</Select.Option>
                 </Select>
               </Form.Item>
             </Col>

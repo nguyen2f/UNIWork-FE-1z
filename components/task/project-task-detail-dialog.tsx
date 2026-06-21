@@ -12,7 +12,8 @@ import { toast } from "sonner"
 import type { Task } from "@/types/task.types"
 import { taskService } from "@/services/task.service"
 import { commentService } from "@/services/comment.service"
-import {AddComment} from "@/types/task.types";
+import { AddComment } from "@/types/task.types";
+import { EditTaskDialog } from "@/components/task/edit-task-dialog"
 
 interface ProjectTaskDetailDialogProps {
     task: Task | null
@@ -42,6 +43,7 @@ export function ProjectTaskDetailDialog({ task, open, onOpenChange, projectId }:
     const [loadingComments, setLoadingComments] = useState(false)
     const [newComment, setNewComment] = useState("")
     const [submitting, setSubmitting] = useState(false)
+    const [editDialogOpen, setEditDialogOpen] = useState(false)
 
     useEffect(() => {
         if (open && task) {
@@ -328,7 +330,7 @@ export function ProjectTaskDetailDialog({ task, open, onOpenChange, projectId }:
 
                             {/* Action Buttons */}
                             <div className="flex justify-end gap-2 pt-4 border-t">
-                                <Button variant="outline" size="sm">
+                                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
                                     <Edit className="h-4 w-4 mr-1" />
                                     Edit Task
                                 </Button>
@@ -341,6 +343,12 @@ export function ProjectTaskDetailDialog({ task, open, onOpenChange, projectId }:
                     </ScrollArea>
                 )}
             </DialogContent>
+            <EditTaskDialog
+                open={editDialogOpen}
+                onOpenChange={setEditDialogOpen}
+                task={displayTask}
+                onSuccess={fetchTaskDetail}
+            />
         </Dialog>
     )
 }

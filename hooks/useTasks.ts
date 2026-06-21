@@ -51,7 +51,7 @@ export function useTasks(projectId?: string) {
 
   const updateTaskStatus = async (id: string, status: string) => {
     try {
-      const updatedTask = await taskService.updateStatus(id as any, id as any, { status: status as any })
+      const updatedTask = await taskService.updateStatus(id as any, id as any, id as any, { status: status as any })
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)))
       toast.success("Cập nhật trạng thái thành công")
       return updatedTask

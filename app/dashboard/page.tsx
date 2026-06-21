@@ -265,7 +265,21 @@ export default function DashboardPage() {
       setLoading(true);
       const result = await fetchTaskReport();
       if (result.data) {
-        setOverallReport(result.data);
+        const d = result.data;
+        setOverallReport({
+          task: {
+            totalTasks: d.totalTasks || 0,
+            doneTasks: d.completedTasks || 0,
+            performance: d.completedPercent || 0,
+            remainingTasks: (d.totalTasks || 0) - (d.completedTasks || 0)
+          } as any,
+          issue: {
+            totalIssues: d.totalIssues || 0,
+            doneIssues: d.completedIssues || 0,
+            performance: d.issuesCompletedPercent || 0,
+            remainingIssues: (d.totalIssues || 0) - (d.completedIssues || 0)
+          }
+        });
       }
     } catch (err: any) {
       setError(err.message);

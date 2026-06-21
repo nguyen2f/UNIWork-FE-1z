@@ -457,7 +457,7 @@ export default function StageDetailPage() {
             </div>
 
             {/* Tasks Section */}
-            <div className="flex items-center justify-between mb-4">
+            {/* <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Tasks</h2>
                 <p className="text-sm text-slate-500">{totalTasks} task{totalTasks !== 1 ? 's' : ''} in this stage</p>
@@ -465,9 +465,9 @@ export default function StageDetailPage() {
               <Button onClick={() => setCreateTaskOpen(true)} size="sm" className="gap-1.5">
                 <Plus className="h-3.5 w-3.5" /> Add Task
               </Button>
-            </div>
+            </div> */}
 
-            {totalTasks === 0 ? (
+            {/* {totalTasks === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <div className="rounded-full bg-slate-100 p-4 mb-4">
@@ -628,7 +628,7 @@ export default function StageDetailPage() {
                   )
                 })}
               </div>
-            )}
+            )} */}
 
             {/* ─── All Tasks & Issues List View ─── */}
             <div className="mt-10">

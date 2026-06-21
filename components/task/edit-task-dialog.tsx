@@ -34,8 +34,29 @@ export function EditTaskDialog({ open, onOpenChange, task, onSuccess }: EditTask
 
   useEffect(() => {
     if (open && task) {
+      let mappedPriority = task.priority;
+      if (typeof task.priority === "string") {
+        const priorityUpper = task.priority.toUpperCase();
+        if (priorityUpper === "LOW") mappedPriority = 0;
+        else if (priorityUpper === "MEDIUM") mappedPriority = 1;
+        else if (priorityUpper === "HIGH") mappedPriority = 2;
+        else if (priorityUpper === "CRITICAL") mappedPriority = 3;
+      }
+
+      let mappedStatus = task.status;
+      if (typeof task.status === "string") {
+        const statusUpper = task.status.toUpperCase();
+        if (statusUpper === "PENDING") mappedStatus = 0;
+        else if (statusUpper === "DOING") mappedStatus = 1;
+        else if (statusUpper === "REVIEWING") mappedStatus = 2;
+        else if (statusUpper === "COMPLETED") mappedStatus = 3;
+        else if (statusUpper === "CANCELLED") mappedStatus = 4;
+      }
+
       form.setFieldsValue({
         ...task,
+        priority: mappedPriority,
+        status: mappedStatus,
         dueDate: task.dueDate ? dayjs(task.dueDate) : null,
       })
       if (task.projectId) {
@@ -157,20 +178,21 @@ export function EditTaskDialog({ open, onOpenChange, task, onSuccess }: EditTask
           <Col span={12}>
             <Form.Item label="Status" name="status">
               <Select placeholder="Select Status">
-                <Select.Option value={1}>To Do</Select.Option>
-                <Select.Option value={2}>In Progress</Select.Option>
-                <Select.Option value={3}>In Review</Select.Option>
-                <Select.Option value={4}>Done</Select.Option>
+                <Select.Option value={0}>To Do</Select.Option>
+                <Select.Option value={1}>In Progress</Select.Option>
+                <Select.Option value={2}>In Review</Select.Option>
+                <Select.Option value={3}>Done</Select.Option>
+                <Select.Option value={4}>Cancelled</Select.Option>
               </Select>
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="Priority" name="priority">
               <Select>
-                <Select.Option value={1}>Low</Select.Option>
-                <Select.Option value={2}>Medium</Select.Option>
-                <Select.Option value={3}>High</Select.Option>
-                <Select.Option value={4}>Critical</Select.Option>
+                <Select.Option value={0}>Low</Select.Option>
+                <Select.Option value={1}>Medium</Select.Option>
+                <Select.Option value={2}>High</Select.Option>
+                <Select.Option value={3}>Critical</Select.Option>
               </Select>
             </Form.Item>
           </Col>

@@ -329,8 +329,8 @@ export function FloatingChat() {
             ) : (
               <>
                 <div>
-                  <h3 className="font-bold text-base">Nhắn tin</h3>
-                  <p className="text-xs text-blue-100">{conversations.length} cuộc trò chuyện</p>
+                  <h3 className="font-bold text-base">Message</h3>
+                  <p className="text-xs text-blue-100">{conversations.length} conversation</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -373,14 +373,14 @@ export function FloatingChat() {
                     <div className="text-center">
                       <MessageSquare className="h-10 w-10 mx-auto mb-2 text-gray-300" />
                       <p>Chưa có tin nhắn</p>
-                      <p className="text-xs mt-1">Hãy bắt đầu cuộc trò chuyện!</p>
+                      <p className="text-xs mt-1"> Let's start a conversation. </p>
                     </div>
                   </div>
                 ) : (
                   <>
                     {loading && (
                       <div className="text-center text-xs text-gray-400 mb-3 py-2">
-                        <span className="animate-pulse">Đang tải thêm...</span>
+                        <span className="animate-pulse">Loading...</span>
                       </div>
                     )}
                     {messages.map((m) => (
@@ -424,7 +424,7 @@ export function FloatingChat() {
                         handleSendMessage()
                       }
                     }}
-                    placeholder="Nhập tin nhắn..."
+                    placeholder="Typing..."
                     className="resize-none text-sm min-h-[36px] max-h-[80px] py-2"
                     rows={1}
                   />
@@ -449,7 +449,7 @@ export function FloatingChat() {
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                   <Input
                     className="pl-8 h-8 text-sm bg-gray-50"
-                    placeholder="Tìm kiếm..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -462,7 +462,7 @@ export function FloatingChat() {
                   {filteredConversations.length === 0 ? (
                     <div className="py-8 text-center text-gray-400 text-sm">
                       <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                      <p>Chưa có cuộc trò chuyện nào</p>
+                      <p>No conversation</p>
                     </div>
                   ) : (
                     filteredConversations.map((c) => (
@@ -498,7 +498,7 @@ export function FloatingChat() {
                               </span>
                             )}
                             <p className="text-xs text-gray-500 truncate">
-                              {c.lastMessage ?? (c.type === "DIRECT" ? "Trực tiếp" : "Nhóm")}
+                              {c.lastMessage ?? (c.type === "DIRECT" ? "DIRIECT" : "GROUP")}
                             </p>
                           </div>
                         </div>

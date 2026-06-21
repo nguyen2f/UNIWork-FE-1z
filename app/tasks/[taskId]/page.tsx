@@ -24,6 +24,7 @@ import { taskService } from "@/services/task.service"
 import { commentService } from "@/services/comment.service"
 import { fileService } from "@/services/file.service"
 import { IssueDialog } from "@/components/issue/issue-dialog"
+import { EditTaskDialog } from "@/components/task/edit-task-dialog"
 import type { IssueDTO } from "@/types/issue.types"
 
 const StatusMap: Record<string, { code: number; label: string; dot: string; bg: string }> = {
@@ -64,6 +65,7 @@ export default function TaskDetailPage() {
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [issueDialogOpen, setIssueDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
   const [completionTime, setCompletionTime] = useState<string>("")
@@ -80,7 +82,15 @@ export default function TaskDetailPage() {
       setTaskDetail(payload.task)
 
       setComments(payload.comments || [])
-      setFileAttachments(payload.fileAttachments || [])
+      
+      try {
+        const filesRes = await fileService.getFiles(taskId)
+        setFileAttachments(filesRes.data || filesRes || [])
+      } catch (err) {
+        console.error("Failed to fetch files from getFiles API, falling back:", err)
+        setFileAttachments(payload.fileAttachments || [])
+      }
+
       setIssues(payload.issues || [])
     } catch (error) {
       console.error("Failed to fetch task detail:", error)
@@ -219,7 +229,7 @@ export default function TaskDetailPage() {
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
-                      <Button variant="outline" size="sm"><Edit className="h-3.5 w-3.5 mr-1" /> Edit</Button>
+                      <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}><Edit className="h-3.5 w-3.5 mr-1" /> Edit</Button>
                       <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5 mr-1" /> Delete</Button>
                     </div>
                   </div>
@@ -376,6 +386,7 @@ export default function TaskDetailPage() {
       </div>
 
       <IssueDialog taskId={taskId} projectId={taskDetail.projectId} open={issueDialogOpen} onOpenChange={setIssueDialogOpen} onSuccess={fetchTaskDetail} />
+      <EditTaskDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} task={taskDetail} onSuccess={fetchTaskDetail} />
 
       {/* Completion Modal - Temporarily disabled
       <Dialog open={isCompletionModalOpen} onOpenChange={setIsCompletionModalOpen}>

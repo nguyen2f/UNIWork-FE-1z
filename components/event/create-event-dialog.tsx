@@ -27,7 +27,7 @@ interface CreateEventDialogProps {
 }
 
 interface Project {
-    id: number
+    projectId: number
     name: string
 }
 
@@ -130,7 +130,7 @@ export function CreateEventDialog({
 
     useEffect(() => {
         if (allProjects.length === 1) {
-            handleChange("projectId", String(allProjects[0].id))
+            handleChange("projectId", String(allProjects[0].projectId))
         }
     }, [allProjects])
 
@@ -167,8 +167,8 @@ export function CreateEventDialog({
                                 .filter((project) => project !== null)
                                 .map((project) => (
                                     <SelectItem
-                                        key={project.id}
-                                        value={String(project.id)}
+                                        key={project.projectId}
+                                        value={String(project.projectId)}
                                     >
                                         {project.name}
                                     </SelectItem>

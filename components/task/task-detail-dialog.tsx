@@ -33,6 +33,7 @@ import { taskService } from "@/services/task.service"
 import { commentService } from "@/services/comment.service"
 import { fileService } from "@/services/file.service"
 import { IssueDialog } from "@/components/issue/issue-dialog"
+import { EditTaskDialog } from "@/components/task/edit-task-dialog"
 import type { IssueDTO } from "@/types/issue.types"
 
 interface TaskDetailDialogProps {
@@ -73,6 +74,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const [isIssuesExpanded, setIsIssuesExpanded] = useState(false)
   const [issueDialogOpen, setIssueDialogOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<IssueDTO | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   useEffect(() => {
     if (!open || !task) return
@@ -96,7 +98,15 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
       setTaskDetail(data.task)
       setChildTasks(data.childTasks || [])
       setComments(data.comments || [])
-      setFileAttachments(data.fileAttachments || [])
+      
+      try {
+        const filesRes = await fileService.getFiles(task.taskId)
+        setFileAttachments(filesRes.data || filesRes || [])
+      } catch (err) {
+        console.error("Failed to fetch files from getFiles API, falling back:", err)
+        setFileAttachments(data.fileAttachments || [])
+      }
+
       setIssues(data.issues || [])
     } catch (error) {
       console.error("Failed to fetch task detail:", error)
@@ -604,7 +614,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
                   <Edit className="h-4 w-4 mr-1" />
                   Edit Task
                 </Button>
@@ -654,6 +664,12 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         issue={selectedIssue}
         open={issueDialogOpen}
         onOpenChange={setIssueDialogOpen}
+        onSuccess={fetchTaskDetail}
+      />
+      <EditTaskDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        task={displayTask}
         onSuccess={fetchTaskDetail}
       />
     </Dialog>
