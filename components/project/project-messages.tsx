@@ -29,7 +29,7 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
         createdAt: new Date().toISOString(),
         sender: {
           userId: 1,
-          name: "Bạn",
+          name: "You",
           email: "you@company.com",
         },
       }
@@ -41,7 +41,7 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
   return (
     <Card className="h-[600px] flex flex-col">
       <CardHeader>
-        <CardTitle>Tin nhắn dự án</CardTitle>
+        <CardTitle>Project Messages</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <ScrollArea className="flex-1 pr-4">
@@ -54,7 +54,7 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="font-medium text-sm">{message.sender.name}</span>
-                    <span className="text-xs text-gray-500">{new Date(message.createdAt).toLocaleString("vi-VN")}</span>
+                    <span className="text-xs text-gray-500">{new Date(message.createdAt).toLocaleString("en-US")}</span>
                   </div>
                   <div className="bg-gray-100 rounded-lg p-3 max-w-md">
                     <p className="text-sm">{message.content}</p>
@@ -64,7 +64,7 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
             ))}
             {messages.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500">Chưa có tin nhắn nào</p>
+                <p className="text-gray-500">No messages yet</p>
               </div>
             )}
           </div>
@@ -72,7 +72,7 @@ export function ProjectMessages({ projectId }: ProjectMessagesProps) {
 
         <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
           <Input
-            placeholder="Nhập tin nhắn..."
+            placeholder="Type a message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => {

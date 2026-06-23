@@ -6,11 +6,11 @@ import { FloatingChat } from "./floating-chat"
 export function FloatingChatWrapper() {
   const pathname = usePathname()
 
-  // Only show floating chat on authenticated pages (not on auth, admin login pages)
+  // Only show floating chat on authenticated pages (not on auth, admin login pages, or messages page)
   const isAuthPage = pathname?.startsWith("/auth")
-  const isAdminPage = pathname?.startsWith("/admin")
+  const isMessagesPage = pathname?.startsWith("/messages")
 
-  if (isAuthPage) return null
+  if (isAuthPage || isMessagesPage) return null
 
   return <FloatingChat />
 }

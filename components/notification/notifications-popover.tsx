@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Bell, Check, Trash2, MessageSquare, CheckSquare, AlertTriangle, Bug, Layers, FolderKanban } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -18,6 +19,7 @@ import { connectSocket, onSocketConnected } from "@/services/socket"
 import { NotificationToast } from "./notification-toast"
 
 export function NotificationsPopover() {
+    const router = useRouter()
     const [notifications, setNotifications] = useState<NotificationDTO[]>([])
     const [isOpen, setIsOpen] = useState(false)
     const [newNotification, setNewNotification] = useState<NotificationDTO | null>(null)
@@ -88,11 +90,47 @@ export function NotificationsPopover() {
     }, [])
 
     const handleMarkAsRead = async (notiId: number) => {
-        await markNotificationAsRead(notiId)
-        setNotifications((prev) =>
-            prev.map((n) => (n.notiId === notiId ? { ...n, read: true } : n))
-        )
-        setUnreadBadgeCount((prev) => Math.max(0, prev - 1))
+        try {
+            await markNotificationAsRead(notiId)
+            setNotifications((prev) =>
+                prev.map((n) => (n.notiId === notiId ? { ...n, read: true } : n))
+            )
+            setUnreadBadgeCount((prev) => Math.max(0, prev - 1))
+        } catch (err) {
+            console.error("Mark as read failed", err)
+            // Update UI state locally anyway for better UX
+            setNotifications((prev) =>
+                prev.map((n) => (n.notiId === notiId ? { ...n, read: true } : n))
+            )
+            setUnreadBadgeCount((prev) => Math.max(0, prev - 1))
+        }
+    }
+
+    const handleNotificationClick = async (n: NotificationDTO) => {
+        if (!n.read) {
+            await handleMarkAsRead(n.notiId)
+        }
+
+        if (n.entityType && n.entityId) {
+            const type = n.entityType.toUpperCase()
+            switch (type) {
+                case "TASK":
+                    router.push(`/tasks/${n.entityId}`)
+                    break
+                case "ISSUE":
+                    router.push(`/issues/${n.entityId}`)
+                    break
+                case "CHAT_ROOM":
+                    router.push(`/messages?roomId=${n.entityId}`)
+                    break
+                case "PROJECT":
+                    router.push(`/projects/${n.entityId}`)
+                    break
+                default:
+                    break
+            }
+        }
+        setIsOpen(false)
     }
 
     const handleMarkAllAsRead = async () => {
@@ -175,14 +213,14 @@ export function NotificationsPopover() {
                 <PopoverContent className="w-[420px] p-0 shadow-2xl border-0 rounded-xl" align="end">
                     <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
                         <div>
-                            <h3 className="font-semibold text-lg">Thông báo</h3>
-                            <p className="text-sm text-gray-500">{unreadCount} chưa đọc</p>
+                            <h3 className="font-semibold text-lg">Notifications</h3>
+                            <p className="text-sm text-gray-500">{unreadCount} unread</p>
                         </div>
 
                         {unreadCount > 0 && (
                             <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} className="text-blue-600 hover:text-blue-700 hover:bg-blue-100">
                                 <Check className="h-4 w-4 mr-1" />
-                                Đọc tất cả
+                                Mark all as read
                             </Button>
                         )}
                     </div>
@@ -192,7 +230,7 @@ export function NotificationsPopover() {
                             {notifications.length === 0 ? (
                                 <div className="flex flex-col items-center py-12 text-gray-500">
                                     <Bell className="h-12 w-12 mb-3 text-gray-300" />
-                                    <p className="text-sm">Không có thông báo</p>
+                                    <p className="text-sm">No notifications</p>
                                 </div>
                             ) : (
                                 notifications.map((n) => (
@@ -201,6 +239,7 @@ export function NotificationsPopover() {
                                         className={`group flex gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm ${
                                             n.read ? "opacity-60 hover:opacity-80" : "bg-blue-50/60 hover:bg-blue-50"
                                         }`}
+                                        onClick={() => handleNotificationClick(n)}
                                     >
                                         <div className="mt-0.5 flex-shrink-0">
                                             {getIcon(n.entityType)}
@@ -219,7 +258,7 @@ export function NotificationsPopover() {
                                                 {n.message}
                                             </p>
                                             <p className="text-xs text-gray-400 mt-1">
-                                                {new Date(n.createdDate).toLocaleString("vi-VN")}
+                                                {new Date(n.createdDate).toLocaleString("en-US")}
                                             </p>
                                         </div>
 
@@ -230,7 +269,7 @@ export function NotificationsPopover() {
                                                     variant="ghost"
                                                     className="h-7 w-7 hover:bg-blue-100"
                                                     onClick={(e) => { e.stopPropagation(); handleMarkAsRead(n.notiId) }}
-                                                    title="Đánh dấu đã đọc"
+                                                    title="Mark as read"
                                                 >
                                                     <Check className="h-3.5 w-3.5 text-blue-600" />
                                                 </Button>
@@ -240,7 +279,7 @@ export function NotificationsPopover() {
                                                 variant="ghost"
                                                 className="h-7 w-7 hover:bg-red-100"
                                                 onClick={(e) => { e.stopPropagation(); handleDelete(n.notiId) }}
-                                                title="Xóa thông báo"
+                                                title="Delete notification"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5 text-red-500" />
                                             </Button>
@@ -260,7 +299,7 @@ export function NotificationsPopover() {
                                     className="w-full text-sm text-gray-500 hover:text-red-600"
                                     onClick={() => setNotifications([])}
                                 >
-                                    Xóa tất cả thông báo
+                                    Clear all notifications
                                 </Button>
                             </div>
                         </>

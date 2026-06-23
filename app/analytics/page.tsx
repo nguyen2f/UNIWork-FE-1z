@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Calendar, Download, Filter } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,11 +9,19 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SidebarContent as Sidebar } from "@/components/layout/sidebar"
+import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 
 export default function AnalyticsPage() {
+  const router = useRouter()
   const [timeRange, setTimeRange] = useState("month")
+
+  useEffect(() => {
+    const role = localStorage.getItem("role")
+    if (role === "EMPLOYEE") {
+      router.push("/dashboard")
+    }
+  }, [router])
 
   const [performanceMetrics] = useState([
     { name: "Project Completion Rate", value: 87, change: 5, trend: "up", target: 90 },

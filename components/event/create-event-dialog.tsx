@@ -19,7 +19,8 @@ import { createEvent } from "@/services/event.service"
 import type { Event } from "@/types/event.types"
 // import {Project} from "@/types";
 import {getAllProjects} from "@/services/project.service";
-import {message} from "antd";
+import {message, TimePicker} from "antd";
+import dayjs from "dayjs";
 
 interface CreateEventDialogProps {
     selectedDate?: Date
@@ -186,10 +187,15 @@ export function CreateEventDialog({
                             onChange={(e) => handleChange("date", e.target.value)}
                             required
                         />
-                        <Input
-                            type="time"
-                            value={formData.time}
-                            onChange={(e) => handleChange("time", e.target.value)}
+                        <TimePicker
+                            className="w-full h-10 border-slate-200 rounded-md"
+                            format="h:mm A"
+                            use12Hours
+                            value={formData.time ? dayjs(formData.time, "HH:mm") : null}
+                            onChange={(time) => {
+                                handleChange("time", time ? time.format("HH:mm") : "")
+                            }}
+                            placeholder="Select time"
                         />
                     </div>
 

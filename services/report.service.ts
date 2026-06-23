@@ -4,6 +4,12 @@ import type {
   MemberWorkloadDTO,
   OverdueItemDTO,
   StageReportDTO,
+  StatusDistributionDTO,
+  PriorityDistributionDTO,
+  CompletionTrendDTO,
+  CreationTrendDTO,
+  AnalyticsSummaryDTO,
+  ProjectAnalyticsDTO,
 } from "@/types/report.types"
 
 export const reportService = {
@@ -37,6 +43,31 @@ export const reportService = {
 
   getStageReport: (projectId: number) =>
     api<StageReportDTO[]>({ method: "GET", url: `/reports/stage-report/${projectId}` }),
+
+  // 8 Analytics Endpoints
+  getAnalyticsSummary: () =>
+    api<AnalyticsSummaryDTO>({ method: "GET", url: "/reports/analytics/summary" }),
+
+  getCompletionTrend: (granularity?: string, from?: number, to?: number) =>
+    api<CompletionTrendDTO>({ method: "GET", url: "/reports/analytics/completion-trend", params: { granularity, from, to } }),
+
+  getCreationTrend: (granularity?: string, from?: number, to?: number) =>
+    api<CreationTrendDTO>({ method: "GET", url: "/reports/analytics/creation-trend", params: { granularity, from, to } }),
+
+  getProjectAnalytics: (projectId: number) =>
+    api<ProjectAnalyticsDTO>({ method: "GET", url: `/reports/analytics/project/${projectId}` }),
+
+  getTaskStatusDistribution: (projectId?: number) =>
+    api<StatusDistributionDTO[]>({ method: "GET", url: "/reports/analytics/task-status-distribution", params: { projectId } }),
+
+  getIssueStatusDistribution: (projectId?: number) =>
+    api<StatusDistributionDTO[]>({ method: "GET", url: "/reports/analytics/issue-status-distribution", params: { projectId } }),
+
+  getTaskPriorityDistribution: () =>
+    api<PriorityDistributionDTO[]>({ method: "GET", url: "/reports/analytics/task-priority-distribution" }),
+
+  getIssuePriorityDistribution: () =>
+    api<PriorityDistributionDTO[]>({ method: "GET", url: "/reports/analytics/issue-priority-distribution" }),
 }
 
 // Backward-compatible aliases
@@ -50,3 +81,13 @@ export const fetchSingleProjectReport = reportService.getSingleProjectReport
 export const fetchMemberWorkload = reportService.getMemberWorkload
 export const fetchOverdueItems = reportService.getOverdueItems
 export const fetchStageReport = reportService.getStageReport
+
+// New Analytics API exports
+export const fetchAnalyticsSummary = reportService.getAnalyticsSummary
+export const fetchCompletionTrend = reportService.getCompletionTrend
+export const fetchCreationTrend = reportService.getCreationTrend
+export const fetchProjectAnalytics = reportService.getProjectAnalytics
+export const fetchTaskStatusDistribution = reportService.getTaskStatusDistribution
+export const fetchIssueStatusDistribution = reportService.getIssueStatusDistribution
+export const fetchTaskPriorityDistribution = reportService.getTaskPriorityDistribution
+export const fetchIssuePriorityDistribution = reportService.getIssuePriorityDistribution

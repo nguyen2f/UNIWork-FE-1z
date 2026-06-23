@@ -17,7 +17,7 @@ export function useProjects() {
       setError(null)
     } catch (err: any) {
       setError(err.message)
-      toast.error("Không thể tải danh sách dự án")
+      toast.error("Failed to load projects list")
     } finally {
       setLoading(false)
     }
@@ -27,10 +27,10 @@ export function useProjects() {
     try {
       const newProject = await projectService.create(projectData)
       setProjects((prev) => [...prev, newProject])
-      toast.success("Tạo dự án thành công")
+      toast.success("Project created successfully")
       return newProject
     } catch (err: any) {
-      toast.error(err.message || "Không thể tạo dự án")
+      toast.error(err.message || "Failed to create project")
       throw err
     }
   }
@@ -39,10 +39,10 @@ export function useProjects() {
     try {
       const updatedProject = await projectService.update(id as any, projectData)
       setProjects((prev) => prev.map((p) => (p.id === id ? updatedProject : p)))
-      toast.success("Cập nhật dự án thành công")
+      toast.success("Project updated successfully")
       return updatedProject
     } catch (err: any) {
-      toast.error(err.message || "Không thể cập nhật dự án")
+      toast.error(err.message || "Failed to update project")
       throw err
     }
   }
@@ -51,9 +51,9 @@ export function useProjects() {
     try {
       await projectService.delete(id as any)
       setProjects((prev) => prev.filter((p) => p.id !== id))
-      toast.success("Xóa dự án thành công")
+      toast.success("Project deleted successfully")
     } catch (err: any) {
-      toast.error(err.message || "Không thể xóa dự án")
+      toast.error(err.message || "Failed to delete project")
       throw err
     }
   }
@@ -86,7 +86,7 @@ export function useProject(id: string) {
       setError(null)
     } catch (err: any) {
       setError(err.message)
-      toast.error("Không thể tải thông tin dự án")
+      toast.error("Failed to load project details")
     } finally {
       setLoading(false)
     }

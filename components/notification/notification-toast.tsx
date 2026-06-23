@@ -38,7 +38,7 @@ export function NotificationToast({ notification, onDismiss }: NotificationToast
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-900">
-              {notification.title ?? "Thông báo mới"}
+              {notification.title ?? "New Notification"}
             </p>
             <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
           </div>

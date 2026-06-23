@@ -9,7 +9,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
   ArrowLeft, Edit, Trash2, Users, MoreHorizontal, Plus, Minus, ChevronRight,
   Calendar, Target, TrendingUp, Timer, FolderKanban, Layers, Flag,
-  CheckCircle2, Circle, Play, AlertCircle, Clock, Zap, ListTodo, Bug, User, Search
+  CheckCircle2, Circle, Play, AlertCircle, Clock, Zap, ListTodo, Bug, User, Search,
+  Table2, LayoutGrid
 } from "lucide-react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
@@ -31,6 +32,7 @@ import { EditProjectDialog } from "@/components/project/edit-project-dialog"
 import { ManageMembersDialog } from "@/components/project/manage-members-dialog"
 import { EditTaskDialog } from "@/components/task/edit-task-dialog"
 import { IssueDialog } from "@/components/issue/issue-dialog"
+import { ProjectSpreadsheetView } from "@/components/project/project-spreadsheet-view"
 
 const ProjectStatusCfg: Record<string, { label: string; bg: string; icon: any }> = {
   PLANNING: { label: "Planning", bg: "bg-amber-50 text-amber-700 border-amber-200", icon: Target },
@@ -79,6 +81,7 @@ export default function ProjectDetailPage(props: any) {
   const [editingIssueTaskId, setEditingIssueTaskId] = useState<number>(0)
   const [activeListTab, setActiveListTab] = useState<"tasks" | "issues">("tasks")
   const [listSearchQuery, setListSearchQuery] = useState("")
+  const [viewMode, setViewMode] = useState<"cards" | "spreadsheet">("cards")
 
   const handleEditStage = (stage: any) => {
     setEditingStage(stage)
@@ -285,7 +288,8 @@ export default function ProjectDetailPage(props: any) {
     try {
       setLoading(true)
       const response = await projectService.getById(pid)
-      setProject((response as any).project || response)
+      const projectData = (response as any)?.project || (response as any)?.data?.project || response
+      setProject(projectData)
     } catch (error) {
       console.error("Failed to fetch project details:", error)
     } finally {
@@ -454,17 +458,64 @@ export default function ProjectDetailPage(props: any) {
               </div>
             </div>
 
-            {/* Stages Section */}
+            {/* View Toggle + Stages Section */}
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">{getStageLabel()}</h2>
                 <p className="text-sm text-slate-500">{stages.length} {getStageLabel().toLowerCase()} in this project</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setCreateStageDialogOpen(true)} className="gap-1.5">
-                <Plus className="h-3.5 w-3.5" /> New {project.method === "AGILE" ? "Sprint" : project.method === "WATERFALL" ? "Phase" : "Stage"}
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* View Toggle */}
+                <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setViewMode("cards")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === "cards"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setViewMode("spreadsheet")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      viewMode === "spreadsheet"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <Table2 className="h-3.5 w-3.5" />
+                    Spreadsheet
+                  </button>
+                </div>
+                {viewMode === "cards" && (
+                  <Button variant="outline" size="sm" onClick={() => setCreateStageDialogOpen(true)} className="gap-1.5">
+                    <Plus className="h-3.5 w-3.5" /> New {project.method === "AGILE" ? "Sprint" : project.method === "WATERFALL" ? "Phase" : "Stage"}
+                  </Button>
+                )}
+              </div>
             </div>
 
+            {viewMode === "spreadsheet" ? (
+              <ProjectSpreadsheetView
+                projectId={projectId}
+                method={project.method || "STANDARD"}
+                stages={stages}
+                stageTasks={stageTasks}
+                taskIssues={taskIssues}
+                onEditStage={handleEditStage}
+                onDeleteStage={handleDeleteStage}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                onEditIssue={handleEditIssue}
+                onDeleteIssue={handleDeleteIssue}
+                onCreateTask={() => setCreateTaskDialogOpen(true)}
+                onCreateStage={() => setCreateStageDialogOpen(true)}
+              />
+            ) : (
+            <>
             {stages.length === 0 ? (
               <Card className="border-dashed mb-8">
                 <CardContent className="flex flex-col items-center justify-center py-16">
@@ -928,6 +979,8 @@ export default function ProjectDetailPage(props: any) {
                 </Card>
               )}
             </div>
+            </>
+            )}
           </div>
         </main>
       </div>

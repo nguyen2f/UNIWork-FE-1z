@@ -11,7 +11,7 @@ import {
   BarChart3, TrendingUp, Download, Calendar, Users, AlertTriangle,
   CheckCircle2, Clock, FolderKanban, Layers, Bug, Loader2
 } from "lucide-react"
-import { SidebarContent as Sidebar } from "@/components/layout/sidebar"
+import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import {
   fetchMemberWorkload,
@@ -21,12 +21,65 @@ import {
 import type { MemberWorkloadDTO, OverdueItemDTO } from "@/types/report.types"
 import type { ProjectReport } from "@/types/project.types"
 
+import { AnalyticsDashboard } from "@/components/report/analytics-dashboard"
+
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [memberWorkload, setMemberWorkload] = useState<MemberWorkloadDTO[]>([])
   const [overdueItems, setOverdueItems] = useState<OverdueItemDTO[]>([])
   const [projectReports, setProjectReports] = useState<ProjectReport[]>([])
-  const [selectedTab, setSelectedTab] = useState<"overview" | "workload" | "overdue">("overview")
+  const [selectedTab, setSelectedTab] = useState<"overview" | "analytics" | "workload" | "overdue">("overview")
+  const [exporting, setExporting] = useState(false)
+
+  const handleExportPDF = async () => {
+    setExporting(true)
+    try {
+      const { default: jsPDF } = await import("jspdf")
+      const { default: html2canvas } = await import("html2canvas")
+
+      const element = document.getElementById("report-to-export")
+      if (!element) return
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#f9fafb", // matches bg-gray-50
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+      })
+
+      const imgData = canvas.toDataURL("image/png")
+      const pdf = new jsPDF("p", "mm", "a4")
+      
+      const imgWidth = 190 // 210 - 20 (10mm margin on left & right)
+      const pageHeight = 277 // 297 - 20 (10mm margin on top & bottom)
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      
+      let heightLeft = imgHeight
+      let position = 0
+      
+      // Page 1
+      pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+      
+      // Additional pages
+      let page = 1
+      while (heightLeft > 0) {
+        position = 10 - (page * pageHeight)
+        pdf.addPage()
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+        page++
+      }
+
+      pdf.save(`Bao_cao_UNIWork_${new Date().toISOString().slice(0, 10)}.pdf`)
+    } catch (error) {
+      console.error("Error exporting PDF:", error)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     loadAllReports()
@@ -90,7 +143,7 @@ export default function ReportsPage() {
           <main className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-3" />
-              <p className="text-gray-500">Đang tải báo cáo...</p>
+              <p className="text-gray-500">Loading reports...</p>
             </div>
           </main>
         </div>
@@ -104,32 +157,45 @@ export default function ReportsPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
+          <div id="report-to-export" className="max-w-7xl mx-auto bg-gray-50 p-4 rounded-xl">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Báo cáo & Thống kê</h1>
-                <p className="text-gray-600 mt-2">Theo dõi tiến độ và hiệu suất của các dự án</p>
+                <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
+                <p className="text-gray-600 mt-2">Track progress and performance of projects</p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2" data-html2canvas-ignore="true">
                 <Button variant="outline" onClick={loadAllReports}>
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  Làm mới
+                  Refresh
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={handleExportPDF}
+                  disabled={exporting}
+                  className="bg-red-600 hover:bg-red-700 text-white gap-2"
+                >
+                  {exporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  {exporting ? "Exporting..." : "Export PDF"}
                 </Button>
               </div>
             </div>
 
             {/* Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <Card className="border-l-4 border-l-blue-500">
+              <Card className="border-l-4 border-l-blue-500 bg-white">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Tổng dự án</p>
+                      <p className="text-sm font-medium text-gray-600">Total Projects</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{projectReports.length}</p>
                       <p className="text-sm text-blue-600 mt-1 flex items-center">
                         <FolderKanban className="h-3 w-3 mr-1" />
-                        Đang theo dõi
+                        Active tracking
                       </p>
                     </div>
                     <FolderKanban className="h-8 w-8 text-blue-600" />
@@ -137,15 +203,15 @@ export default function ReportsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-green-500">
+              <Card className="border-l-4 border-l-green-500 bg-white">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Tasks hoàn thành</p>
+                      <p className="text-sm font-medium text-gray-600">Completed Tasks</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{totalCompleted}</p>
                       <p className="text-sm text-green-600 mt-1 flex items-center">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                        {totalTasks > 0 ? `${((totalCompleted / totalTasks) * 100).toFixed(0)}%` : "0%"} tổng
+                        {totalTasks > 0 ? `${((totalCompleted / totalTasks) * 100).toFixed(0)}%` : "0%"} total
                       </p>
                     </div>
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
@@ -153,15 +219,15 @@ export default function ReportsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-orange-500">
+              <Card className="border-l-4 border-l-orange-500 bg-white">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Issues đã giải quyết</p>
+                      <p className="text-sm font-medium text-gray-600">Resolved Issues</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{resolvedIssues}</p>
                       <p className="text-sm text-orange-600 mt-1 flex items-center">
                         <Bug className="h-3 w-3 mr-1" />
-                        {totalIssues > 0 ? `${((resolvedIssues / totalIssues) * 100).toFixed(0)}%` : "0%"} tổng
+                        {totalIssues > 0 ? `${((resolvedIssues / totalIssues) * 100).toFixed(0)}%` : "0%"} total
                       </p>
                     </div>
                     <Bug className="h-8 w-8 text-orange-600" />
@@ -169,15 +235,15 @@ export default function ReportsPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-red-500">
+              <Card className="border-l-4 border-l-red-500 bg-white">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Quá hạn</p>
+                      <p className="text-sm font-medium text-gray-600">Overdue Items</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{overdueItems.length}</p>
                       <p className="text-sm text-red-600 mt-1 flex items-center">
                         <AlertTriangle className="h-3 w-3 mr-1" />
-                        Cần xử lý
+                        Requires action
                       </p>
                     </div>
                     <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -187,11 +253,12 @@ export default function ReportsPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-6" data-html2canvas-ignore="true">
               {[
-                { key: "overview" as const, label: "Tổng quan dự án", icon: FolderKanban },
-                { key: "workload" as const, label: "Khối lượng công việc", icon: Users },
-                { key: "overdue" as const, label: "Quá hạn", icon: AlertTriangle },
+                { key: "overview" as const, label: "Project Overview", icon: FolderKanban },
+                { key: "analytics" as const, label: "Data Analytics", icon: BarChart3 },
+                { key: "workload" as const, label: "Member Workload", icon: Users },
+                { key: "overdue" as const, label: "Overdue", icon: AlertTriangle },
               ].map((tab) => (
                 <Button
                   key={tab.key}
@@ -218,15 +285,15 @@ export default function ReportsPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FolderKanban className="h-5 w-5 text-blue-600" />
-                      Tiến độ dự án
+                      Project Progress
                     </CardTitle>
-                    <CardDescription>Tình trạng tiến độ của các dự án đang thực hiện</CardDescription>
+                    <CardDescription>Status and progress of active projects</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {projectReports.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <FolderKanban className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                        <p>Không có dữ liệu dự án</p>
+                        <p>No project data available</p>
                       </div>
                     ) : (
                       <div className="space-y-5">
@@ -245,11 +312,11 @@ export default function ReportsPage() {
                             <div className="flex justify-between text-xs text-gray-500">
                               <div className="flex items-center gap-1">
                                 <Users className="h-3 w-3" />
-                                <span>{project.countMember} thành viên</span>
+                                <span>{project.countMember} members</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                <span>Đến: {project.project?.endDate}</span>
+                                <span>Due: {project.project?.endDate}</span>
                               </div>
                             </div>
                           </div>
@@ -261,20 +328,24 @@ export default function ReportsPage() {
               </div>
             )}
 
+            {selectedTab === "analytics" && (
+              <AnalyticsDashboard projectReports={projectReports} />
+            )}
+
             {selectedTab === "workload" && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-indigo-600" />
-                    Khối lượng công việc thành viên
+                    Member Workload
                   </CardTitle>
-                  <CardDescription>Thống kê tasks và issues của từng thành viên trong các dự án</CardDescription>
+                  <CardDescription>Task and issue statistics for each team member across projects</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {memberWorkload.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <Users className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                      <p>Không có dữ liệu</p>
+                      <p>No data available</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -290,7 +361,7 @@ export default function ReportsPage() {
                                 </div>
                                 <div>
                                   <p className="font-semibold text-gray-900">{member.userName}</p>
-                                  <p className="text-xs text-gray-500">{member.projectCount ?? 0} dự án</p>
+                                  <p className="text-xs text-gray-500">{member.projectCount ?? 0} projects</p>
                                 </div>
                               </div>
                             </div>
@@ -346,19 +417,19 @@ export default function ReportsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-red-600" />
-                    Danh sách quá hạn
+                    Overdue List
                     {overdueItems.length > 0 && (
                       <Badge variant="destructive" className="ml-2">{overdueItems.length}</Badge>
                     )}
                   </CardTitle>
-                  <CardDescription>Tasks và Issues đã quá hạn, sắp xếp theo số ngày quá hạn</CardDescription>
+                  <CardDescription>Overdue tasks and issues, sorted by days overdue</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {overdueItems.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                       <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-400" />
-                      <p className="font-medium text-green-600">Không có mục nào quá hạn!</p>
-                      <p className="text-sm text-gray-400 mt-1">Tất cả đang đúng tiến độ</p>
+                      <p className="font-medium text-green-600">No overdue items!</p>
+                      <p className="text-sm text-gray-400 mt-1">Everything is on schedule</p>
                     </div>
                   ) : (
                     <div className="space-y-3">

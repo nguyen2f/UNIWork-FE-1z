@@ -7,17 +7,17 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!name || !email || !password) {
-      return NextResponse.json({ message: "Vui lòng điền đầy đủ thông tin" }, { status: 400 })
+      return NextResponse.json({ message: "Please fill in all required fields" }, { status: 400 })
     }
 
     if (password.length < 6) {
-      return NextResponse.json({ message: "Mật khẩu phải có ít nhất 6 ký tự" }, { status: 400 })
+      return NextResponse.json({ message: "Password must be at least 6 characters long" }, { status: 400 })
     }
 
     // Check if user already exists (trong thực tế sẽ check database)
     // Giả lập check email đã tồn tại
     if (email === "admin@company.com" || email === "manager@company.com") {
-      return NextResponse.json({ message: "Email đã được sử dụng" }, { status: 400 })
+      return NextResponse.json({ message: "Email is already in use" }, { status: 400 })
     }
 
     // Hash password
@@ -43,13 +43,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Tài khoản đã được tạo thành công",
+        message: "Account has been created successfully",
         user: userWithoutPassword,
       },
       { status: 201 },
     )
   } catch (error) {
     console.error("Registration error:", error)
-    return NextResponse.json({ message: "Đã xảy ra lỗi server" }, { status: 500 })
+    return NextResponse.json({ message: "An internal server error occurred" }, { status: 500 })
   }
 }

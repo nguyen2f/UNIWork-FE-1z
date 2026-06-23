@@ -95,7 +95,7 @@ export function InviteMemberToProjectDialog({
             const user = allUsers.find((u) => u.userId === userId)
 
             message.success(
-                `${user?.name ?? email} đã được mời vào dự án ${project.name}`,
+                `${user?.name ?? email} has been invited to project ${project.name}`,
                 3
             )
 

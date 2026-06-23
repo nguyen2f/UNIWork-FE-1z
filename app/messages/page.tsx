@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, Suspense, useRef, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Plus, Send, Search, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,8 +36,21 @@ interface Conversation {
 }
 
 function MessagesContent() {
+  const searchParams = useSearchParams()
+  const roomIdParam = searchParams.get("roomId")
+
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (roomIdParam) {
+      const roomIdNum = Number(roomIdParam)
+      if (!isNaN(roomIdNum)) {
+        setSelectedConversation(roomIdNum)
+      }
+    }
+  }, [roomIdParam])
+
   const [newMessage, setNewMessage] = useState("")
   const [createChatOpen, setCreateChatOpen] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)

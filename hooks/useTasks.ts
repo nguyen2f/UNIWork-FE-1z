@@ -19,7 +19,7 @@ export function useTasks(projectId?: string) {
       setError(null)
     } catch (err: any) {
       setError(err.message)
-      toast.error("Không thể tải danh sách công việc")
+      toast.error("Failed to load tasks list")
     } finally {
       setLoading(false)
     }
@@ -29,10 +29,10 @@ export function useTasks(projectId?: string) {
     try {
       const newTask = await taskService.create(taskData)
       setTasks((prev) => [...prev, newTask])
-      toast.success("Tạo công việc thành công")
+      toast.success("Task created successfully")
       return newTask
     } catch (err: any) {
-      toast.error(err.message || "Không thể tạo công việc")
+      toast.error(err.message || "Failed to create task")
       throw err
     }
   }
@@ -41,10 +41,10 @@ export function useTasks(projectId?: string) {
     try {
       const updatedTask = await taskService.update(id as any, taskData)
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)))
-      toast.success("Cập nhật công việc thành công")
+      toast.success("Task updated successfully")
       return updatedTask
     } catch (err: any) {
-      toast.error(err.message || "Không thể cập nhật công việc")
+      toast.error(err.message || "Failed to update task")
       throw err
     }
   }
@@ -53,10 +53,10 @@ export function useTasks(projectId?: string) {
     try {
       const updatedTask = await taskService.updateStatus(id as any, id as any, id as any, { status: status as any })
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)))
-      toast.success("Cập nhật trạng thái thành công")
+      toast.success("Task status updated successfully")
       return updatedTask
     } catch (err: any) {
-      toast.error(err.message || "Không thể cập nhật trạng thái")
+      toast.error(err.message || "Failed to update task status")
       throw err
     }
   }
@@ -65,9 +65,9 @@ export function useTasks(projectId?: string) {
     try {
       await taskService.delete(id as any)
       setTasks((prev) => prev.filter((t) => t.id !== id))
-      toast.success("Xóa công việc thành công")
+      toast.success("Task deleted successfully")
     } catch (err: any) {
-      toast.error(err.message || "Không thể xóa công việc")
+      toast.error(err.message || "Failed to delete task")
       throw err
     }
   }

@@ -59,7 +59,7 @@ export function AddProjectMemberDialog({ open, onOpenChange, projectId, onSucces
 
   return (
     <Modal
-      title="Thêm thành viên vào dự án"
+      title="Add Team Member to Project"
       open={open}
       onCancel={() => onOpenChange(false)}
       footer={null}
@@ -68,12 +68,12 @@ export function AddProjectMemberDialog({ open, onOpenChange, projectId, onSucces
       <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
         <Form.Item
           name="userId"
-          label="Thành viên"
-          rules={[{ required: true, message: "Vui lòng chọn thành viên" }]}
+          label="Member"
+          rules={[{ required: true, message: "Please select a member" }]}
         >
           <Select
             showSearch
-            placeholder="Chọn thành viên"
+            placeholder="Select a member"
             loading={fetchingUsers}
             filterOption={(input, option) =>
               (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
@@ -87,19 +87,19 @@ export function AddProjectMemberDialog({ open, onOpenChange, projectId, onSucces
 
         <Form.Item
           name="role"
-          label="Vai trò"
-          rules={[{ required: true, message: "Vui lòng chọn vai trò" }]}
+          label="Role"
+          rules={[{ required: true, message: "Please select a role" }]}
         >
-          <Select placeholder="Chọn vai trò">
-            <Select.Option value="PROJECT_MANAGER">Quản lý dự án (PROJECT_MANAGER)</Select.Option>
-            <Select.Option value="MEMBER">Thành viên (MEMBER)</Select.Option>
+          <Select placeholder="Select a role">
+            <Select.Option value="PROJECT_MANAGER">Project Manager (PROJECT_MANAGER)</Select.Option>
+            <Select.Option value="MEMBER">Member (MEMBER)</Select.Option>
           </Select>
         </Form.Item>
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button onClick={() => onOpenChange(false)}>Hủy</Button>
+          <Button onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button type="primary" htmlType="submit" loading={loading} className="bg-blue-600">
-            Thêm thành viên
+            Add Member
           </Button>
         </div>
       </Form>

@@ -56,15 +56,15 @@ export function ProjectMembers({ projectId, members }: ProjectMembersProps) {
   const getRoleText = (role: string) => {
     switch (role) {
       case "owner":
-        return "Chủ sở hữu"
+        return "Owner"
       case "manager":
       case "PROJECT_MANAGER":
-        return "Quản lý"
+        return "Manager"
       case "member":
       case "MEMBER":
-        return "Thành viên"
+        return "Member"
       case "viewer":
-        return "Người xem"
+        return "Viewer"
       default:
         return role
     }
@@ -74,10 +74,10 @@ export function ProjectMembers({ projectId, members }: ProjectMembersProps) {
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Thành viên dự án</CardTitle>
+          <CardTitle>Project Members</CardTitle>
           <Button onClick={() => setIsAddMemberOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Thêm thành viên
+            Add Member
           </Button>
         </CardHeader>
         <CardContent>
@@ -112,9 +112,9 @@ export function ProjectMembers({ projectId, members }: ProjectMembersProps) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Thay đổi vai trò</DropdownMenuItem>
-                      <DropdownMenuItem>Gửi tin nhắn</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">Xóa khỏi dự án</DropdownMenuItem>
+                      <DropdownMenuItem>Change Role</DropdownMenuItem>
+                      <DropdownMenuItem>Send Message</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600">Remove from project</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -123,10 +123,10 @@ export function ProjectMembers({ projectId, members }: ProjectMembersProps) {
 
             {allMembers?.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500">Chưa có thành viên nào</p>
+                <p className="text-gray-500">No members yet</p>
                 <Button className="mt-4" onClick={() => setIsAddMemberOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Thêm thành viên đầu tiên
+                  Add first member
                 </Button>
               </div>
             )}

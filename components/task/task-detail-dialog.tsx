@@ -160,7 +160,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A"
-    return new Date(dateString).toLocaleDateString("vi-VN", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -181,7 +181,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     if (diffHours < 24) return `${diffHours}h ago`
     if (diffDays < 7) return `${diffDays}d ago`
 
-    return date.toLocaleDateString("vi-VN", {
+    return date.toLocaleDateString("en-US", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -198,7 +198,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
       setUploading(true)
       await fileService.upload(task.projectId, task.taskId, file)
       fetchTaskDetail()
-      toast.success("Upload file thành công")
+      toast.success("File uploaded successfully")
     } catch (error) {
       console.error("Upload error:", error)
       toast.error("Failed to upload file")

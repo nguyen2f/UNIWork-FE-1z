@@ -17,7 +17,6 @@ import { connectSocket, disconnectSocket, onSocketConnected } from "@/services/s
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
 
 export function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false)
@@ -238,7 +237,7 @@ export function FloatingChat() {
   const formatTime = (time?: string | null) => {
     if (!time) return ""
     try {
-      return formatDistanceToNow(new Date(time), { addSuffix: true, locale: vi })
+      return formatDistanceToNow(new Date(time), { addSuffix: true })
     } catch {
       return ""
     }
@@ -252,7 +251,7 @@ export function FloatingChat() {
       {/* Floating Chat Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-8 right-8 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 ${
           isOpen
             ? "bg-gray-700 hover:bg-gray-800 rotate-0"
             : "bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
@@ -276,7 +275,7 @@ export function FloatingChat() {
       {/* Chat Widget Panel */}
       {isOpen && (
         <div
-          className={`fixed bottom-24 right-6 z-50 ${widgetWidth} ${widgetHeight} bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in`}
+          className={`fixed bottom-28 right-8 z-50 ${widgetWidth} ${widgetHeight} bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in`}
           id="floating-chat-panel"
         >
           {/* Header */}
@@ -294,10 +293,10 @@ export function FloatingChat() {
                   </Button>
                   <div>
                     <p className="font-semibold text-sm truncate max-w-[180px]">
-                      {currentConversation?.name ?? "Tin nhắn trực tiếp"}
+                      {currentConversation?.name ?? "Direct Message"}
                     </p>
                     <p className="text-xs text-blue-100">
-                      {currentConversation?.type === "DIRECT" ? "Trực tiếp" : "Nhóm"}
+                      {currentConversation?.type === "DIRECT" ? "Direct" : "Group"}
                     </p>
                   </div>
                 </div>
@@ -319,7 +318,7 @@ export function FloatingChat() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleOpenRename(selectedConversation!)}>
-                          Đổi tên nhóm
+                          Rename group
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -372,7 +371,7 @@ export function FloatingChat() {
                   <div className="flex items-center justify-center h-full text-gray-400 text-sm py-12">
                     <div className="text-center">
                       <MessageSquare className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                      <p>Chưa có tin nhắn</p>
+                      <p>No messages yet</p>
                       <p className="text-xs mt-1"> Let's start a conversation. </p>
                     </div>
                   </div>
@@ -483,7 +482,7 @@ export function FloatingChat() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <p className="font-semibold text-sm truncate text-gray-900">
-                              {c.name ?? "Tin nhắn trực tiếp"}
+                              {c.name ?? "Direct Message"}
                             </p>
                             {c.lastMessageTime && (
                               <span className="text-[10px] text-gray-400 flex-shrink-0 ml-2">

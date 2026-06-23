@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ projects })
   } catch (error) {
     console.error("Get projects error:", error)
-    return NextResponse.json({ message: "Đã xảy ra lỗi server" }, { status: 500 })
+    return NextResponse.json({ message: "An internal server error occurred" }, { status: 500 })
   }
 }
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!name || !description) {
-      return NextResponse.json({ message: "Vui lòng điền đầy đủ thông tin" }, { status: 400 })
+      return NextResponse.json({ message: "Please fill in all required fields" }, { status: 400 })
     }
 
     // Create project (trong thực tế sẽ lưu vào database)
@@ -68,13 +68,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Dự án đã được tạo thành công",
+        message: "Project has been created successfully",
         project,
       },
       { status: 201 },
     )
   } catch (error) {
     console.error("Create project error:", error)
-    return NextResponse.json({ message: "Đã xảy ra lỗi server" }, { status: 500 })
+    return NextResponse.json({ message: "An internal server error occurred" }, { status: 500 })
   }
 }

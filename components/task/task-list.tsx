@@ -50,13 +50,13 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
   const getStatusText = (status: string) => {
     switch (status) {
       case "todo":
-        return "Cần làm"
+        return "To Do"
       case "in-progress":
-        return "Đang làm"
+        return "In Progress"
       case "review":
-        return "Đang xem xét"
+        return "Review"
       case "completed":
-        return "Hoàn thành"
+        return "Completed"
       default:
         return status
     }
@@ -65,13 +65,13 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
   const getPriorityText = (priority: string) => {
     switch (priority) {
       case "low":
-        return "Thấp"
+        return "Low"
       case "medium":
-        return "Trung bình"
+        return "Medium"
       case "high":
-        return "Cao"
+        return "High"
       case "critical":
-        return "Khẩn cấp"
+        return "Critical"
       default:
         return priority
     }
@@ -80,10 +80,10 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Danh sách công việc</CardTitle>
+        <CardTitle>Tasks List</CardTitle>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Thêm công việc
+          Add Task
         </Button>
       </CardHeader>
       <CardContent>
@@ -102,9 +102,9 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
-                    <DropdownMenuItem>Gán người thực hiện</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">Xóa</DropdownMenuItem>
+                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem>Assignee</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -125,7 +125,7 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
                   </div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    {new Date(task.dueDate).toLocaleDateString("vi-VN")}
+                    {new Date(task.dueDate).toLocaleDateString("en-US")}
                   </div>
                 </div>
               </div>
@@ -134,10 +134,10 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
 
           {taskList.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">Chưa có công việc nào</p>
+              <p className="text-gray-500">No tasks yet</p>
               <Button className="mt-4">
                 <Plus className="h-4 w-4 mr-2" />
-                Tạo công việc đầu tiên
+                Create your first task
               </Button>
             </div>
           )}

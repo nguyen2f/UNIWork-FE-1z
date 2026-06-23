@@ -377,7 +377,7 @@ export default function StageDetailPage() {
                     )}
                     {stage.goal && (
                       <p className="text-blue-50/80 text-xs flex items-center gap-1">
-                        <Target className="h-3 w-3" /> Mục tiêu: {stage.goal}
+                        <Target className="h-3 w-3" /> Goal: {stage.goal}
                       </p>
                     )}
                     <p className="text-blue-100 text-sm mt-1">
