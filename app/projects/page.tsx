@@ -46,6 +46,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
   const [projectPage, setProjectPage] = useState(0)
   const [projectPagination, setProjectPagination] = useState({
     currentPage: 0, pageSize: 6, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false,
@@ -79,6 +80,11 @@ export default function ProjectsPage() {
     if (!p.project) return false
     if (statusFilter && p.project.status !== statusFilter) return false
     if (priorityFilter && p.project.priority !== priorityFilter) return false
+    if (searchQuery) {
+      const nameMatch = p.project.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      const descMatch = p.project.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      if (!nameMatch && !descMatch) return false
+    }
     return true
   })
 
@@ -105,7 +111,12 @@ export default function ProjectsPage() {
               <div className="flex gap-3 flex-1">
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input placeholder="Search projects..." className="pl-9 bg-white border-slate-200" />
+                  <Input
+                    placeholder="Search projects..."
+                    className="pl-9 bg-white border-slate-200"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
                 <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
                   <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Status" /></SelectTrigger>

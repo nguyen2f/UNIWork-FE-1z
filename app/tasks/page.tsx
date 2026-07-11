@@ -43,6 +43,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => { fetchTasks() }, [])
 
@@ -68,6 +69,12 @@ export default function TasksPage() {
   const filteredTasks = tasks.filter((t) => {
     if (statusFilter && t.status !== statusFilter) return false
     if (priorityFilter && t.priority !== priorityFilter) return false
+    if (searchQuery) {
+      const titleMatch = t.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      const descMatch = t.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      const projectMatch = t.projectName?.toLowerCase().includes(searchQuery.toLowerCase())
+      if (!titleMatch && !descMatch && !projectMatch) return false
+    }
     return true
   })
 
@@ -94,7 +101,12 @@ export default function TasksPage() {
               <div className="flex gap-3 flex-1">
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input placeholder="Search tasks..." className="pl-9 bg-white border-slate-200" />
+                  <Input
+                    placeholder="Search tasks..."
+                    className="pl-9 bg-white border-slate-200"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
                 <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
                   <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
