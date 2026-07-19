@@ -75,13 +75,39 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false)
   const [isFilesExpanded, setIsFilesExpanded] = useState(false)
   const [previewFile, setPreviewFile] = useState<any>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [issues, setIssues] = useState<IssueDTO[]>([])
   const [isIssuesExpanded, setIsIssuesExpanded] = useState(false)
   const [issueDialogOpen, setIssueDialogOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<IssueDTO | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+
+  // Handle PDF blob fetching for proper preview of raw Cloudinary files
+  useEffect(() => {
+    if (isPreviewOpen && previewFile?.contentType?.includes("pdf") && previewFile.fileUrl) {
+      setPdfBlobUrl(null)
+      fetch(previewFile.fileUrl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const url = URL.createObjectURL(blob)
+          setPdfBlobUrl(url)
+        })
+        .catch((err) => {
+          console.error("Failed to load PDF blob for preview:", err)
+          setPdfBlobUrl(previewFile.fileUrl) // fallback to direct url
+        })
+    }
+  }, [isPreviewOpen, previewFile])
+
+  useEffect(() => {
+    if (!isPreviewOpen) {
+      if (pdfBlobUrl && pdfBlobUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(pdfBlobUrl)
+      }
+      setPdfBlobUrl(null)
+    }
+  }, [isPreviewOpen])
 
   useEffect(() => {
     if (!open || !task) return
@@ -569,16 +595,9 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                onClick={async () => {
+                                onClick={() => {
                                   setPreviewFile(file)
                                   setIsPreviewOpen(true)
-                                  try {
-                                    const url = await fileService.preview(String(file.fileId))
-                                    setPreviewUrl(url)
-                                  } catch (error) {
-                                    console.error("Preview failed:", error)
-                                    setPreviewUrl(file.fileUrl) // fallback
-                                  }
                                 }}
                               >
                                 <Eye className="h-4 w-4" />
@@ -644,13 +663,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         )}
       </DialogContent>
 
-      <Dialog open={isPreviewOpen} onOpenChange={(open) => {
-        setIsPreviewOpen(open);
-        if (!open) {
-          setPreviewUrl(null);
-          setPreviewFile(null);
-        }
-      }}>
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-4 border-b flex-shrink-0">
             <DialogTitle className="flex justify-between items-center pr-8">
@@ -658,23 +671,25 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center p-4">
-            {!previewUrl ? (
-              <div className="text-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-                <p className="text-gray-500">Loading preview...</p>
-              </div>
-            ) : previewFile?.contentType?.startsWith("image/") ? (
+            {previewFile?.contentType?.startsWith("image/") ? (
               <img
-                src={previewUrl}
+                src={previewFile.fileUrl}
                 alt={previewFile.originalFileName}
                 className="max-w-full max-h-full object-contain shadow-lg"
               />
             ) : previewFile?.contentType?.includes("pdf") ? (
-              <iframe 
-                src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`} 
-                className="w-full h-full border-none" 
-                title="PDF Preview" 
-              />
+              pdfBlobUrl ? (
+                <iframe 
+                  src={pdfBlobUrl} 
+                  className="w-full h-full border-none" 
+                  title="PDF Preview" 
+                />
+              ) : (
+                <div className="text-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+                  <p className="text-gray-500">Loading PDF preview...</p>
+                </div>
+              )
             ) : (
               <div className="text-center p-8">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />

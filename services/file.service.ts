@@ -27,29 +27,29 @@ export const fileService = {
     }),
 
   download: async (
-    projectId: number,
-    taskId: number,
-    fileId: string,
-    fileName: string,
-  ) => {
-    const response = await api({
-      method: "GET",
-      url: `/tasks/files/${fileId}/download`,
-    })
+  projectId: number,
+  taskId: number,
+  fileId: string,
+  fileName: string,
+) => {
+  const response = await api({
+    method: "GET",
+    url: `/tasks/files/${fileId}/download`,
+    responseType: "blob", // 👈 bắt buộc, để không bị parse sai binary
+  })
 
-    if (response?.url || response?.data?.url) {
-      const url = response.url || response.data.url
-      const link = document.createElement("a")
-      link.href = url
-      link.setAttribute("download", fileName)
-      link.setAttribute("target", "_blank")
-      document.body.appendChild(link)
-      link.click()
-      link.parentNode?.removeChild(link)
-    }
+  // Tuỳ http-client của bạn trả về gì — kiểm tra response.data hay chính response là Blob
+  const blob = response.data instanceof Blob ? response.data : new Blob([response.data ?? response])
 
-    return response
-  },
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.setAttribute("download", fileName)
+  document.body.appendChild(link)
+  link.click()
+  link.parentNode?.removeChild(link)
+  window.URL.revokeObjectURL(url)
+},
 
   preview: async (fileId: string) => {
     const response = await api({
