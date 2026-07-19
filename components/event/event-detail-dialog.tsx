@@ -11,6 +11,7 @@ interface EventDetailDialogProps {
     event: Event | null
     open: boolean
     onOpenChange: (open: boolean) => void
+    projectName?: string
 }
 
 // ---- helpers ----
@@ -19,7 +20,7 @@ const parseEventDate = (dateStr: string) => {
     return new Date(dateStr.replace(" ", "T"))
 }
 
-export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDialogProps) {
+export function EventDetailDialog({ event, open, onOpenChange, projectName }: EventDetailDialogProps) {
     if (!event) return null
 
     const eventDate = parseEventDate(event.date)
@@ -63,9 +64,11 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <DialogTitle className="text-2xl">{event.title}</DialogTitle>
-                            {/*<DialogDescription className="mt-2 text-base">*/}
-                            {/*    Project ID: {event.projectId}*/}
-                            {/*</DialogDescription>*/}
+                            {event.projectId && (
+                                <DialogDescription className="mt-2 text-base text-gray-600">
+                                    {projectName ? projectName : `Project ${event.projectId}`}
+                                </DialogDescription>
+                            )}
                         </div>
 
                         <div className="flex items-center space-x-2">

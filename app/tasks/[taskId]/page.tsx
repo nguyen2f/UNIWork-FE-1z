@@ -17,7 +17,7 @@ import { Sidebar } from "@/components/layout/sidebar"
 import {
   Calendar, Clock, AlertCircle, User, Edit, Trash2, Upload, Loader2, Send,
   MessageSquare, ChevronRight, Download, Bug, Plus, ArrowLeft, ListTodo,
-  Flag, Tag, Layers, FolderKanban
+  Flag, Tag, Layers, FolderKanban, MoreVertical, Eye
 } from "lucide-react"
 import { toast } from "sonner"
 import { taskService } from "@/services/task.service"
@@ -40,6 +40,12 @@ const PriorityMap: Record<string, { code: number; label: string; color: string }
   MEDIUM: { code: 1, label: "Medium", color: "text-amber-600 bg-amber-50 border-amber-200" },
   HIGH: { code: 2, label: "High", color: "text-orange-600 bg-orange-50 border-orange-200" },
   CRITICAL: { code: 3, label: "Critical", color: "text-red-600 bg-red-50 border-red-200" },
+}
+
+const TypeMap: Record<string, { label: string; color: string }> = {
+  EPIC: { label: "Epic", color: "text-purple-600 bg-purple-50 border-purple-200" },
+  STORY: { label: "Story", color: "text-blue-600 bg-blue-50 border-blue-200" },
+  TASK: { label: "Task", color: "text-indigo-600 bg-indigo-50 border-indigo-200" },
 }
 
 const IssueStatusColor: Record<string, string> = {
@@ -70,6 +76,9 @@ export default function TaskDetailPage() {
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
   const [completionTime, setCompletionTime] = useState<string>("")
   const [pendingStatusChange, setPendingStatusChange] = useState<{key: string, code: number} | null>(null)
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [previewFile, setPreviewFile] = useState<any>(null)
 
   useEffect(() => { if (taskId) fetchTaskDetail() }, [taskId])
 
@@ -149,7 +158,7 @@ export default function TaskDetailPage() {
     fileService.download(taskDetail.projectId, taskId, file.fileId, file.originalFileName || "file")
   }
 
-  const fmt = (d: string) => d ? new Date(d).toLocaleDateString("vi-VN", { year: "numeric", month: "short", day: "numeric" }) : "N/A"
+  const fmt = (d: string) => d ? new Date(d).toLocaleDateString("vi-VN", { year: "numeric", month: "short", day: "numeric" }) : ""
   const fmtRel = (d: string) => {
     if (!d) return ""
     const ms = Date.now() - new Date(d).getTime()
@@ -199,7 +208,7 @@ export default function TaskDetailPage() {
               <Link href="/projects" className="text-slate-500 hover:text-blue-600 transition-colors font-medium">Projects</Link>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
               <Link href={`/projects/${taskDetail.projectId}`} className="text-slate-500 hover:text-blue-600 transition-colors font-medium">
-                <FolderKanban className="h-3.5 w-3.5 inline mr-1" />Project #{taskDetail.projectId}
+                <FolderKanban className="h-3.5 w-3.5 inline mr-1" />{taskDetail.projectName || `Project #${taskDetail.projectId}`}
               </Link>
               {taskDetail.stageName && (<><ChevronRight className="h-3.5 w-3.5 text-slate-400" />
                 <Link href={`/projects/${taskDetail.projectId}/stages/${taskDetail.stageId}`} className="text-slate-500 hover:text-blue-600 transition-colors font-medium">
@@ -225,7 +234,11 @@ export default function TaskDetailPage() {
                         <Badge variant="outline" className={`border ${cp.color}`}>
                           <Flag className="h-3 w-3 mr-1" />{cp.label}
                         </Badge>
-                        {taskDetail.tags && <Badge variant="outline" className="text-xs"><Tag className="h-3 w-3 mr-1" />{taskDetail.tags}</Badge>}
+                        {taskDetail.type && (
+                          <Badge variant="outline" className={`border text-xs ${TypeMap[taskDetail.type as keyof typeof TypeMap]?.color || "text-slate-600 bg-slate-50 border-slate-200"}`}>
+                            <Tag className="h-3 w-3 mr-1" />{TypeMap[taskDetail.type as keyof typeof TypeMap]?.label || taskDetail.type}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
@@ -338,13 +351,13 @@ export default function TaskDetailPage() {
                     {[
                       { icon: FolderKanban, label: "Project", value: taskDetail.projectName || `Project #${taskDetail.projectId}` },
                       { icon: User, label: "Creator", value: taskDetail.createdByName || taskDetail.creatorName || "System" },
-                      { icon: User, label: "Manager", value: taskDetail.managedByName || taskDetail.managerName || "N/A" },
+                      { icon: User, label: "Manager", value: taskDetail.managedByName || taskDetail.managerName || "" },
                       { icon: User, label: "Assignee", value: taskDetail.assigneeName || "Unassigned" },
                       { icon: Layers, label: "Stage", value: taskDetail.stageName || "—" },
                       { icon: Bug, label: "Issues", value: taskDetail.issueCount != null ? `${taskDetail.issueCount} issue(s)` : `${issues.length} issue(s)` },
                       { icon: Calendar, label: "Due Date", value: fmt(taskDetail.dueDate) },
                       { icon: Clock, label: "Created", value: fmt(taskDetail.createdDate) },
-                      { icon: Clock, label: "Updated", value: fmt(taskDetail.updatedDate) },
+                      { icon: Clock, label: taskDetail.status === "COMPLETED" ? "Completed" : "Updated", value: fmt(taskDetail.updatedDate) },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-3">
                         <item.icon className="h-4 w-4 text-slate-400 mt-0.5" />
@@ -367,6 +380,7 @@ export default function TaskDetailPage() {
                       <div key={f.fileId} className="flex items-center gap-2 p-2 border border-slate-100 rounded-lg text-sm">
                         <Upload className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                         <span className="truncate flex-1 text-slate-700">{f.originalFileName}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-blue-600" onClick={() => { setPreviewFile(f); setIsPreviewOpen(true); }}><Eye className="h-3 w-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDownloadFile(f)}><Download className="h-3 w-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => handleDeleteFile(f.fileId)}><Trash2 className="h-3 w-3" /></Button>
                       </div>
@@ -435,6 +449,37 @@ export default function TaskDetailPage() {
         </DialogContent>
       </Dialog>
       */}
+
+      {/* Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b flex-shrink-0">
+            <DialogTitle className="flex justify-between items-center pr-8">
+              <span className="truncate">{previewFile?.originalFileName}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-4">
+            {previewFile?.contentType?.startsWith("image/") ? (
+              <img
+                src={previewFile.fileUrl}
+                alt={previewFile.originalFileName}
+                className="max-w-full max-h-full object-contain shadow-lg"
+              />
+            ) : previewFile?.contentType === "application/pdf" ? (
+              <iframe src={previewFile.fileUrl} className="w-full h-[70vh] border-none" title="PDF Preview" />
+            ) : (
+              <div className="text-center p-8">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 text-slate-400" />
+                <p className="text-slate-600 mb-4">No preview available for this file type.</p>
+                <Button onClick={() => handleDownloadFile(previewFile)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download to View
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

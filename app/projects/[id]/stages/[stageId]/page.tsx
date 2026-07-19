@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { CreateTaskDialog } from "@/components/task/create-task-dialog"
@@ -103,6 +104,9 @@ export default function StageDetailPage() {
   const [editingIssueTaskId, setEditingIssueTaskId] = useState<number>(0)
   const [activeListTab, setActiveListTab] = useState<"tasks" | "issues">("tasks")
   const [listSearchQuery, setListSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+  const [userFilter, setUserFilter] = useState<string | null>(null)
 
   const toggleTask = (taskId: number) => {
     setExpandedTasks(prev => prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId])
@@ -126,29 +130,44 @@ export default function StageDetailPage() {
     return issues
   }, [taskIssues, tasks])
 
-  // Filtered tasks based on search query
+  // Filtered tasks based on search query and filters
   const filteredTasks = useMemo(() => {
-    if (!listSearchQuery.trim()) return tasks
+    let result = tasks;
+    if (statusFilter) result = result.filter(t => t.status === statusFilter)
+    if (priorityFilter) result = result.filter(t => t.priority === priorityFilter)
+    if (userFilter) result = result.filter(t => t.assigneeName === userFilter)
+
+    if (!listSearchQuery.trim()) return result
     const q = listSearchQuery.toLowerCase()
-    return tasks.filter(t =>
+    return result.filter(t =>
       t.title?.toLowerCase().includes(q) ||
       t.assigneeName?.toLowerCase().includes(q) ||
       t.status?.toLowerCase().includes(q)
     )
-  }, [tasks, listSearchQuery])
+  }, [tasks, listSearchQuery, statusFilter, priorityFilter, userFilter])
 
-  // Filtered issues based on search query
+  // Filtered issues based on search query and filters
   const filteredIssues = useMemo(() => {
-    if (!listSearchQuery.trim()) return allIssues
+    let result = allIssues;
+    if (statusFilter) result = result.filter(i => i.status === statusFilter)
+    if (priorityFilter) result = result.filter(i => i.priority === priorityFilter)
+    if (userFilter) result = result.filter(i => (i.assigneeName || i.assignedToName) === userFilter)
+
+    if (!listSearchQuery.trim()) return result
     const q = listSearchQuery.toLowerCase()
-    return allIssues.filter((i: any) =>
+    return result.filter((i: any) =>
       i.title?.toLowerCase().includes(q) ||
       i.reporterName?.toLowerCase().includes(q) ||
       i.assigneeName?.toLowerCase().includes(q) ||
       i.status?.toLowerCase().includes(q) ||
       i._taskTitle?.toLowerCase().includes(q)
     )
-  }, [allIssues, listSearchQuery])
+  }, [allIssues, listSearchQuery, statusFilter, priorityFilter, userFilter])
+
+  const allUsers = useMemo(() => Array.from(new Set([
+    ...tasks.map(t => t.assigneeName).filter(Boolean),
+    ...allIssues.map((i: any) => i.assigneeName || i.assignedToName).filter(Boolean)
+  ])).sort() as string[], [tasks, allIssues])
 
   const fetchData = async () => {
     try {
@@ -280,7 +299,7 @@ export default function StageDetailPage() {
   }
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A"
+    if (!dateString) return ""
     return new Date(dateString).toLocaleDateString("vi-VN", {
       year: "numeric", month: "short", day: "numeric",
     })
@@ -333,8 +352,9 @@ export default function StageDetailPage() {
   const statusConfig = StageStatusConfig[stage.status] || StageStatusConfig.PLANNED
   const StatusIcon = statusConfig.icon
   const daysRemaining = getDaysRemaining()
-  const completedTasks = tasks.filter(t => t.status === "COMPLETED").length
-  const totalTasks = tasks.length
+  const validTasks = tasks.filter(t => t.status !== "CANCELLED")
+  const completedTasks = validTasks.filter(t => t.status === "COMPLETED").length
+  const totalTasks = validTasks.length
   const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   return (
@@ -440,7 +460,7 @@ export default function StageDetailPage() {
                     <Timer className="h-3.5 w-3.5" /> Remaining
                   </div>
                   <p className={`text-2xl font-bold ${daysRemaining !== null && daysRemaining < 0 ? 'text-red-600' : daysRemaining !== null && daysRemaining <= 3 ? 'text-amber-600' : 'text-slate-900'}`}>
-                    {daysRemaining !== null ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : `${daysRemaining}d`) : "N/A"}
+                    {daysRemaining !== null ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : `${daysRemaining}d`) : ""}
                   </p>
                 </div>
                 <div className="px-6 py-5">
@@ -450,7 +470,7 @@ export default function StageDetailPage() {
                   <p className="text-2xl font-bold text-slate-900">
                     {stage.startDate && stage.endDate
                       ? `${Math.ceil((new Date(stage.endDate).getTime() - new Date(stage.startDate).getTime()) / (1000 * 60 * 60 * 24))}d`
-                      : "N/A"}
+                      : ""}
                   </p>
                 </div>
               </div>
@@ -641,6 +661,33 @@ export default function StageDetailPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Status</SelectItem>
+                      {Object.entries(activeListTab === "tasks" ? TaskStatusConfig : IssueStatusCfg).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(v) => setPriorityFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="Priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Priority</SelectItem>
+                      {Object.entries(PriorityConfig).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(v) => setUserFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="User" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Users</SelectItem>
+                      {allUsers.map((user) => (
+                        <SelectItem key={user} value={user}>{user}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {/* Search */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />

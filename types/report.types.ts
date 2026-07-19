@@ -1,5 +1,13 @@
 // Report module types
 
+export interface MemberKpiDTO {
+  userId: number
+  userName: string
+  totalCompletedTasks: number
+  totalHoursSpent: number
+  kpiScore: number
+}
+
 export interface SingleProjectReportDTO {
   projectId: number
   projectName: string

@@ -77,6 +77,24 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
     }
   }
 
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "EPIC": return "bg-purple-100 text-purple-800"
+      case "STORY": return "bg-blue-100 text-blue-800"
+      case "TASK": return "bg-indigo-100 text-indigo-800"
+      default: return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getTypeText = (type: string) => {
+    switch (type) {
+      case "EPIC": return "Epic"
+      case "STORY": return "Story"
+      case "TASK": return "Task"
+      default: return type
+    }
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -112,6 +130,9 @@ export function TaskList({ projectId, tasks }: TaskListProps) {
               <div className="flex items-center gap-2 mb-3">
                 <Badge className={getStatusColor(task.status)}>{getStatusText(task.status)}</Badge>
                 <Badge className={getPriorityColor(task.priority)}>{getPriorityText(task.priority)}</Badge>
+                {task.type && (
+                  <Badge className={getTypeColor(task.type)}>{getTypeText(task.type)}</Badge>
+                )}
               </div>
 
               <div className="flex items-center justify-between text-sm text-gray-600">

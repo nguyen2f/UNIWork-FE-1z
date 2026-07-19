@@ -122,7 +122,7 @@ export function ProjectTaskDetailDialog({ task, open, onOpenChange, projectId }:
     }
 
     const formatDate = (dateString: string) => {
-        if (!dateString) return "N/A"
+        if (!dateString) return ""
         return new Date(dateString).toLocaleDateString("vi-VN", {
             year: "numeric",
             month: "long",

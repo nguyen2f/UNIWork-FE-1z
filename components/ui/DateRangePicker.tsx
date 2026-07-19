@@ -201,27 +201,9 @@ export const DateRangePicker = ({
                 onKeyDown={(e: any) => handleKeyDown(e, value, onChange, setInternalValue)}
                 {...rest}
             />
-            <Dropdown disabled={Boolean(rest?.disabled)} menu={dropdownMenu}>
-                <Button className="!h-[32px] px-2" type="link">
-                    <Space>
-                        <span>{selectedLabel}</span>
-                        <DownOutlined />
-                    </Space>
-                </Button>
-            </Dropdown>
         </div>
     ) : (
         <div className="w-full relative">
-            <div className="absolute -top-8 -right-2 z-10 flex justify-between items-center">
-                <Dropdown disabled={Boolean(rest?.disabled)} menu={dropdownMenu}>
-                    <Button className="!h-[32px] px-2" type="link">
-                        <Space>
-                            <span>{selectedLabel}</span>
-                            <DownOutlined />
-                        </Space>
-                    </Button>
-                </Dropdown>
-            </div>
             <DatePicker.RangePicker
                 className="w-full"
                 format={format}

@@ -57,6 +57,12 @@ const PriorityMap = {
   CRITICAL: { code: 3, label: "Critical", color: "bg-orange-500 text-white" },
 }
 
+const TypeMap = {
+  EPIC: { label: "Epic", color: "bg-purple-500 text-white" },
+  STORY: { label: "Story", color: "bg-blue-400 text-white" },
+  TASK: { label: "Task", color: "bg-blue-600 text-white" },
+}
+
 export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogProps) {
   const [taskDetail, setTaskDetail] = useState<any>(null)
   const [childTasks, setChildTasks] = useState<any[]>([])
@@ -69,6 +75,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const [isCommentsExpanded, setIsCommentsExpanded] = useState(false)
   const [isFilesExpanded, setIsFilesExpanded] = useState(false)
   const [previewFile, setPreviewFile] = useState<any>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const [issues, setIssues] = useState<IssueDTO[]>([])
   const [isIssuesExpanded, setIsIssuesExpanded] = useState(false)
@@ -159,7 +166,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   }
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A"
+    if (!dateString) return ""
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -231,6 +238,7 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const displayTask = taskDetail || task
   const currentStatus = StatusMap[displayTask.status as keyof typeof StatusMap] || StatusMap.PENDING
   const currentPriority = PriorityMap[displayTask.priority as keyof typeof PriorityMap] || PriorityMap.LOW
+  const currentType = TypeMap[displayTask.type as keyof typeof TypeMap] || TypeMap.TASK
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -250,10 +258,11 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">{displayTask.description}</p>
 
-                {/* Status + Priority */}
+                {/* Status + Priority + Type */}
                 <div className="flex gap-2 flex-wrap">
                   <Badge className={currentStatus.color}>{currentStatus.label}</Badge>
                   <Badge className={currentPriority.color}>{currentPriority.label}</Badge>
+                  <Badge className={currentType.color}>{currentType.label}</Badge>
                 </div>
 
                 {/* Task Details Grid */}
@@ -560,9 +569,16 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                onClick={() => {
+                                onClick={async () => {
                                   setPreviewFile(file)
                                   setIsPreviewOpen(true)
+                                  try {
+                                    const url = await fileService.preview(String(file.fileId))
+                                    setPreviewUrl(url)
+                                  } catch (error) {
+                                    console.error("Preview failed:", error)
+                                    setPreviewUrl(file.fileUrl) // fallback
+                                  }
                                 }}
                               >
                                 <Eye className="h-4 w-4" />
@@ -628,7 +644,13 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
         )}
       </DialogContent>
 
-      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+      <Dialog open={isPreviewOpen} onOpenChange={(open) => {
+        setIsPreviewOpen(open);
+        if (!open) {
+          setPreviewUrl(null);
+          setPreviewFile(null);
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-4 border-b flex-shrink-0">
             <DialogTitle className="flex justify-between items-center pr-8">
@@ -636,14 +658,23 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-auto bg-gray-100 flex items-center justify-center p-4">
-            {previewFile?.contentType?.startsWith("image/") ? (
+            {!previewUrl ? (
+              <div className="text-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-gray-500">Loading preview...</p>
+              </div>
+            ) : previewFile?.contentType?.startsWith("image/") ? (
               <img
-                src={previewFile.fileUrl}
+                src={previewUrl}
                 alt={previewFile.originalFileName}
                 className="max-w-full max-h-full object-contain shadow-lg"
               />
-            ) : previewFile?.contentType === "application/pdf" ? (
-              <iframe src={previewFile.fileUrl} className="w-full h-full border-none" title="PDF Preview" />
+            ) : previewFile?.contentType?.includes("pdf") ? (
+              <iframe 
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`} 
+                className="w-full h-full border-none" 
+                title="PDF Preview" 
+              />
             ) : (
               <div className="text-center p-8">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />

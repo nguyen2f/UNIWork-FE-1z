@@ -22,13 +22,16 @@ import type { MemberWorkloadDTO, OverdueItemDTO } from "@/types/report.types"
 import type { ProjectReport } from "@/types/project.types"
 
 import { AnalyticsDashboard } from "@/components/report/analytics-dashboard"
+import { ProjectKpiCostView } from "@/components/project/project-kpi-cost-view"
 
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [memberWorkload, setMemberWorkload] = useState<MemberWorkloadDTO[]>([])
   const [overdueItems, setOverdueItems] = useState<OverdueItemDTO[]>([])
   const [projectReports, setProjectReports] = useState<ProjectReport[]>([])
-  const [selectedTab, setSelectedTab] = useState<"overview" | "analytics" | "workload" | "overdue">("overview")
+  const [selectedTab, setSelectedTab] = useState<"overview" | "analytics" | "workload" | "overdue" | "kpi">("overview")
+  const [selectedKpiProject, setSelectedKpiProject] = useState<number | null>(null)
+  const [selectedWorkloadProject, setSelectedWorkloadProject] = useState<string>("all")
   const [exporting, setExporting] = useState(false)
 
   const handleExportPDF = async () => {
@@ -73,7 +76,7 @@ export default function ReportsPage() {
         page++
       }
 
-      pdf.save(`Bao_cao_UNIWork_${new Date().toISOString().slice(0, 10)}.pdf`)
+      pdf.save(`UNIWork_Report_${new Date().toISOString().slice(0, 10)}.pdf`)
     } catch (error) {
       console.error("Error exporting PDF:", error)
     } finally {
@@ -253,11 +256,12 @@ export default function ReportsPage() {
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex gap-2 mb-6" data-html2canvas-ignore="true">
+            <div className="flex gap-2 mb-6 flex-wrap" data-html2canvas-ignore="true">
               {[
                 { key: "overview" as const, label: "Project Overview", icon: FolderKanban },
                 { key: "analytics" as const, label: "Data Analytics", icon: BarChart3 },
                 { key: "workload" as const, label: "Member Workload", icon: Users },
+                { key: "kpi" as const, label: "KPI Score", icon: TrendingUp },
                 { key: "overdue" as const, label: "Overdue", icon: AlertTriangle },
               ].map((tab) => (
                 <Button
@@ -335,11 +339,28 @@ export default function ReportsPage() {
             {selectedTab === "workload" && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-indigo-600" />
-                    Member Workload
-                  </CardTitle>
-                  <CardDescription>Task and issue statistics for each team member across projects</CardDescription>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-indigo-600" />
+                        Member Workload
+                      </CardTitle>
+                      <CardDescription>Task and issue statistics for each team member across projects</CardDescription>
+                    </div>
+                    <Select value={selectedWorkloadProject} onValueChange={setSelectedWorkloadProject}>
+                      <SelectTrigger className="w-[250px]">
+                        <SelectValue placeholder="All Projects" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Projects</SelectItem>
+                        {projectReports.map((p) => (
+                          <SelectItem key={p.project?.projectId} value={p.project?.projectId?.toString() ?? ""}>
+                            {p.project?.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {memberWorkload.length === 0 ? (
@@ -406,6 +427,45 @@ export default function ReportsPage() {
                           </div>
                         )
                       })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {selectedTab === "kpi" && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-emerald-600" />
+                      KPI Score Analytics
+                    </CardTitle>
+                    <CardDescription>Evaluate member performance based on task completion quality</CardDescription>
+                  </div>
+                  <Select
+                    value={selectedKpiProject ? selectedKpiProject.toString() : ""}
+                    onValueChange={(val) => setSelectedKpiProject(Number(val))}
+                  >
+                    <SelectTrigger className="w-[280px]">
+                      <SelectValue placeholder="Select a project..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projectReports.map((p) => (
+                        <SelectItem key={p.project?.projectId} value={p.project?.projectId?.toString() ?? ""}>
+                          {p.project?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardHeader>
+                <CardContent>
+                  {selectedKpiProject ? (
+                    <ProjectKpiCostView projectId={selectedKpiProject} />
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <FolderKanban className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                      <p>Select a project to view KPI Score</p>
                     </div>
                   )}
                 </CardContent>

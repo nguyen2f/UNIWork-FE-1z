@@ -111,6 +111,7 @@ export function CreateTaskDialog({ open, onOpenChange, projectId, stageId, onTas
             initialValues={{
               status: 0,
               priority: 1,
+              type: "TASK",
             }}
         >
           <Form.Item
@@ -197,12 +198,28 @@ export function CreateTaskDialog({ open, onOpenChange, projectId, stageId, onTas
             </Col>
           </Row>
 
-          <Form.Item
-              label="Due Date"
-              name="dueDate"
-          >
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                  label="Type"
+                  name="type"
+              >
+                <Select placeholder="Select Type">
+                  <Select.Option value="EPIC">Epic</Select.Option>
+                  <Select.Option value="STORY">Story</Select.Option>
+                  <Select.Option value="TASK">Task</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                  label="Due Date"
+                  name="dueDate"
+              >
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
               label="Assign To"

@@ -321,7 +321,7 @@ export default function AdminPage() {
                                   <div>
                                     <h4 className="font-medium">{user.name}</h4>
                                     <p className="text-sm text-gray-600">{user.email}</p>
-                                    <p className="text-sm text-gray-500">{user.systemRole} • {(user.department as any)?.departmentName || user.department || "N/A"}</p>
+                                    <p className="text-sm text-gray-500">{user.systemRole} {(user.department as any)?.departmentName || user.department ? `• ${(user.department as any)?.departmentName || user.department}` : ""}</p>
                                     
                                     {/* Password mask toggle */}
                                     <div className="mt-1 flex items-center text-xs text-gray-500">

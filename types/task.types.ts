@@ -16,7 +16,7 @@ export interface TaskDTO {
   dueDate: string
   createdDate: string
   updatedDate: string | null
-  tags: string
+  type: string
   assigneeName: string
   createdByName?: string | null
   managedByName?: string | null
@@ -44,7 +44,7 @@ export interface TaskRequest {
   priority: number
   status: number
   dueDate: string
-  tags: string
+  type: string
 }
 
 export interface CommentDTO {

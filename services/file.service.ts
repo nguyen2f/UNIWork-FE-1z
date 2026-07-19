@@ -35,19 +35,28 @@ export const fileService = {
     const response = await api({
       method: "GET",
       url: `/tasks/files/${fileId}/download`,
-      responseType: "blob",
     })
 
-    const url = window.URL.createObjectURL(response.data)
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", fileName)
-    document.body.appendChild(link)
-    link.click()
-    link.parentNode?.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    if (response?.url || response?.data?.url) {
+      const url = response.url || response.data.url
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", fileName)
+      link.setAttribute("target", "_blank")
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode?.removeChild(link)
+    }
 
     return response
+  },
+
+  preview: async (fileId: string) => {
+    const response = await api({
+      method: "GET",
+      url: `/tasks/files/${fileId}/preview`,
+    })
+    return response?.url || response?.data?.url
   },
 }
 

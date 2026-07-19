@@ -18,6 +18,7 @@ export interface IssueDTO {
   taskTitle: string | null
   // legacy aliases
   assignedToName?: string | null
+  projectName?: string | null
 }
 
 export interface IssueRequest {

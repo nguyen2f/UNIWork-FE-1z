@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DateRangePicker } from "@/components/ui/DateRangePicker"
+import dayjs from "dayjs"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import {
@@ -92,6 +95,8 @@ export default function DashboardPage() {
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null);
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | undefined>([dayjs().startOf('month'), dayjs().endOf('month')]);
+
   const Pagination = ({ currentPage, totalPages, onPageChange, hasNext, hasPrevious }: {
     currentPage: number;
     totalPages: number;
@@ -260,10 +265,19 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchOverview = async () => {
+  const fetchOverview = async (range: [dayjs.Dayjs, dayjs.Dayjs] | undefined = dateRange) => {
     try {
       setLoading(true);
-      const result = await fetchTaskReport();
+      
+      let begin: number | undefined;
+      let end: number | undefined;
+      
+      if (range) {
+        begin = range[0].valueOf();
+        end = range[1].valueOf();
+      }
+
+      const result = await fetchTaskReport(begin, end);
       if (result.data) {
         const d = result.data;
         setOverallReport({
@@ -284,6 +298,8 @@ export default function DashboardPage() {
     } catch (err: any) {
       setError(err.message);
       console.error('Error fetching overview report:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -378,11 +394,20 @@ export default function DashboardPage() {
           </div>
           {/* Performance Overview */}
           <Card className="mb-6">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" />
                 Overall Performance
               </CardTitle>
+              <div className="w-[300px]">
+                <DateRangePicker 
+                  value={dateRange}
+                  onChange={(val) => {
+                    setDateRange(val);
+                    fetchOverview(val);
+                  }}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-8">

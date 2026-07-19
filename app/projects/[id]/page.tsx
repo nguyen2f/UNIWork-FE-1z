@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   ArrowLeft, Edit, Trash2, Users, MoreHorizontal, Plus, Minus, ChevronRight,
   Calendar, Target, TrendingUp, Timer, FolderKanban, Layers, Flag,
   CheckCircle2, Circle, Play, AlertCircle, Clock, Zap, ListTodo, Bug, User, Search,
-  Table2, LayoutGrid
+  Table2, LayoutGrid, Download
 } from "lucide-react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
@@ -33,6 +34,7 @@ import { ManageMembersDialog } from "@/components/project/manage-members-dialog"
 import { EditTaskDialog } from "@/components/task/edit-task-dialog"
 import { IssueDialog } from "@/components/issue/issue-dialog"
 import { ProjectSpreadsheetView } from "@/components/project/project-spreadsheet-view"
+import { DollarSign } from "lucide-react"
 
 const ProjectStatusCfg: Record<string, { label: string; bg: string; icon: any }> = {
   PLANNING: { label: "Planning", bg: "bg-amber-50 text-amber-700 border-amber-200", icon: Target },
@@ -81,7 +83,10 @@ export default function ProjectDetailPage(props: any) {
   const [editingIssueTaskId, setEditingIssueTaskId] = useState<number>(0)
   const [activeListTab, setActiveListTab] = useState<"tasks" | "issues">("tasks")
   const [listSearchQuery, setListSearchQuery] = useState("")
-  const [viewMode, setViewMode] = useState<"cards" | "spreadsheet">("cards")
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+  const [userFilter, setUserFilter] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<"cards" | "spreadsheet" | "kpi-cost">("cards")
 
   const handleEditStage = (stage: any) => {
     setEditingStage(stage)
@@ -124,6 +129,24 @@ export default function ProjectDetailPage(props: any) {
         }
       }
     })
+  }
+
+  const handleExportCSV = async () => {
+    try {
+      toast.loading("Exporting tasks...", { id: "export-csv" })
+      const blob = await taskService.exportTasksToCsv(projectId)
+      const url = window.URL.createObjectURL(new Blob([blob]))
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", `tasks_project_${projectId}.csv`)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode?.removeChild(link)
+      toast.success("Export successful", { id: "export-csv" })
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to export tasks", { id: "export-csv" })
+    }
   }
 
   const handleEditTask = (task: any) => {
@@ -203,30 +226,40 @@ export default function ProjectDetailPage(props: any) {
     return issues
   }, [taskIssues, tasks])
 
-  // Filtered tasks based on search query
+  // Filtered tasks based on search query and filters
   const filteredTasks = useMemo(() => {
-    if (!listSearchQuery.trim()) return tasks
+    let result = tasks;
+    if (statusFilter) result = result.filter(t => t.status === statusFilter)
+    if (priorityFilter) result = result.filter(t => t.priority === priorityFilter)
+    if (userFilter) result = result.filter(t => t.assigneeName === userFilter)
+
+    if (!listSearchQuery.trim()) return result
     const q = listSearchQuery.toLowerCase()
-    return tasks.filter(t =>
+    return result.filter(t =>
       t.title?.toLowerCase().includes(q) ||
       t.assigneeName?.toLowerCase().includes(q) ||
       t.status?.toLowerCase().includes(q) ||
       t.stageName?.toLowerCase().includes(q)
     )
-  }, [tasks, listSearchQuery])
+  }, [tasks, listSearchQuery, statusFilter, priorityFilter, userFilter])
 
-  // Filtered issues based on search query
+  // Filtered issues based on search query and filters
   const filteredIssues = useMemo(() => {
-    if (!listSearchQuery.trim()) return allIssues
+    let result = allIssues;
+    if (statusFilter) result = result.filter(i => i.status === statusFilter)
+    if (priorityFilter) result = result.filter(i => i.priority === priorityFilter)
+    if (userFilter) result = result.filter(i => (i.assigneeName || i.assignedToName) === userFilter)
+
+    if (!listSearchQuery.trim()) return result
     const q = listSearchQuery.toLowerCase()
-    return allIssues.filter((i: any) =>
+    return result.filter((i: any) =>
       i.title?.toLowerCase().includes(q) ||
       i.reporterName?.toLowerCase().includes(q) ||
       i.assigneeName?.toLowerCase().includes(q) ||
       i.status?.toLowerCase().includes(q) ||
       i._taskTitle?.toLowerCase().includes(q)
     )
-  }, [allIssues, listSearchQuery])
+  }, [allIssues, listSearchQuery, statusFilter, priorityFilter, userFilter])
 
   const fetchStagesAndTasks = async () => {
     try {
@@ -300,7 +333,7 @@ export default function ProjectDetailPage(props: any) {
   const reloadData = () => { fetchStagesAndTasks() }
 
   const formatDate = (d: string) => {
-    if (!d) return "N/A"
+    if (!d) return ""
     return new Date(d).toLocaleDateString("vi-VN", { year: "numeric", month: "short", day: "numeric" })
   }
 
@@ -336,16 +369,57 @@ export default function ProjectDetailPage(props: any) {
     DONE: { label: "Done", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
   }
 
+  const allUsers = useMemo(() => Array.from(new Set([
+    ...tasks.map(t => t.assigneeName).filter(Boolean),
+    ...allIssues.map(i => i.assigneeName || i.assignedToName).filter(Boolean)
+  ])).sort() as string[], [tasks, allIssues])
+
   if (loading) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-slate-500">Loading project...</p>
+          <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+            <div className="max-w-6xl mx-auto space-y-6">
+              {/* Breadcrumb Skeleton */}
+              <div className="h-5 w-48 bg-slate-200 rounded animate-pulse mb-6"></div>
+
+              {/* Hero Section Skeleton */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="h-40 bg-slate-200 animate-pulse"></div>
+                <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="px-5 py-4 space-y-3">
+                      <div className="h-3 w-16 bg-slate-200 rounded animate-pulse"></div>
+                      <div className="h-6 w-12 bg-slate-200 rounded animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* View Toggle Skeleton */}
+              <div className="flex justify-between items-center pt-4">
+                <div className="space-y-2">
+                  <div className="h-6 w-32 bg-slate-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-48 bg-slate-200 rounded animate-pulse"></div>
+                </div>
+                <div className="h-9 w-64 bg-slate-200 rounded animate-pulse"></div>
+              </div>
+
+              {/* Cards Skeleton */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                    <div className="flex justify-between">
+                      <div className="h-5 w-32 bg-slate-200 rounded animate-pulse"></div>
+                      <div className="h-5 w-8 bg-slate-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-3 w-40 bg-slate-200 rounded animate-pulse"></div>
+                    <div className="h-2 w-full bg-slate-200 rounded animate-pulse mt-4"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </main>
         </div>
@@ -373,8 +447,12 @@ export default function ProjectDetailPage(props: any) {
   const statusCfg = ProjectStatusCfg[project.status] || ProjectStatusCfg.PLANNING
   const StatusIcon = statusCfg.icon
   const priorityCfg = PriorityCfg[project.priority] || PriorityCfg.MEDIUM
-  const completedTasks = tasks.filter(t => t.status === "COMPLETED").length
-  const progressPercent = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0
+  
+  const validTasks = tasks.filter(t => t.status !== "CANCELLED")
+  const totalTasks = validTasks.length
+  const completedTasks = validTasks.filter(t => t.status === "COMPLETED").length
+  const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  
   const deptName = departments.find(d => d.departmentId === project.departmentId)?.departmentName || "—"
 
   return (
@@ -445,7 +523,7 @@ export default function ProjectDetailPage(props: any) {
                 </div>
                 <div className="px-5 py-4">
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Tasks</p>
-                  <span className="text-xl font-bold text-slate-900">{completedTasks}<span className="text-slate-400 text-base font-normal">/{tasks.length}</span></span>
+                  <span className="text-xl font-bold text-slate-900">{completedTasks}<span className="text-slate-400 text-base font-normal">/{totalTasks}</span></span>
                 </div>
                 <div className="px-5 py-4">
                   <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1 flex items-center gap-1"><Calendar className="h-3 w-3" /> Deadline</p>
@@ -692,6 +770,41 @@ export default function ProjectDetailPage(props: any) {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleExportCSV} 
+                    className="gap-1.5 text-slate-600 bg-white border-slate-200 shadow-sm hover:bg-slate-50"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Export CSV
+                  </Button>
+                  <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Status</SelectItem>
+                      {Object.entries(activeListTab === "tasks" ? TaskStatusCfg : IssueStatusCfg).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(v) => setPriorityFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="Priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Priority</SelectItem>
+                      {Object.entries(PriorityCfg).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(v) => setUserFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="User" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Users</SelectItem>
+                      {allUsers.map((user) => (
+                        <SelectItem key={user} value={user}>{user}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {/* Search */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />

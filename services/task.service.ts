@@ -44,6 +44,13 @@ export const taskService = {
       data: body,
       headers: { "Content-Type": "application/json" },
     }),
+
+  exportTasksToCsv: (projectId: number) =>
+    api<Blob>({
+      method: "GET",
+      url: `/tasks/project/${projectId}/export`,
+      responseType: "blob",
+    }),
 }
 
 // Backward-compatible aliases for transition (Will be removed later)

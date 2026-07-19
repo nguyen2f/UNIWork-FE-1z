@@ -43,6 +43,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+  const [projectFilter, setProjectFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => { fetchTasks() }, [])
@@ -69,6 +70,7 @@ export default function TasksPage() {
   const filteredTasks = tasks.filter((t) => {
     if (statusFilter && t.status !== statusFilter) return false
     if (priorityFilter && t.priority !== priorityFilter) return false
+    if (projectFilter && String(t.projectId) !== projectFilter) return false
     if (searchQuery) {
       const titleMatch = t.title?.toLowerCase().includes(searchQuery.toLowerCase())
       const descMatch = t.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -124,6 +126,16 @@ export default function TasksPage() {
                     {Object.entries(PriorityCfg).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v.label}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+                <Select onValueChange={(v) => setProjectFilter(v === "CLEAR" ? null : v)}>
+                  <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Project" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CLEAR">All Projects</SelectItem>
+                    {Array.from(new Set(tasks.map(t => t.projectId))).filter(Boolean).map(id => {
+                      const task = tasks.find(t => t.projectId === id)
+                      return <SelectItem key={id} value={String(id)}>{task?.projectName || `Project #${id}`}</SelectItem>
+                    })}
                   </SelectContent>
                 </Select>
               </div>

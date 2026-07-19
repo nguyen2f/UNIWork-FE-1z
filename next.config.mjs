@@ -9,6 +9,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'antd', 'recharts', 'date-fns'],
+  },
 }
 
 export default nextConfig

@@ -101,7 +101,7 @@ export default function IssueDetailPage() {
   }
 
   const fmt = (d: string | null) => {
-    if (!d) return "N/A"
+    if (!d) return ""
     return new Date(d).toLocaleDateString("vi-VN", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
@@ -145,7 +145,7 @@ export default function IssueDetailPage() {
               <Link href="/projects" className="text-slate-500 hover:text-blue-600 transition-colors font-medium">Projects</Link>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
               <Link href={`/projects/${issue.projectId}`} className="text-slate-500 hover:text-blue-600 transition-colors font-medium">
-                <FolderKanban className="h-3.5 w-3.5 inline mr-1" />Project #{issue.projectId}
+                <FolderKanban className="h-3.5 w-3.5 inline mr-1" />{issue.projectName || `Project #${issue.projectId}`}
               </Link>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
               <Link href={`/tasks/${issue.taskId}`} className="text-slate-500 hover:text-blue-600 transition-colors font-medium">
@@ -247,7 +247,7 @@ export default function IssueDetailPage() {
                       { icon: User, label: "Reporter", value: issue.reporterName || "System" },
                       { icon: User, label: "Assignee", value: (issue as any).assigneeName || issue.assignedToName || "Unassigned" },
                       { icon: Clock, label: "Created", value: fmt(issue.createdDate) },
-                      { icon: Clock, label: "Updated", value: fmt(issue.updatedDate || issue.createdDate) },
+                      { icon: Clock, label: (issue.status === "RESOLVED" || issue.status === "CLOSED" || issue.status === "DONE" || issue.status === "COMPLETED") ? "Completed" : "Updated", value: fmt(issue.updatedDate || issue.createdDate) },
                       { icon: Calendar, label: "Due Date", value: fmt(issue.dueDate) },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-3">
@@ -271,7 +271,7 @@ export default function IssueDetailPage() {
                     </button>
                     <button onClick={() => router.push(`/projects/${issue.projectId}`)} className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all text-left">
                       <FolderKanban className="h-4 w-4 text-indigo-500" />
-                      <div><p className="text-xs text-slate-500">Project</p><p className="text-sm font-medium text-slate-900">Project #{issue.projectId}</p></div>
+                      <div><p className="text-xs text-slate-500">Project</p><p className="text-sm font-medium text-slate-900">{issue.projectName || `Project #${issue.projectId}`}</p></div>
                     </button>
                   </div>
                 </div>

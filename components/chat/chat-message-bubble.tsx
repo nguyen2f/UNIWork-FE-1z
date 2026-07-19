@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
 
 interface ChatMessageBubbleProps {
   message: {
@@ -20,7 +19,6 @@ interface ChatMessageBubbleProps {
 export function ChatMessageBubble({ message, isOwn, userId }: ChatMessageBubbleProps) {
   const timeAgo = formatDistanceToNow(new Date(message.createdAt), {
     addSuffix: true,
-    locale: vi,
   })
 
   const senderInitial = (message.senderName || "U")?.charAt(0).toUpperCase()

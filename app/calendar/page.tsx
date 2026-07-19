@@ -13,6 +13,7 @@ import { CreateEventDialog } from "@/components/event/create-event-dialog"
 import { EventDetailDialog } from "@/components/event/event-detail-dialog"
 
 import { getAllEvents } from "@/services/event.service"
+import { fetchProjectReport } from "@/services/report.service"
 import type { Event } from "@/types/event.types"
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -48,6 +49,29 @@ export default function CalendarPage() {
     // nếu bạn cần sau này
     const [currentPage] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
+
+    const [projectMap, setProjectMap] = useState<Record<number, string>>({})
+
+    // -------- load projects --------
+    useEffect(() => {
+        const loadProjects = async () => {
+            try {
+                const res = await fetchProjectReport(0, 100)
+                if (res.data) {
+                    const map: Record<number, string> = {}
+                    res.data.forEach((p: any) => {
+                        if (p.project?.projectId && p.project?.name) {
+                            map[p.project.projectId] = p.project.name
+                        }
+                    })
+                    setProjectMap(map)
+                }
+            } catch (err) {
+                console.error("Load projects error:", err)
+            }
+        }
+        loadProjects()
+    }, [])
 
     // -------- load events --------
     useEffect(() => {
@@ -213,17 +237,7 @@ export default function CalendarPage() {
                                             </Button>
                                         </div>
 
-                                        <div className="flex space-x-2">
-                                            <Button variant={view === "month" ? "default" : "outline"} size="sm" onClick={() => setView("month")}>
-                                                Month
-                                            </Button>
-                                            <Button variant={view === "week" ? "default" : "outline"} size="sm" onClick={() => setView("week")}>
-                                                Week
-                                            </Button>
-                                            <Button variant={view === "day" ? "default" : "outline"} size="sm" onClick={() => setView("day")}>
-                                                Day
-                                            </Button>
-                                        </div>
+
                                     </CardHeader>
 
                                     <CardContent>
@@ -346,7 +360,9 @@ export default function CalendarPage() {
                                                         <div className={`w-2.5 h-2.5 rounded-full ${getPriorityColor(event.priority)}`} />
                                                     </div>
 
-                                                    <p className="text-xs text-gray-600 mb-2 line-clamp-1">Project {event.projectId}</p>
+                                                    <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+                                                        {event.projectId ? (projectMap[event.projectId] || `Project ${event.projectId}`) : ""}
+                                                    </p>
 
                                                     <div className="space-y-1">
                                                         <div className="flex items-center text-xs text-gray-500">
@@ -412,7 +428,12 @@ export default function CalendarPage() {
                 </main>
             </div>
 
-            <EventDetailDialog event={selectedEvent} open={showEventDetail} onOpenChange={setShowEventDetail} />
+            <EventDetailDialog 
+                event={selectedEvent} 
+                open={showEventDetail} 
+                onOpenChange={setShowEventDetail} 
+                projectName={selectedEvent?.projectId ? projectMap[selectedEvent.projectId] : undefined}
+            />
         </div>
     )
 }

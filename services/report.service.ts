@@ -10,14 +10,15 @@ import type {
   CreationTrendDTO,
   AnalyticsSummaryDTO,
   ProjectAnalyticsDTO,
+  MemberKpiDTO,
 } from "@/types/report.types"
 
 export const reportService = {
   getProjectReport: (page?: number, size?: number) =>
     api({ method: "GET", url: "/reports/project-report", params: { page, size } }, true),
 
-  getTaskReport: () =>
-    api({ method: "GET", url: "/reports/task-report" }, true),
+  getTaskReport: (begin?: number, end?: number) =>
+    api({ method: "GET", url: "/reports/task-report", params: { begin, end } }, true),
 
   getPendingTasks: (page?: number, size?: number) =>
     api({ method: "GET", url: "/reports/task-report/pending-tasks", params: { page, size } }, true),
@@ -43,6 +44,9 @@ export const reportService = {
 
   getStageReport: (projectId: number) =>
     api<StageReportDTO[]>({ method: "GET", url: `/reports/stage-report/${projectId}` }),
+
+  getMemberKpiCostReport: (projectId: number, begin?: number, end?: number) =>
+    api<MemberKpiDTO[]>({ method: "GET", url: `/reports/member-kpi-cost/${projectId}`, params: { begin, end } }),
 
   // 8 Analytics Endpoints
   getAnalyticsSummary: () =>
@@ -81,6 +85,7 @@ export const fetchSingleProjectReport = reportService.getSingleProjectReport
 export const fetchMemberWorkload = reportService.getMemberWorkload
 export const fetchOverdueItems = reportService.getOverdueItems
 export const fetchStageReport = reportService.getStageReport
+export const fetchMemberKpiCostReport = reportService.getMemberKpiCostReport
 
 // New Analytics API exports
 export const fetchAnalyticsSummary = reportService.getAnalyticsSummary
