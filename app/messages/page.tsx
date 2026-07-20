@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, useRef, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
-import { Plus, Send, Search, MoreVertical } from "lucide-react"
+import { Plus, Send, Search, MoreVertical, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -247,9 +247,10 @@ function MessagesContent() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
 
-        <main className="flex-1 overflow-hidden bg-white">
+        <main className="flex-1 overflow-hidden bg-white relative">
           <div className="h-full flex">
-            <div className="w-80 border-r flex flex-col">
+            {/* Conversations List Pane */}
+            <div className={`w-full md:w-80 border-r flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
               <div className="p-4 border-b">
                 <div className="flex justify-between mb-4">
                   <h2 className="font-semibold">Messages</h2>
@@ -314,21 +315,35 @@ function MessagesContent() {
               </ScrollArea>
             </div>
 
-            <div className="flex-1 flex flex-col">
+            {/* Chat Pane */}
+            <div className={`flex-1 flex-col ${!selectedConversation ? 'hidden md:flex' : 'flex'}`}>
               {currentConversation ? (
                 <>
                   <div
-                    className="p-4 border-b cursor-pointer hover:bg-gray-50"
+                    className="p-4 border-b cursor-pointer hover:bg-gray-50 flex items-center gap-3"
                     onClick={() => {
                       if (currentConversation.type === "GROUP") {
                         handleOpenRename(currentConversation.roomId)
                       }
                     }}
                   >
-                    <h3 className="font-semibold">{currentConversation.name ?? "Direct Chat"}</h3>
-                    <p className="text-sm text-gray-500">
-                      {currentConversation.type === "DIRECT" ? "Direct chat" : "Group chat (click to rename)"}
-                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="md:hidden flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedConversation(null);
+                      }}
+                    >
+                      <ChevronRight className="h-5 w-5 rotate-180" />
+                    </Button>
+                    <div>
+                      <h3 className="font-semibold">{currentConversation.name ?? "Direct Chat"}</h3>
+                      <p className="text-sm text-gray-500">
+                        {currentConversation.type === "DIRECT" ? "Direct chat" : "Group chat (click to rename)"}
+                      </p>
+                    </div>
                   </div>
 
                   <ScrollArea

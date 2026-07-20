@@ -379,9 +379,9 @@ export default function StageDetailPage() {
 
             {/* Stage Hero */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
-              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-8 py-6">
-                <div className="flex items-start justify-between">
-                  <div>
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-6 sm:px-8 py-6">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                  <div className="w-full">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs">
                         {stage.type || "STAGE"}
@@ -404,7 +404,7 @@ export default function StageDetailPage() {
                       {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
                     {stage.status === "PLANNED" && (
                       <Button size="sm" onClick={handleActivate} className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm">
                         <Play className="h-3.5 w-3.5 mr-1.5" /> Activate
@@ -660,7 +660,7 @@ export default function StageDetailPage() {
                     {tasks.length} task{tasks.length !== 1 ? "s" : ""} · {allIssues.length} issue{allIssues.length !== 1 ? "s" : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                   <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
                     <SelectTrigger className="w-[120px] h-8 bg-white text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
                     <SelectContent>
@@ -736,8 +736,9 @@ export default function StageDetailPage() {
               {/* ─── Tasks List ─── */}
               {activeListTab === "tasks" && (
                 <Card className="overflow-hidden border-slate-200/80">
-                  <CardContent className="p-0">
-                    {/* Table Header */}
+                  <CardContent className="p-0 overflow-x-auto">
+                    <div className="min-w-[850px]">
+                      {/* Table Header */}
                     <div className="grid grid-cols-[1fr_100px_100px_120px_140px_80px] gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       <span>Task</span>
                       <span>Status</span>
@@ -849,6 +850,7 @@ export default function StageDetailPage() {
                         })}
                       </div>
                     )}
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -856,8 +858,9 @@ export default function StageDetailPage() {
               {/* ─── Issues List ─── */}
               {activeListTab === "issues" && (
                 <Card className="overflow-hidden border-slate-200/80">
-                  <CardContent className="p-0">
-                    {/* Table Header */}
+                  <CardContent className="p-0 overflow-x-auto">
+                    <div className="min-w-[850px]">
+                      {/* Table Header */}
                     <div className="grid grid-cols-[1fr_100px_100px_120px_140px_80px] gap-3 px-5 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       <span>Issue</span>
                       <span>Status</span>
@@ -970,6 +973,7 @@ export default function StageDetailPage() {
                         })}
                       </div>
                     )}
+                    </div>
                   </CardContent>
                 </Card>
               )}

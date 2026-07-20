@@ -100,7 +100,7 @@ export function ProjectSpreadsheetView({
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       {/* ─── Toolbar ─── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200 gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
             <Layers className="h-4 w-4 text-indigo-500" />
@@ -114,7 +114,7 @@ export function ProjectSpreadsheetView({
             <span>{totalIssues} Issues</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -141,8 +141,11 @@ export function ProjectSpreadsheetView({
         </div>
       </div>
 
-      {/* ─── Table Header ─── */}
-      <div className="grid grid-cols-[40px_1fr_110px_90px_130px_120px_60px] gap-0 px-0 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none">
+      {/* ─── Table Container ─── */}
+      <div className="overflow-x-auto">
+        <div className="min-w-[850px]">
+          {/* ─── Table Header ─── */}
+          <div className="grid grid-cols-[40px_1fr_110px_90px_130px_120px_60px] gap-0 px-0 bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none">
         <div className="px-2 py-2.5 border-r border-slate-100 text-center">#</div>
         <div className="px-3 py-2.5 border-r border-slate-100">Name</div>
         <div className="px-3 py-2.5 border-r border-slate-100">Status</div>
@@ -427,6 +430,8 @@ export function ProjectSpreadsheetView({
             )
           })
         )}
+      </div>
+        </div>
       </div>
     </div>
   )

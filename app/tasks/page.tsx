@@ -99,37 +99,39 @@ export default function TasksPage() {
             </div>
 
             {/* Filters */}
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div className="flex gap-3 flex-1">
-                <div className="relative flex-1 max-w-sm">
+            <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full md:flex-1">
+                <div className="relative w-full sm:w-auto flex-1 sm:max-w-sm">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     placeholder="Search tasks..."
-                    className="pl-9 bg-white border-slate-200"
+                    className="pl-9 bg-white border-slate-200 w-full"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
-                  <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CLEAR">All Status</SelectItem>
-                    {Object.entries(StatusCfg).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select onValueChange={(v) => setPriorityFilter(v === "CLEAR" ? null : v)}>
-                  <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Priority" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="CLEAR">All Priority</SelectItem>
-                    {Object.entries(PriorityCfg).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-2 sm:flex gap-3 w-full sm:w-auto">
+                  <Select onValueChange={(v) => setStatusFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-full sm:w-[130px] lg:w-[150px] bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Status</SelectItem>
+                      {Object.entries(StatusCfg).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select onValueChange={(v) => setPriorityFilter(v === "CLEAR" ? null : v)}>
+                    <SelectTrigger className="w-full sm:w-[130px] lg:w-[150px] bg-white"><SelectValue placeholder="Priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CLEAR">All Priority</SelectItem>
+                      {Object.entries(PriorityCfg).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Select onValueChange={(v) => setProjectFilter(v === "CLEAR" ? null : v)}>
-                  <SelectTrigger className="w-[150px] bg-white"><SelectValue placeholder="Project" /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-[150px] bg-white"><SelectValue placeholder="Project" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="CLEAR">All Projects</SelectItem>
                     {Array.from(new Set(tasks.map(t => t.projectId))).filter(Boolean).map(id => {
