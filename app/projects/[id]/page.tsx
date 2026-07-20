@@ -31,6 +31,7 @@ import { toast } from "sonner"
 import { EditStageDialog } from "@/components/stage/edit-stage-dialog"
 import { EditProjectDialog } from "@/components/project/edit-project-dialog"
 import { ManageMembersDialog } from "@/components/project/manage-members-dialog"
+import { ProjectKanbanBoard } from "@/components/project/project-kanban-board"
 import { EditTaskDialog } from "@/components/task/edit-task-dialog"
 import { IssueDialog } from "@/components/issue/issue-dialog"
 import { ProjectSpreadsheetView } from "@/components/project/project-spreadsheet-view"
@@ -86,7 +87,7 @@ export default function ProjectDetailPage(props: any) {
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
   const [userFilter, setUserFilter] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<"cards" | "spreadsheet" | "kpi-cost">("cards")
+  const [viewMode, setViewMode] = useState<"cards" | "spreadsheet" | "kanban" | "kpi-cost">("cards")
 
   const handleEditStage = (stage: any) => {
     setEditingStage(stage)
@@ -556,6 +557,19 @@ export default function ProjectDetailPage(props: any) {
                     <LayoutGrid className="h-3.5 w-3.5" />
                     Cards
                   </button>
+                  {project.method === "AGILE" && (
+                    <button
+                      onClick={() => setViewMode("kanban")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        viewMode === "kanban"
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <FolderKanban className="h-3.5 w-3.5" />
+                      Kanban
+                    </button>
+                  )}
                   <button
                     onClick={() => setViewMode("spreadsheet")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
@@ -576,7 +590,16 @@ export default function ProjectDetailPage(props: any) {
               </div>
             </div>
 
-            {viewMode === "spreadsheet" ? (
+            {viewMode === "kanban" ? (
+              <ProjectKanbanBoard
+                projectId={projectId}
+                tasks={tasks}
+                taskIssues={taskIssues}
+                stages={stages}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+              />
+            ) : viewMode === "spreadsheet" ? (
               <ProjectSpreadsheetView
                 projectId={projectId}
                 method={project.method || "STANDARD"}

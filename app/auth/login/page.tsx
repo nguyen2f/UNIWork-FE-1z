@@ -50,7 +50,7 @@ export default function LoginPage() {
     try {
       await login({ email, password } as LoginRequest);
     } catch (err: any) {
-      setError(err.message || "Login failed");
+      setError(err?.data?.message || err?.message || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }

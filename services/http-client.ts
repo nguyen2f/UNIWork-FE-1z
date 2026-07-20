@@ -24,8 +24,9 @@ request.interceptors.response.use(
       (error.response && error.response.status === 401) ||
       !localStorage.getItem("Authorization")
     ) {
-      message?.error(error?.response?.data?.message)
+      message?.error(error?.response?.data?.message || "Đã xảy ra lỗi")
       localStorage.removeItem("Authorization")
+      return Promise.reject(error?.response || { data: {} })
     } else {
       message?.error(error?.response?.data?.message)
       return Promise.reject(error?.response || { data: {} })
