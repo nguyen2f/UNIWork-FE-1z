@@ -402,9 +402,10 @@ export default function DashboardPage() {
               <div className="w-[300px]">
                 <DateRangePicker 
                   value={dateRange}
-                  onChange={(val) => {
-                    setDateRange(val);
-                    fetchOverview(val);
+                  onChange={(val: any) => {
+                    const nextVal = val || undefined;
+                    setDateRange(nextVal);
+                    fetchOverview(nextVal);
                   }}
                 />
               </div>

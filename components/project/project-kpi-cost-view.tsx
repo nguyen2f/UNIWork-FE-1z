@@ -118,7 +118,6 @@ export function ProjectKpiCostView({ projectId }: ProjectKpiCostViewProps) {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
               <Calendar
-                initialFocus
                 mode="range"
                 defaultMonth={dateRange.from}
                 selected={{ from: dateRange.from, to: dateRange.to }}

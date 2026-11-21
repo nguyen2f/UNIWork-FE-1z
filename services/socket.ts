@@ -19,8 +19,14 @@ export const connectSocket = () => {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("Authorization") : null
 
+  const wsUrl =
+    process.env.NEXT_PUBLIC_WS_URL ||
+    (process.env.NEXT_PUBLIC_API_BASE_URL
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/ws-chat`
+      : "http://localhost:8297/ws-chat")
+
   stompClient = new Client({
-    webSocketFactory: () => new SockJS("http://localhost:8297/ws-chat"),
+    webSocketFactory: () => new SockJS(wsUrl),
     connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
     reconnectDelay: 5000,
     debug: (str) => console.log("STOMP:", str),
