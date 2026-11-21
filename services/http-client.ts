@@ -20,15 +20,22 @@ request.interceptors.response.use(
     return response?.data
   },
   (error) => {
-    if (
-      (error.response && error.response.status === 401) ||
-      !localStorage.getItem("Authorization")
-    ) {
-      message?.error(error?.response?.data?.message || "Đã xảy ra lỗi")
-      localStorage.removeItem("Authorization")
+    if (error.response && error.response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("Authorization")
+        localStorage.removeItem("userId")
+        localStorage.removeItem("userName")
+        localStorage.removeItem("role")
+        document.cookie = "auth_token=; path=/; max-age=0;"
+        message?.error(error?.response?.data?.message || "Phiên đăng nhập đã hết hạn")
+        if (!window.location.pathname.startsWith("/auth")) {
+          window.location.href = "/auth/login"
+        }
+      }
       return Promise.reject(error?.response || { data: {} })
     } else {
-      message?.error(error?.response?.data?.message)
+      const errMsg = error?.response?.data?.message || error?.message || "Đã xảy ra lỗi"
+      message?.error(errMsg)
       return Promise.reject(error?.response || { data: {} })
     }
   },
@@ -60,9 +67,15 @@ export const api = <T = any>(
       ...options.headers,
     },
   }
-  if (localStorage.getItem("Authorization")) {
-    config.headers.Authorization = `Bearer ${localStorage.getItem("Authorization")}`
-    config.headers.userId = `${localStorage.getItem("userId")}`
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("Authorization")
+    const userId = localStorage.getItem("userId")
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    if (userId) {
+      config.headers.userId = userId
+    }
   }
   return request(config)
 }
