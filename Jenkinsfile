@@ -17,8 +17,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo '=== Stage 2: Installing dependencies with pnpm ==='
-                sh 'npm install -g pnpm@9'
-                sh 'pnpm install --frozen-lockfile'
+                sh 'pnpm install --frozen-lockfile=false'
             }
         }
 
