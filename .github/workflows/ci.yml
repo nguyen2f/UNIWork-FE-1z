@@ -33,3 +33,16 @@ jobs:
 
     - name: Build Next.js Application
       run: pnpm run build
+
+    - name: Trigger Vercel Deploy Hook
+      if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && github.event_name == 'push'
+      env:
+        DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+      run: |
+        if [ -n "$DEPLOY_HOOK" ]; then
+          echo "Triggering Vercel deployment..."
+          curl -s -X POST "$DEPLOY_HOOK"
+        else
+          echo "VERCEL_DEPLOY_HOOK secret is not set, skipping deployment."
+        fi
+
