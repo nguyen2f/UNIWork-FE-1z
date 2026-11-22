@@ -49,6 +49,16 @@ pipeline {
                 sh 'docker image inspect ${IMAGE_NAME} --format "{{.Id}}: {{.Size}} bytes"'
             }
         }
+
+        stage('Deploy to Vercel') {
+            when {
+                expression { env.VERCEL_DEPLOY_HOOK != null && env.VERCEL_DEPLOY_HOOK != '' }
+            }
+            steps {
+                echo '=== Stage 7: All checks passed. Triggering Vercel Production Deployment ==='
+                sh 'curl -X POST "${VERCEL_DEPLOY_HOOK}"'
+            }
+        }
     }
 
     post {
