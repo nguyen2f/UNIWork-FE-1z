@@ -50,12 +50,19 @@ pipeline {
         }
 
         stage('Deploy to Vercel') {
-            when {
-                expression { env.VERCEL_DEPLOY_HOOK != null && env.VERCEL_DEPLOY_HOOK != '' }
-            }
             steps {
-                echo '=== Stage 7: All checks passed. Triggering Vercel Production Deployment ==='
-                sh 'curl -X POST "${VERCEL_DEPLOY_HOOK}"'
+                script {
+                    try {
+                        withCredentials([string(credentialsId: 'VERCEL_DEPLOY_HOOK', variable: 'HOOK_URL')]) {
+                            if (env.HOOK_URL) {
+                                echo '=== Stage 7: All checks passed. Triggering Vercel Production Deployment ==='
+                                sh 'curl -s -X POST "${HOOK_URL}"'
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo 'VERCEL_DEPLOY_HOOK credential not configured in Jenkins, skipping deployment step.'
+                    }
+                }
             }
         }
     }
